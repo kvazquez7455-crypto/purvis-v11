@@ -1828,3 +1828,264 @@ app.listen(PORT, () => {
     overnightRunner();
   }, 60 * 60 * 1000);
 });
+
+// ============================================================
+// PURVIS TEST RUNNER + SELF-LEARNING ENGINE
+// Minimal API calls. PURVIS tests himself inside my app.
+// ============================================================
+
+// ---- Read resource policy from Supabase ----
+async function getPolicy(key) {
+  const { data } = await supabase.from('purvis_resource_policy').select('value').eq('key', key).single();
+  return data?.value;
+}
+
+// ---- Check if daily test limit is hit ----
+async function canRunTest(type) {
+  const maxKey = `max_${type}_test_calls_per_day`;
+  const max = parseInt(await getPolicy(maxKey) || '3');
+  const today = new Date().toISOString().split('T')[0];
+  const { data } = await supabase.from('purvis_tests')
+    .select('api_calls_count')
+    .gte('created_at', today)
+    .ilike('tools_used', `%${type}%`);
+  const used = (data || []).reduce((sum, r) => sum + (r.api_calls_count || 0), 0);
+  if (used >= max) return { allowed: false, reason: `Daily limit of ${max} ${type} test calls reached. Resets tomorrow. (Used: ${used})` };
+  return { allowed: true, used, remaining: max - used };
+}
+
+// ---- SCENARIO: Deep Research (OpenAI only) ----
+async function runDeepResearchTest() {
+  const start = Date.now();
+  const check = await canRunTest('openai');
+  if (!check.allowed) return { status: 'skipped', notes: check.reason, api_calls_count: 0, tools_used: ['openai'] };
+
+  const result = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      { role: 'system', content: PURVIS_SYSTEM },
+      { role: 'user', content: 'PURVIS SELF-TEST — Deep Research scenario. Research this question in 3 sentences: What are the top 3 free ways to monetize YouTube Shorts in 2025?' }
+    ],
+    max_tokens: 300
+  });
+  return {
+    status: 'pass',
+    result: result.choices[0].message.content,
+    tools_used: ['openai', 'memory'],
+    api_calls_count: 1,
+    duration_ms: Date.now() - start,
+    notes: 'GPT-4o deep research test passed. 1 API call used.'
+  };
+}
+
+// ---- SCENARIO: Voice Reply (OpenAI → ElevenLabs) ----
+async function runVoiceTest() {
+  const start = Date.now();
+  const openaiCheck = await canRunTest('openai');
+  if (!openaiCheck.allowed) return { status: 'skipped', notes: openaiCheck.reason, api_calls_count: 0 };
+
+  const elKey = (process.env.ELEVENLABS_KEYS || '').split(',')[0].trim();
+  if (!elKey) {
+    return { status: 'skipped', notes: 'ELEVENLABS_KEYS not set in Railway. Add it to activate voice tests.', api_calls_count: 0, tools_used: ['openai'] };
+  }
+
+  const elCheck = await canRunTest('elevenlabs');
+  if (!elCheck.allowed) return { status: 'skipped', notes: elCheck.reason, api_calls_count: 0 };
+
+  // Step 1: GPT-4o generates short reply
+  const llmResult = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [{ role: 'user', content: 'Say "PURVIS voice test complete" in exactly 5 words.' }],
+    max_tokens: 20
+  });
+  const text = llmResult.choices[0].message.content.trim();
+
+  // Step 2: ElevenLabs TTS (short text only — minimal cost)
+  const voiceId = process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM';
+  const elRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'xi-api-key': elKey },
+    body: JSON.stringify({ text, model_id: 'eleven_monolingual_v1', voice_settings: { stability: 0.5, similarity_boost: 0.5 } })
+  });
+
+  if (!elRes.ok) {
+    const err = await elRes.text();
+    return { status: 'fail', notes: 'ElevenLabs failed: ' + err.substring(0, 100), api_calls_count: 1, tools_used: ['openai', 'elevenlabs'] };
+  }
+
+  return {
+    status: 'pass',
+    result: `Voice generated for: "${text}"`,
+    tools_used: ['openai', 'elevenlabs'],
+    api_calls_count: 2,
+    duration_ms: Date.now() - start,
+    notes: 'OpenAI + ElevenLabs voice test passed. Audio generated (not auto-played to save bandwidth). 2 API calls used.'
+  };
+}
+
+// ---- SCENARIO: Sportsbook Analysis ----
+async function runSportsbookTest() {
+  const start = Date.now();
+  if (!process.env.SPORTSBOOK_API_KEY) {
+    return { status: 'skipped', notes: 'SPORTSBOOK_API_KEY not set. Add to Railway → Variables to activate.', api_calls_count: 0, tools_used: ['sportsbook'] };
+  }
+
+  const sbCheck = await canRunTest('sportsbook');
+  if (!sbCheck.allowed) return { status: 'skipped', notes: sbCheck.reason, api_calls_count: 0 };
+
+  try {
+    // Cheapest call: get sports list (no odds = no credit burn)
+    const data = await callSportsbook({ endpoint: '/sports', params: {} });
+    const count = Array.isArray(data) ? data.length : 0;
+
+    const openaiCheck = await canRunTest('openai');
+    if (!openaiCheck.allowed) {
+      return { status: 'pass', result: `Sportsbook connected. ${count} sports available.`, api_calls_count: 1, tools_used: ['sportsbook'], notes: 'Sportsbook test passed. OpenAI limit hit so skipped analysis step.' };
+    }
+
+    // GPT-4o analyzes the sports list
+    const analysis = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: 'You are PURVIS betting analyst. Be brief and protect Kelvin\'s $30 credit.' },
+        { role: 'user', content: `Sportsbook has ${count} sports available. Name 2 that typically have the best EV betting opportunities for a $100 bankroll.` }
+      ],
+      max_tokens: 100
+    });
+
+    return {
+      status: 'pass',
+      result: `${count} sports found. Analysis: ${analysis.choices[0].message.content}`,
+      tools_used: ['sportsbook', 'openai'],
+      api_calls_count: 2,
+      duration_ms: Date.now() - start,
+      notes: `Sportsbook test passed. Sports list (cheap call) + 1 GPT-4o analysis. Credit warning: $30 remaining, use sparingly.`
+    };
+  } catch(e) {
+    return { status: 'fail', notes: 'Sportsbook error: ' + e.message, api_calls_count: 0, tools_used: ['sportsbook'] };
+  }
+}
+
+// ---- RUN TEST ENDPOINT ----
+app.post('/api/tests/run', async (req, res) => {
+  const { scenarioName } = req.body;
+  if (!scenarioName) return res.status(400).json({ error: 'scenarioName required' });
+
+  let testResult;
+  try {
+    if (scenarioName === 'deep_research') testResult = await runDeepResearchTest();
+    else if (scenarioName === 'voice') testResult = await runVoiceTest();
+    else if (scenarioName === 'sportsbook') testResult = await runSportsbookTest();
+    else return res.status(400).json({ error: `Unknown scenario: ${scenarioName}. Use: deep_research, voice, sportsbook` });
+
+    // Log to Supabase
+    const { data } = await supabase.from('purvis_tests').insert({
+      test_name: scenarioName,
+      scenario: scenarioName,
+      status: testResult.status,
+      tools_used: testResult.tools_used || [],
+      api_calls_count: testResult.api_calls_count || 0,
+      result: testResult.result || null,
+      notes: testResult.notes || null,
+      duration_ms: testResult.duration_ms || null
+    }).select().single();
+
+    res.json({ ...testResult, id: data?.id });
+  } catch(e) {
+    // Log failure
+    await supabase.from('purvis_tests').insert({ test_name: scenarioName, scenario: scenarioName, status: 'fail', notes: e.message, api_calls_count: 0 });
+    res.status(500).json({ status: 'fail', error: e.message });
+  }
+});
+
+// ---- GET LATEST TESTS ----
+app.get('/api/tests/latest', async (req, res) => {
+  const { data } = await supabase.from('purvis_tests').select('*').order('created_at', { ascending: false }).limit(10);
+  res.json({ tests: data || [] });
+});
+
+// ---- TESTS HEALTH ----
+app.get('/api/tests/health', async (req, res) => {
+  const { data: tests } = await supabase.from('purvis_tests').select('*').order('created_at', { ascending: false }).limit(20);
+  const scenarios = ['deep_research', 'voice', 'sportsbook'];
+  const summary = {};
+  for (const s of scenarios) {
+    const last = (tests || []).find(t => t.scenario === s);
+    summary[s] = last ? { status: last.status, api_calls_count: last.api_calls_count, last_run: last.created_at, notes: last.notes } : { status: 'never_run', api_calls_count: 0 };
+  }
+  const { data: policy } = await supabase.from('purvis_resource_policy').select('key,value');
+  res.json({ ok: true, scenarios: summary, resource_policy: Object.fromEntries((policy||[]).map(p=>[p.key,p.value])), totalTestsRun: (tests||[]).length });
+});
+
+// ---- DAILY LEARNING LOOP ----
+app.post('/api/learn/daily', async (req, res) => {
+  res.json({ status: 'Learning loop started. Check /api/learn/health in 30 seconds.' });
+
+  try {
+    const enabled = await getPolicy('enable_daily_learning');
+    if (enabled !== 'true') return;
+
+    const openaiCheck = await canRunTest('openai');
+    if (!openaiCheck.allowed) return;
+
+    // Gather recent data (no API call needed)
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+    const [msgs, improvements, tests] = await Promise.all([
+      supabase.from('purvis_messages').select('role,content,is_correction,is_error').gte('created_at', yesterday).limit(50),
+      supabase.from('purvis_improvements').select('area,note').gte('created_at', yesterday).limit(10),
+      supabase.from('purvis_tests').select('scenario,status,notes').gte('created_at', yesterday).limit(5)
+    ]);
+
+    const msgSummary = (msgs.data||[]).filter(m=>m.is_correction||m.is_error).map(m=>m.content.substring(0,100)).join(' | ') || 'No errors yesterday';
+    const improvSummary = (improvements.data||[]).map(i=>i.note.substring(0,80)).join(' | ') || 'No new improvement notes';
+    const testSummary = (tests.data||[]).map(t=>`${t.scenario}:${t.status}`).join(', ') || 'No tests run yesterday';
+
+    // ONE OpenAI call for learning summary
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: PURVIS_SYSTEM },
+        { role: 'user', content: `PURVIS DAILY LEARNING — analyze yesterday and improve.\n\nErrors/corrections: ${msgSummary}\nImprovement notes: ${improvSummary}\nTest results: ${testSummary}\n\nGive me:\n1. WHAT WORKED: (1 sentence)\n2. WHAT SUCKED: (1 sentence)\n3. WHAT TO CHANGE: (2 specific behavior rules for tomorrow)` }
+      ],
+      max_tokens: 300
+    });
+
+    const learning = result.choices[0].message.content;
+    const lines = learning.split('\n');
+    const worked = lines.find(l=>l.includes('WHAT WORKED'))?.replace('1. WHAT WORKED:','').trim() || '';
+    const sucked = lines.find(l=>l.includes('WHAT SUCKED'))?.replace('2. WHAT SUCKED:','').trim() || '';
+    const change = lines.find(l=>l.includes('WHAT TO CHANGE'))?.replace('3. WHAT TO CHANGE:','').trim() || '';
+
+    // Save to learning log
+    await supabase.from('purvis_learning_log').insert({ summary: learning, what_worked: worked, what_sucked: sucked, what_to_change: change, api_calls_used: 1 });
+
+    // Save as improvement note
+    await supabase.from('purvis_improvements').insert({ area: 'daily_learning', note: `[${new Date().toLocaleDateString()}] Change: ${change}`, applied: false });
+
+    // Update life thread
+    await supabase.from('purvis_life_thread').insert({ user_id: 'kelvin', event_type: 'lesson', title: 'Daily Learning ' + new Date().toLocaleDateString(), content: learning.substring(0,500), importance: 2 });
+
+  } catch(e) {
+    console.log('[PURVIS LEARN] Error:', e.message);
+  }
+});
+
+// ---- LEARN HEALTH ----
+app.get('/api/learn/health', async (req, res) => {
+  const [logs, policy] = await Promise.all([
+    supabase.from('purvis_learning_log').select('*').order('created_at', { ascending: false }).limit(5),
+    supabase.from('purvis_resource_policy').select('key,value').in('key', ['enable_daily_learning','max_openai_test_calls_per_day'])
+  ]);
+  const enabled = (policy.data||[]).find(p=>p.key==='enable_daily_learning')?.value === 'true';
+  const lastLog = (logs.data||[])[0];
+  res.json({
+    ok: true,
+    dailyLearningEnabled: enabled,
+    lastRun: lastLog?.created_at || 'never',
+    lastSummary: lastLog ? { whatWorked: lastLog.what_worked, whatSucked: lastLog.what_sucked, whatToChange: lastLog.what_to_change } : null,
+    totalLearningLogs: (logs.data||[]).length,
+    triggerUrl: 'POST /api/learn/daily'
+  });
+});

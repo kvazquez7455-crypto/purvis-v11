@@ -1983,5 +1983,99 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+
+<script>
+// BRAIN & TESTS ENGINE
+async function runTest(scenario) {
+  const statusEl = document.getElementById(scenario.replace('deep_research','dr').replace('sportsbook','sb') + '-status');
+  const resultEl = document.getElementById(scenario.replace('deep_research','dr').replace('sportsbook','sb') + '-result');
+  if (statusEl) { statusEl.textContent = 'RUNNING...'; statusEl.style.background = 'rgba(234,179,8,.2)'; statusEl.style.color = '#eab308'; }
+  try {
+    const d = await apiFetch('/api/tests/run', { scenarioName: scenario });
+    const pass = d.status === 'pass';
+    const skip = d.status === 'skipped';
+    if (statusEl) {
+      statusEl.textContent = pass ? '✅ PASS' : skip ? '⏭ SKIPPED' : '❌ FAIL';
+      statusEl.style.background = pass ? 'rgba(34,197,94,.2)' : skip ? 'rgba(59,130,246,.2)' : 'rgba(239,68,68,.2)';
+      statusEl.style.color = pass ? '#22c55e' : skip ? '#3b82f6' : '#ef4444';
+    }
+    if (resultEl) {
+      resultEl.textContent = (d.result || d.notes || '') + (d.api_calls_count ? `\n\n📊 API calls used: ${d.api_calls_count}` : '');
+      resultEl.style.display = 'block';
+      resultEl.style.color = pass ? '#22c55e' : '#888899';
+    }
+    loadTestHistory();
+  } catch(e) {
+    if (statusEl) { statusEl.textContent = '❌ ERROR'; statusEl.style.color = '#ef4444'; }
+    if (resultEl) { resultEl.textContent = e.message; resultEl.style.display = 'block'; }
+  }
+}
+
+async function loadTestHistory() {
+  try {
+    const d = await fetch('/api/tests/latest').then(r=>r.json());
+    const el = document.getElementById('testHistory');
+    if (!d.tests || !d.tests.length) { el.innerHTML = '<div style="color:#888899;font-size:12px;text-align:center;padding:16px">No tests run yet</div>'; return; }
+    el.innerHTML = d.tests.map(t => {
+      const icon = t.status==='pass'?'✅':t.status==='skipped'?'⏭':'❌';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1a1a24;font-size:12px">
+        <span style="color:#f1f1f5">${icon} ${t.scenario}</span>
+        <span style="color:#888899">${t.api_calls_count} calls · ${new Date(t.created_at).toLocaleString()}</span>
+      </div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+async function loadPolicy() {
+  try {
+    const d = await fetch('/api/resource-policy').then(r=>r.json());
+    const el = document.getElementById('policyOut');
+    if (el && d.policy) {
+      el.innerHTML = `
+        <div>🎯 Max OpenAI test calls/day: <strong style="color:#a855f7">${d.policy.max_openai_test_calls_per_day || 3}</strong></div>
+        <div>🎤 Max ElevenLabs test calls/day: <strong style="color:#a855f7">${d.policy.max_elevenlabs_test_calls_per_day || 1}</strong></div>
+        <div>🎲 Max Sportsbook test calls/day: <strong style="color:#a855f7">${d.policy.max_sportsbook_test_calls_per_day || 1}</strong></div>
+        <div>💰 Sportsbook credit: <strong style="color:#eab308">${d.policy.sportsbook_credit_remaining || '$30'}</strong></div>
+        <div style="margin-top:8px;font-style:italic;color:#888899">"${d.policy.coke_can_rule || ''}"</div>
+      `;
+    }
+  } catch(e) {}
+}
+
+async function loadLearnHealth() {
+  try {
+    const d = await fetch('/api/learn/health').then(r=>r.json());
+    const el = document.getElementById('learnStatus');
+    if (el) el.textContent = `Daily learning: ${d.dailyLearningEnabled ? '✅ ENABLED' : '❌ DISABLED'} · Last run: ${d.lastRun === 'never' ? 'Never' : new Date(d.lastRun).toLocaleString()} · ${d.totalLearningLogs} logs`;
+    if (d.lastSummary) {
+      const summaryEl = document.getElementById('learnSummary');
+      if (summaryEl) {
+        summaryEl.style.display = 'block';
+        summaryEl.innerHTML = `
+          <div style="margin-bottom:6px"><span style="color:#22c55e;font-weight:700">✅ What Worked:</span> ${d.lastSummary.whatWorked || 'N/A'}</div>
+          <div style="margin-bottom:6px"><span style="color:#ef4444;font-weight:700">❌ What Sucked:</span> ${d.lastSummary.whatSucked || 'N/A'}</div>
+          <div><span style="color:#a855f7;font-weight:700">🔄 What to Change:</span> ${d.lastSummary.whatToChange || 'N/A'}</div>
+        `;
+      }
+    }
+  } catch(e) {}
+}
+
+async function runDailyLearn() {
+  const btn = event.target;
+  btn.textContent = '⚡ Running...'; btn.disabled = true;
+  try {
+    await fetch('/api/learn/daily', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    setTimeout(() => { loadLearnHealth(); btn.textContent = '▶ TRIGGER LEARNING RUN'; btn.disabled = false; }, 15000);
+  } catch(e) { btn.textContent = '▶ TRIGGER LEARNING RUN'; btn.disabled = false; }
+}
+
+// Load when tab opens
+const __btOrigGo = window.go;
+window.go = function(t) { __btOrigGo(t); if (t==='brain-tests') { loadPolicy(); loadTestHistory(); loadLearnHealth(); } };
+const __btOrigMgo = window.mgo;
+window.mgo = function(t) { __btOrigMgo(t); if (t==='brain-tests') { loadPolicy(); loadTestHistory(); loadLearnHealth(); } };
+</script>
+
 </body>
 </html>
