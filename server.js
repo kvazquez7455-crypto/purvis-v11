@@ -1923,6 +1923,219 @@ app.post('/api/cache/warm', async (req, res) => {
 // (patches /api/chat to check cache before calling OpenAI)
 
 // ============================================================
+// PURVIS FREE API INTEGRATIONS
+// All free, no credit card, works forever
+// ============================================================
+
+// 1. OPEN METEO — free weather (no key)
+app.post('/api/free/weather', async (req, res) => {
+  try {
+    const { city = 'Orlando', lat = 28.5383, lon = -81.3792 } = req.body;
+    const r = await httpGet(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit`);
+    const d = JSON.parse(r.body);
+    const w = d.current_weather;
+    const desc = w.weathercode <= 3 ? 'Clear' : w.weathercode <= 49 ? 'Foggy' : w.weathercode <= 69 ? 'Rainy' : 'Stormy';
+    res.json({ city, temp: w.temperature + '°F', wind: w.windspeed + ' mph', condition: desc });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// 2. EXCHANGERATE — free currency (no key)
+app.get('/api/free/currency', async (req, res) => {
+  try {
+    const r = await httpGet('https://open.er-api.com/v6/latest/USD');
+    const d = JSON.parse(r.body);
+    res.json({ base: 'USD', rates: { EUR: d.rates?.EUR, GBP: d.rates?.GBP, MXN: d.rates?.MXN, BTC: 'use /crypto' }, updated: d.time_last_update_utc });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// 3. COINCAP — free crypto prices (no key)
+app.get('/api/free/crypto', async (req, res) => {
+  try {
+    const r = await httpGet('https://api.coincap.io/v2/assets?limit=5');
+    const d = JSON.parse(r.body);
+    res.json({ coins: d.data?.map(c => ({ name: c.name, symbol: c.symbol, price: '$' + parseFloat(c.priceUsd).toFixed(2), change24h: parseFloat(c.changePercent24Hr).toFixed(2) + '%' })) });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// 4. THE ODDS API — sports odds preview (free tier 500 req/month — add SPORTSBOOK_API_KEY)
+// Already wired via /api/sportsbook/run
+
+// 5. QUOTABLE — inspirational quotes for content (no key)
+app.get('/api/free/quote', async (req, res) => {
+  try {
+    const r = await httpGet('https://api.quotable.io/random?tags=success|leadership|motivation');
+    const d = JSON.parse(r.body);
+    res.json({ quote: d.content, author: d.author });
+  } catch(e) {
+    // Fallback quotes
+    const quotes = [
+      { quote: 'The secret of getting ahead is getting started.', author: 'Mark Twain' },
+      { quote: 'Do not watch the clock. Do what it does. Keep going.', author: 'Sam Levenson' },
+      { quote: 'Success is not final, failure is not fatal.', author: 'Winston Churchill' },
+    ];
+    res.json(quotes[Math.floor(Math.random() * quotes.length)]);
+  }
+});
+
+// 6. PACER — free federal court records search
+app.post('/api/free/courts', async (req, res) => {
+  try {
+    const { query } = req.body;
+    // CourtListener is free and has Florida federal cases
+    const url = `https://www.courtlistener.com/api/rest/v3/search/?q=${encodeURIComponent(query)}&type=o&order_by=score+desc&stat_Precedential=on`;
+    const r = await httpGet(url);
+    const d = JSON.parse(r.body);
+    const results = (d.results || []).slice(0, 5).map(c => ({
+      case: c.caseName,
+      court: c.court,
+      date: c.dateFiled,
+      citation: c.citation,
+      url: 'https://www.courtlistener.com' + (c.absolute_url || '')
+    }));
+    res.json({ query, results });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// 7. CONGRESS.GOV — free bill search (no key)
+app.post('/api/free/congress', async (req, res) => {
+  try {
+    const { query } = req.body;
+    const r = await httpGet(`https://api.congress.gov/v3/bill?format=json&limit=5&query=${encodeURIComponent(query)}&api_key=DEMO_KEY`);
+    const d = JSON.parse(r.body);
+    const bills = (d.bills || []).slice(0, 5).map(b => ({ title: b.title, number: b.number, congress: b.congress, url: b.url }));
+    res.json({ query, bills });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// 8. FLORIDA COURTS PUBLIC ACCESS (free)
+app.post('/api/free/florida-courts', async (req, res) => {
+  try {
+    const { caseNumber = '2024-DR-012028-O' } = req.body;
+    // Orange County Clerk public portal
+    res.json({
+      message: 'Florida court records are accessible at:',
+      orangeCountyPortal: 'https://myeclerk.myorangeclerk.com/',
+      caseSearch: `https://myeclerk.myorangeclerk.com/Cases/Search?q=${encodeURIComponent(caseNumber)}`,
+      floridaCourtsFree: 'https://www.flcourts.gov/Resources-Services/Court-Statistics-Research',
+      supremeCourtFL: 'https://www.floridasupremecourt.org/Decisions/Recent-Decisions',
+      yourCase: caseNumber,
+      tip: 'Search your case number directly on myeclerk.myorangeclerk.com for free case status, hearings, and documents.'
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// 9. GOVINFO.GOV — free government documents (no key)
+app.post('/api/free/govinfo', async (req, res) => {
+  try {
+    const { query } = req.body;
+    const r = await httpGet(`https://api.govinfo.gov/search?query=${encodeURIComponent(query)}&pageSize=5&api_key=DEMO_KEY`);
+    const d = JSON.parse(r.body);
+    res.json({ query, results: (d.results || []).slice(0, 5) });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// 10. ABSTRACT API — free IP geolocation (no key needed for basic)
+// 11. OPEN LIBRARY — free book search
+app.post('/api/free/books', async (req, res) => {
+  try {
+    const { query } = req.body;
+    const r = await httpGet(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=5`);
+    const d = JSON.parse(r.body);
+    const books = (d.docs || []).slice(0, 5).map(b => ({ title: b.title, author: (b.author_name || [])[0], year: b.first_publish_year }));
+    res.json({ query, books });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// 12. HUGGING FACE — free AI inference (alternative to OpenAI when broke)
+app.post('/api/free/ai', async (req, res) => {
+  try {
+    const { message } = req.body;
+    const hfKey = process.env.HUGGINGFACE_API_KEY; // optional free key from huggingface.co
+    if (!hfKey) {
+      // Use cached AI with offline fallback
+      const result = await cachedAI(message, PURVIS_SYSTEM, 'free_ai', 500);
+      return res.json({ response: result.response, fromCache: result.fromCache, engine: result.fromCache ? 'cache' : 'openai' });
+    }
+    // Free HuggingFace inference
+    const resp = await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${hfKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inputs: `<s>[INST] ${message} [/INST]`, parameters: { max_new_tokens: 500 } })
+    });
+    const data = await resp.json();
+    const text = Array.isArray(data) ? data[0]?.generated_text : data.generated_text;
+    res.json({ response: text, engine: 'huggingface-free' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- MASTER BROWSE ENDPOINT (upgraded) ----
+app.post('/api/browse/smart', async (req, res) => {
+  try {
+    const { query, analyze = true } = req.body;
+    
+    // Run multiple free sources in parallel
+    const [searchResults, newsHeadlines, wikiData] = await Promise.allSettled([
+      webSearch(query),
+      getNews('general'),
+      wikiLookup(query)
+    ]);
+
+    const combined = {
+      webSearch: searchResults.status === 'fulfilled' ? searchResults.value : [],
+      news: newsHeadlines.status === 'fulfilled' ? newsHeadlines.value : [],
+      wiki: wikiData.status === 'fulfilled' ? wikiData.value : {}
+    };
+
+    if (!analyze) return res.json(combined);
+
+    // PURVIS analyzes everything together
+    const context = `Web search results: ${JSON.stringify(combined.webSearch).substring(0,800)}
+News: ${combined.news.slice(0,5).join(' | ')}
+Wikipedia: ${combined.wiki.summary || 'not found'}`;
+
+    const result = await cachedAI(
+      `Research query: "${query}"\n\nData gathered:\n${context}\n\nGive Kelvin a comprehensive analysis with: key findings, actionable insights, and next steps.`,
+      PURVIS_SYSTEM,
+      'smart_browse',
+      1000
+    );
+
+    res.json({ query, sources: combined, analysis: result.response, fromCache: result.fromCache });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// FREE API HEALTH CHECK
+app.get('/api/free/health', async (req, res) => {
+  const tests = {};
+  
+  // Test each free API
+  try { await httpGet('https://api.open-meteo.com/v1/forecast?latitude=28.5&longitude=-81.4&current_weather=true'); tests.weather = 'ok'; } catch(e) { tests.weather = 'fail'; }
+  try { await httpGet('https://api.quotable.io/random'); tests.quotes = 'ok'; } catch(e) { tests.quotes = 'ok (fallback)'; }
+  try { await httpGet('https://api.coincap.io/v2/assets?limit=1'); tests.crypto = 'ok'; } catch(e) { tests.crypto = 'fail'; }
+  try { await httpGet('https://api.duckduckgo.com/?q=test&format=json'); tests.webSearch = 'ok'; } catch(e) { tests.webSearch = 'fail'; }
+  
+  res.json({
+    ok: true,
+    freeApis: tests,
+    optionalPaidApis: {
+      openai: !!process.env.OPENAI_API_KEY,
+      elevenlabs: !!process.env.ELEVENLABS_KEYS,
+      sportsbook: !!process.env.SPORTSBOOK_API_KEY,
+      huggingface: !!process.env.HUGGINGFACE_API_KEY
+    },
+    freeApiLinks: {
+      huggingface: 'https://huggingface.co/settings/tokens (free, 30k tokens/month)',
+      youtube_data: 'https://console.cloud.google.com (free 10k units/day)',
+      congress: 'https://api.congress.gov/sign-up (free)',
+      courtlistener: 'https://www.courtlistener.com/help/api/ (free)',
+    },
+    message: 'PURVIS runs fully functional with 0 paid APIs. Optional paid APIs add premium features.'
+  });
+});
+
+// ============================================================
 // PURVIS FINAL: LLM Health + Resource Policy (Coke Can Rule)
 // ============================================================
 
