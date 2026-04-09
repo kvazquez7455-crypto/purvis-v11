@@ -1819,9 +1819,19 @@ app.get('/api/resource-policy', (req, res) => {
 // ============================================================
 
 // ---- Read resource policy from Supabase ----
+const POLICY_DEFAULTS = {
+  'max_openai_test_calls_per_day': '3',
+  'max_elevenlabs_test_calls_per_day': '1',
+  'max_sportsbook_test_calls_per_day': '1',
+  'enable_daily_learning': 'true'
+};
 async function getPolicy(key) {
-  const { data } = await supabase.from('purvis_resource_policy').select('value').eq('key', key).single();
-  return data?.value;
+  try {
+    const { data } = await supabase.from('purvis_resource_policy').select('value').eq('key', key).single();
+    return data?.value || POLICY_DEFAULTS[key];
+  } catch(e) {
+    return POLICY_DEFAULTS[key];
+  }
 }
 
 // ---- Check if daily test limit is hit ----
