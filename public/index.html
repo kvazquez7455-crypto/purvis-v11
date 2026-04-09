@@ -2,8 +2,28 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>PURVIS 11 — Unified AI Operator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PURVIS 11</title>
+
+<!-- PWA Manifest — enables Add to Home Screen on ALL browsers -->
+<link rel="manifest" href="/manifest.json">
+
+<!-- iOS Safari PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PURVIS 11">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="apple-touch-startup-image" href="/icons/icon-512.png">
+
+<!-- Android Chrome PWA -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#7c3aed">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
+
+<!-- General -->
+<meta name="description" content="PURVIS 11 — Unified AI Operator System">
+<meta name="application-name" content="PURVIS 11">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -401,6 +421,7 @@ audio{width:100%;margin-top:8px;border-radius:8px}
       <div class="mob-drawer-item" onclick="mgo('email')"><span class="dic">📧</span>Email / Gmail</div>
       <div class="mob-drawer-item" onclick="mgo('canva')"><span class="dic">🖼️</span>Canva / CapCut</div>
       <div style="padding:16px 18px;border-top:1px solid var(--border);margin-top:8px">
+        <button class="btn hidden" id="installBtn" style="width:100%;margin-bottom:8px;background:#16a34a" onclick="installPWA()">📲 Add PURVIS to Home Screen</button>
         <button class="btn" style="width:100%;margin-bottom:8px" onclick="lockApp();closeDrawer()">🔒 Lock PURVIS</button>
         <div style="font-size:11px;color:var(--muted);text-align:center">SunBiz LLC • Mission: $100 → $1M</div>
       </div>
@@ -1059,42 +1080,35 @@ window.addEventListener('load', () => setTimeout(syncMobileMission, 500));
 // Detect mobile and auto-adjust
 function isMobile() { return window.innerWidth <= 768; }
 
-// PWA manifest injection for "Add to Home Screen"
-const manifest = {
-  name: 'PURVIS 11',
-  short_name: 'PURVIS',
-  description: 'Unified AI Operator System',
-  start_url: '/',
-  display: 'standalone',
-  background_color: '#0a0a0f',
-  theme_color: '#7c3aed',
-  icons: [{
-    src: 'https://api.qrserver.com/v1/create-qr-code/?size=192x192&data=PURVIS11',
-    sizes: '192x192',
-    type: 'image/png'
-  }]
-};
-const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
-const url = URL.createObjectURL(blob);
-const link = document.createElement('link');
-link.rel = 'manifest'; link.href = url;
-document.head.appendChild(link);
+// Register Service Worker — enables PWA install prompt on all browsers
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(() => console.log('PURVIS SW registered'))
+      .catch(e => console.log('SW error:', e));
+  });
+}
 
-// Theme color meta for mobile browser chrome
-const meta = document.createElement('meta');
-meta.name = 'theme-color'; meta.content = '#7c3aed';
-document.head.appendChild(meta);
-
-// Apple mobile web app meta tags
-['apple-mobile-web-app-capable','mobile-web-app-capable'].forEach(n => {
-  const m = document.createElement('meta');
-  m.name = n; m.content = 'yes';
-  document.head.appendChild(m);
+// Show install prompt on Android Chrome
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show our custom install button
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.classList.remove('hidden');
 });
-const statusMeta = document.createElement('meta');
-statusMeta.name = 'apple-mobile-web-app-status-bar-style';
-statusMeta.content = 'black-translucent';
-document.head.appendChild(statusMeta);
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.classList.add('hidden');
+  deferredPrompt = null;
+});
+function installPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+  }
+}
 </script>
 
 </body></html>`);
