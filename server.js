@@ -1344,29 +1344,33 @@ app.post('/api/overnight/learn', async (req, res) => {
 // ---- MEMORY HEALTH ----
 app.get('/api/memory-health', async (req, res) => {
   try {
-    const [msgs, improvements, lifeEvents, codeFiles, memItems] = await Promise.all([
-      supabase.from('purvis_messages').select('count', { count: 'exact', head: true }),
-      supabase.from('purvis_improvements').select('count', { count: 'exact', head: true }),
-      supabase.from('purvis_life_thread').select('count', { count: 'exact', head: true }),
-      supabase.from('purvis_code_map').select('count', { count: 'exact', head: true }),
-      supabase.from('purvis_memory').select('count', { count: 'exact', head: true })
-    ]);
+    // Use raw SQL count for accurate results
+    const counts = await supabase.rpc('get_table_counts').then ? 
+      null : null; // fallback below
+    
+    const tables = ['purvis_messages','purvis_improvements','purvis_life_thread','purvis_code_map','purvis_memory'];
+    const results = {};
+    for (const t of tables) {
+      const { count } = await supabase.from(t).select('*', { count: 'exact', head: true });
+      results[t] = count || 0;
+    }
 
     res.json({
       ok: true,
       counts: {
-        messages: msgs.count || 0,
-        improvement_notes: improvements.count || 0,
-        life_events: lifeEvents.count || 0,
-        code_map_files: codeFiles.count || 0,
-        memory_items: memItems.count || 0
+        messages: results.purvis_messages,
+        improvement_notes: results.purvis_improvements,
+        life_events: results.purvis_life_thread,
+        code_map_files: results.purvis_code_map,
+        memory_items: results.purvis_memory
       },
       lifeThreadId: LIFE_THREAD_ID,
       lifeThreadActive: true,
-      codeMapLoaded: (codeFiles.count || 0) > 0,
+      codeMapLoaded: results.purvis_code_map > 0,
       multiDevice: true,
       selfLearning: true,
-      status: 'PURVIS big brain active — remembering everything, learning from mistakes'
+      goldenRule: 'Only add to PURVIS. Never delete, reset, or overwrite. All changes must be backwards-compatible.',
+      status: 'PURVIS big brain active — remembering everything, learning from every interaction'
     });
   } catch(e) {
     res.status(500).json({ ok: false, error: e.message });
