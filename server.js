@@ -253,3 +253,179 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`PURVIS v11 running on port ${PORT}`));
 
 module.exports = app;
+
+// ============================================================
+// PURVIS 11 — SOCIAL MEDIA + YOUTUBE + GMAIL INTEGRATIONS
+// All free APIs / OAuth flows
+// ============================================================
+
+// ---- YOUTUBE DATA API (free — just needs API key) ----
+// Gets trending videos, channel stats, uploads list
+app.post('/api/youtube/trending', async (req, res) => {
+  try {
+    const { category = 'news', regionCode = 'US' } = req.body;
+    const ytKey = process.env.YOUTUBE_API_KEY;
+    if (!ytKey) return res.json({ result: 'Add YOUTUBE_API_KEY to Railway env vars (free at console.cloud.google.com)' });
+    const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=${regionCode}&videoCategoryId=25&maxResults=10&key=${ytKey}`;
+    const r = await fetch(url);
+    const data = await r.json();
+    const videos = (data.items || []).map(v => ({
+      title: v.snippet.title,
+      channel: v.snippet.channelTitle,
+      views: v.statistics.viewCount,
+      url: `https://youtube.com/watch?v=${v.id}`
+    }));
+    res.json({ videos });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// YouTube: AI-generate a video title + description + tags for a script
+app.post('/api/youtube/optimize', async (req, res) => {
+  try {
+    const { script, niche } = req.body;
+    const key = getNextKey('openai');
+    const openai = new OpenAI({ apiKey: key });
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: 'You are a YouTube SEO expert. Optimize content for maximum views and clicks.' },
+        { role: 'user', content: `For this ${niche} script:\n\n${script}\n\nGenerate:\n1. 5 viral title options\n2. SEO-optimized description (500 chars)\n3. 20 relevant tags\n4. Best upload time\n5. Thumbnail concept` }
+      ],
+      max_tokens: 1000
+    });
+    res.json({ result: result.choices[0].message.content });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- GMAIL / EMAIL (free via Gmail SMTP or Nodemailer) ----
+// Drafts email using AI — user sends via their own Gmail
+app.post('/api/email/draft', async (req, res) => {
+  try {
+    const { to, subject, context, tone = 'professional' } = req.body;
+    const key = getNextKey('openai');
+    const openai = new OpenAI({ apiKey: key });
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: 'You are PURVIS email assistant for SunBiz LLC, Orlando FL. Draft professional, clear emails.' },
+        { role: 'user', content: `Draft a ${tone} email to: ${to || '[recipient]'}\nSubject: ${subject || '[subject]'}\nContext: ${context}\n\nInclude subject line and full email body.` }
+      ],
+      max_tokens: 600
+    });
+    res.json({ draft: result.choices[0].message.content });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- SOCIAL MEDIA POST GENERATOR (free) ----
+// Generates platform-specific posts from one piece of content
+app.post('/api/social/repurpose', async (req, res) => {
+  try {
+    const { content, platforms = ['twitter', 'instagram', 'facebook', 'linkedin', 'tiktok'] } = req.body;
+    const key = getNextKey('openai');
+    const openai = new OpenAI({ apiKey: key });
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: 'You are a social media expert who repurposes content for maximum engagement on every platform.' },
+        { role: 'user', content: `Repurpose this content for these platforms: ${platforms.join(', ')}\n\nContent:\n${content}\n\nFor each platform give: optimized post text, hashtags, best posting time, and engagement tip.` }
+      ],
+      max_tokens: 1500
+    });
+    res.json({ result: result.choices[0].message.content });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- CANVA INTEGRATION GUIDE (free) ----
+// Generates Canva design brief + direct Canva template links
+app.post('/api/canva/brief', async (req, res) => {
+  try {
+    const { contentType, topic, style } = req.body;
+    const key = getNextKey('openai');
+    const openai = new OpenAI({ apiKey: key });
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: 'You are a graphic design assistant. Generate Canva design briefs with specific color codes, fonts, layout instructions, and direct Canva template search terms.' },
+        { role: 'user', content: `Create a complete Canva design brief for:\nType: ${contentType || 'YouTube thumbnail'}\nTopic: ${topic}\nStyle: ${style || 'bold dark purple modern'}\n\nInclude: colors (hex), fonts, layout, text placement, direct Canva template URL to search.` }
+      ],
+      max_tokens: 800
+    });
+    // Build Canva deep links
+    const canvaLinks = {
+      youtube_thumbnail: 'https://www.canva.com/create/youtube-thumbnails/',
+      instagram_post: 'https://www.canva.com/create/instagram-posts/',
+      instagram_story: 'https://www.canva.com/create/instagram-stories/',
+      tiktok: 'https://www.canva.com/create/tiktok-videos/',
+      facebook_post: 'https://www.canva.com/create/facebook-posts/',
+      logo: 'https://www.canva.com/create/logos/',
+    };
+    res.json({
+      brief: result.choices[0].message.content,
+      canvaLink: canvaLinks[contentType] || 'https://www.canva.com/templates/',
+      openCanva: 'https://www.canva.com'
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- CAPCUT SCRIPT GENERATOR (free) ----
+app.post('/api/capcut/script', async (req, res) => {
+  try {
+    const { content, duration = 60 } = req.body;
+    const key = getNextKey('openai');
+    const openai = new OpenAI({ apiKey: key });
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: 'You are a video editor who creates CapCut editing scripts with timestamps, text overlays, transitions, and effects.' },
+        { role: 'user', content: `Create a CapCut editing script for this ${duration}-second video:\n\n${content}\n\nInclude: timestamp breakdown, text overlays with exact wording, transition types, background music mood, effects, and captions.` }
+      ],
+      max_tokens: 1000
+    });
+    res.json({ script: result.choices[0].message.content });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- FIRST TASK: PURVIS SELF-BUILD INSTRUCTION ----
+// This endpoint tells PURVIS what to build as its first autonomous task
+app.get('/api/first-task', async (req, res) => {
+  try {
+    const key = getNextKey('openai');
+    const openai = new OpenAI({ apiKey: key });
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: `You are PURVIS 11 — a fully autonomous AI operator built for Kelvin Vazquez of SunBiz LLC, Orlando FL. Your mission: $100 to $1,000,000. You are now executing your FIRST AUTONOMOUS TASK upon activation.` },
+        { role: 'user', content: `Execute PURVIS First Task Protocol:
+
+1. SELF-AUDIT: Review all your engines (Command, Brain, Content, Image, Music, Research, Legal, CRM, Plumbing, Sub-Agents, Memory) and confirm status
+2. CONTENT PLAN: Generate a 7-day content calendar for YouTube Shorts using Scripture Daily and Political Commentary tracks
+3. LEGAL CHECK: Identify the 3 strongest arguments for case 2024-DR-012028-O based on Napue v. Illinois
+4. BUSINESS: Draft a follow-up email template for SunBiz LLC plumbing leads
+5. MISSION: Calculate what daily revenue is needed to reach $1M in 12 months from $100
+6. NEXT ACTIONS: List your top 5 priority actions for Kelvin this week
+
+Output a full structured report. Be the operator, not a chatbot.` }
+      ],
+      max_tokens: 2000
+    });
+    res.json({ 
+      task: 'PURVIS FIRST AUTONOMOUS TASK — COMPLETE',
+      report: result.choices[0].message.content,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

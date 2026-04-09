@@ -948,3 +948,235 @@ window.addEventListener('load',()=>{
 </script>
 </body>
 </html>
+
+<script>
+// PURVIS SOCIAL EXTENSION — injected after main load
+document.addEventListener('DOMContentLoaded', function() {
+
+  // Add new nav items
+  const nav = document.querySelector('nav ul');
+  const newItems = [
+    { t:'youtube', ic:'📺', lb:'YouTube' },
+    { t:'social',  ic:'📲', lb:'Social Media' },
+    { t:'email',   ic:'📧', lb:'Email / Gmail' },
+    { t:'canva',   ic:'🖼️', lb:'Canva / CapCut' },
+  ];
+  newItems.forEach(item => {
+    const li = document.createElement('li');
+    li.setAttribute('data-t', item.t);
+    li.onclick = () => go(item.t);
+    li.innerHTML = `<span class="ic">${item.ic}</span><span class="lb">${item.lb}</span>`;
+    nav.appendChild(li);
+  });
+
+  // Add tab labels
+  const labels = {youtube:'📺 YouTube Engine', social:'📲 Social Media', email:'📧 Email / Gmail', canva:'🖼️ Canva / CapCut'};
+  Object.assign(window.tabLabels || {}, labels);
+  // patch tabLabels global
+  const orig = window.tabLabels;
+  window.tabLabels = Object.assign(orig||{}, labels);
+
+  // Inject tab sections into main
+  const main = document.querySelector('.main');
+  const tabs = `
+  <!-- YOUTUBE -->
+  <div id="t-youtube" class="tab">
+    <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="ch"><h2>📺 YouTube Engine</h2><span class="badge">FREE API</span></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <textarea id="ytscript" rows="4" placeholder="Paste your video script here..." style="flex:1;min-width:200px"></textarea>
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:160px">
+          <select id="ytniche">
+            <option value="Scripture / Bible">Scripture / Bible</option>
+            <option value="Political Commentary">Political Commentary</option>
+            <option value="Plumbing Tips">Plumbing Tips</option>
+            <option value="Motivation">Motivation</option>
+            <option value="Legal Awareness">Legal Awareness</option>
+          </select>
+          <button class="btn" onclick="ytOptimize()">OPTIMIZE FOR YOUTUBE</button>
+          <button class="btn sec" onclick="ytTrending()">GET TRENDING NOW</button>
+        </div>
+      </div>
+      <div id="ytout" class="output" style="flex:1;min-height:200px">Paste a script and click OPTIMIZE to get titles, descriptions, tags, and thumbnail concepts.</div>
+    </div>
+  </div>
+
+  <!-- SOCIAL MEDIA -->
+  <div id="t-social" class="tab">
+    <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="ch"><h2>📲 Social Media Repurposer</h2><span class="badge">ALL PLATFORMS</span></div>
+      <textarea id="socialcontent" rows="4" placeholder="Paste any content — script, article, idea — to repurpose across all platforms..."></textarea>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" onclick="repurposeSocial()">REPURPOSE FOR ALL PLATFORMS</button>
+        <button class="btn sec" onclick="repurposeSpecific('twitter')">Twitter/X</button>
+        <button class="btn sec" onclick="repurposeSpecific('instagram')">Instagram</button>
+        <button class="btn sec" onclick="repurposeSpecific('tiktok')">TikTok</button>
+        <button class="btn sec" onclick="repurposeSpecific('facebook')">Facebook</button>
+      </div>
+      <div id="socialout" class="output" style="flex:1;min-height:200px">Paste content and click REPURPOSE to get platform-specific posts, hashtags, and posting times.</div>
+    </div>
+  </div>
+
+  <!-- EMAIL -->
+  <div id="t-email" class="tab">
+    <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="ch"><h2>📧 Email / Gmail Drafts</h2><span class="badge">AI POWERED — FREE</span></div>
+      <div class="fgrid">
+        <input type="text" id="emailto" placeholder="To (name or email)">
+        <input type="text" id="emailsubject" placeholder="Subject">
+        <select id="emailtone">
+          <option value="professional">Professional</option>
+          <option value="friendly">Friendly</option>
+          <option value="assertive">Assertive</option>
+          <option value="follow-up">Follow-Up</option>
+          <option value="legal">Legal / Formal</option>
+        </select>
+        <button class="btn" onclick="draftEmail()">DRAFT EMAIL</button>
+      </div>
+      <textarea id="emailcontext" rows="3" placeholder="What is this email about? e.g. Follow up with plumbing lead John about bathroom estimate from last week"></textarea>
+      <div id="emailout" class="output" style="flex:1;min-height:200px">Fill in the fields above and click DRAFT EMAIL.</div>
+      <div style="display:flex;gap:10px">
+        <button class="btn sec" onclick="openGmail()">📬 Open Gmail</button>
+        <button class="btn sec" onclick="copyEmail()">📋 Copy Draft</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVA / CAPCUT -->
+  <div id="t-canva" class="tab">
+    <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
+      <div class="ch"><h2>🖼️ Canva + CapCut Engine</h2><span class="badge">FREE TOOLS</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Canva Design Brief</div>
+          <select id="canvatype">
+            <option value="youtube_thumbnail">YouTube Thumbnail</option>
+            <option value="instagram_post">Instagram Post</option>
+            <option value="instagram_story">Instagram Story</option>
+            <option value="tiktok">TikTok Video Cover</option>
+            <option value="facebook_post">Facebook Post</option>
+            <option value="logo">Logo</option>
+          </select>
+          <input type="text" id="canvatopic" placeholder="Topic (e.g. David and Goliath)">
+          <button class="btn" onclick="genCanva()">GENERATE BRIEF</button>
+          <button class="btn sec" onclick="openCanva()">🎨 OPEN CANVA</button>
+          <div id="canvaout" class="output" style="flex:1;min-height:140px;font-size:12px">Design brief will appear here.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">CapCut Script</div>
+          <textarea id="capcutcontent" rows="4" placeholder="Paste your video script for CapCut editing instructions..."></textarea>
+          <select id="capcutdur">
+            <option value="30">30 seconds</option>
+            <option value="60">60 seconds (Shorts)</option>
+            <option value="90">90 seconds</option>
+            <option value="180">3 minutes</option>
+          </select>
+          <button class="btn" onclick="genCapcut()">GENERATE CAPCUT SCRIPT</button>
+          <button class="btn sec" onclick="openCapcut()">✂️ OPEN CAPCUT</button>
+          <div id="capcutout" class="output" style="flex:1;min-height:140px;font-size:12px">CapCut editing script will appear here.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  `;
+  main.insertAdjacentHTML('beforeend', tabs);
+
+  // ---- YOUTUBE FUNCTIONS ----
+  window.ytOptimize = async function() {
+    const script = document.getElementById('ytscript').value.trim();
+    const niche = document.getElementById('ytniche').value;
+    if(!script) return;
+    document.getElementById('ytout').textContent = 'Optimizing for YouTube...';
+    try {
+      const d = await apiFetch('/api/youtube/optimize', {script, niche});
+      document.getElementById('ytout').textContent = d.result;
+    } catch(e) { document.getElementById('ytout').textContent = 'Error: ' + e.message; }
+  };
+  window.ytTrending = async function() {
+    document.getElementById('ytout').textContent = 'Fetching trending YouTube videos...';
+    try {
+      const d = await apiFetch('/api/youtube/trending', {category:'news'});
+      if(d.result) { document.getElementById('ytout').textContent = d.result; return; }
+      const txt = d.videos.map((v,i) => `${i+1}. ${v.title}\n   Channel: ${v.channel} | Views: ${parseInt(v.views).toLocaleString()}\n   ${v.url}`).join('\n\n');
+      document.getElementById('ytout').textContent = txt;
+    } catch(e) { document.getElementById('ytout').textContent = 'Error: ' + e.message; }
+  };
+
+  // ---- SOCIAL FUNCTIONS ----
+  window.repurposeSocial = async function() {
+    const content = document.getElementById('socialcontent').value.trim();
+    if(!content) return;
+    document.getElementById('socialout').textContent = 'Repurposing for all platforms...';
+    try {
+      const d = await apiFetch('/api/social/repurpose', {content, platforms:['Twitter/X','Instagram','TikTok','Facebook','LinkedIn','YouTube Community']});
+      document.getElementById('socialout').textContent = d.result;
+    } catch(e) { document.getElementById('socialout').textContent = 'Error: ' + e.message; }
+  };
+  window.repurposeSpecific = async function(platform) {
+    const content = document.getElementById('socialcontent').value.trim();
+    if(!content) return;
+    document.getElementById('socialout').textContent = `Optimizing for ${platform}...`;
+    try {
+      const d = await apiFetch('/api/social/repurpose', {content, platforms:[platform]});
+      document.getElementById('socialout').textContent = d.result;
+    } catch(e) { document.getElementById('socialout').textContent = 'Error: ' + e.message; }
+  };
+
+  // ---- EMAIL FUNCTIONS ----
+  window.draftEmail = async function() {
+    const to = document.getElementById('emailto').value;
+    const subject = document.getElementById('emailsubject').value;
+    const context = document.getElementById('emailcontext').value.trim();
+    const tone = document.getElementById('emailtone').value;
+    if(!context) return;
+    document.getElementById('emailout').textContent = 'Drafting email...';
+    try {
+      const d = await apiFetch('/api/email/draft', {to, subject, context, tone});
+      document.getElementById('emailout').textContent = d.draft;
+    } catch(e) { document.getElementById('emailout').textContent = 'Error: ' + e.message; }
+  };
+  window.openGmail = function() { window.open('https://mail.google.com/mail/u/0/#compose','_blank'); };
+  window.copyEmail = function() {
+    const txt = document.getElementById('emailout').textContent;
+    navigator.clipboard.writeText(txt).then(()=>alert('Email copied to clipboard!'));
+  };
+
+  // ---- CANVA FUNCTIONS ----
+  window.genCanva = async function() {
+    const contentType = document.getElementById('canvatype').value;
+    const topic = document.getElementById('canvatopic').value.trim();
+    if(!topic) return;
+    document.getElementById('canvaout').textContent = 'Generating design brief...';
+    try {
+      const d = await apiFetch('/api/canva/brief', {contentType, topic, style:'bold dark purple modern'});
+      document.getElementById('canvaout').textContent = d.brief;
+    } catch(e) { document.getElementById('canvaout').textContent = 'Error: ' + e.message; }
+  };
+  window.openCanva = function() { window.open('https://www.canva.com','_blank'); };
+
+  // ---- CAPCUT FUNCTIONS ----
+  window.genCapcut = async function() {
+    const content = document.getElementById('capcutcontent').value.trim();
+    const duration = document.getElementById('capcutdur').value;
+    if(!content) return;
+    document.getElementById('capcutout').textContent = 'Generating CapCut script...';
+    try {
+      const d = await apiFetch('/api/capcut/script', {content, duration});
+      document.getElementById('capcutout').textContent = d.script;
+    } catch(e) { document.getElementById('capcutout').textContent = 'Error: ' + e.message; }
+  };
+  window.openCapcut = function() { window.open('https://www.capcut.com','_blank'); };
+
+  // ---- RUN FIRST TASK ON FIRST LOAD ----
+  if(!localStorage.getItem('purvis_first_task_done')) {
+    setTimeout(async () => {
+      try {
+        const d = await apiFetch('/api/first-task', {});
+        localStorage.setItem('purvis_first_task_done', '1');
+        localStorage.setItem('purvis_first_task_report', d.report);
+        addMsg('cmdlog','ai','🚀 PURVIS FIRST TASK COMPLETE:\n\n' + d.report);
+      } catch(e) {}
+    }, 3000);
+  }
+});
+</script>
