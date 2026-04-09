@@ -17,8 +17,8 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.ht
 
 // ============ API KEY ROTATION SYSTEM ============
 const API_KEYS = {
-  openai: (process.env.OPENAI_KEYS || process.env.OPENAI_API_KEY || '').split(',').filter(Boolean),
-  elevenlabs: (process.env.ELEVENLABS_KEYS || '').split(',').filter(Boolean),
+  openai: (process.env.OPENAI_API_KEY || process.env.OPENAI_KEYS || '').split(',').filter(Boolean),
+  elevenlabs: (process.env.ELEVENLABS_KEYS || process.env.ELEVENLABS_API_KEY || '').split(',').filter(Boolean),
 };
 let keyIndex = { openai: 0, elevenlabs: 0 };
 
@@ -417,6 +417,104 @@ app.get('/api/health', (req, res) => {
     supabase: !!process.env.SUPABASE_URL,
     timestamp: new Date().toISOString()
   });
+});
+
+
+// ============================================================
+// PURVIS EMAIL OTP LOGIN — one-time code, no password
+// ============================================================
+const crypto = require('crypto');
+const otpStore = {}; // { email: { code, expires } }
+
+// Send OTP to email using Gmail SMTP (free)
+async function sendOTP(email, code) {
+  // Use OpenAI to confirm identity context, then send via free email
+  // For now store it and return it (user sees it in response)
+  // To actually send email, add SMTP credentials to Railway env
+  const key = getNextKey('openai');
+  if (!key) return false;
+  
+  // If SMTP configured, send real email
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  
+  if (smtpUser && smtpPass) {
+    try {
+      const nodemailer = require('nodemailer');
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: smtpUser, pass: smtpPass }
+      });
+      await transporter.sendMail({
+        from: smtpUser,
+        to: email,
+        subject: 'PURVIS Login Code',
+        html: `<div style="background:#0a0a0f;color:#f1f1f5;padding:40px;font-family:sans-serif;border-radius:12px">
+          <h1 style="color:#a855f7">🧠 PURVIS 11</h1>
+          <p style="color:#888899">Your one-time login code:</p>
+          <h2 style="color:#22c55e;font-size:48px;letter-spacing:12px">${code}</h2>
+          <p style="color:#888899">Expires in 10 minutes. Do not share.</p>
+          <p style="color:#888899">SunBiz LLC — $100 → $1M Mission</p>
+        </div>`
+      });
+      return true;
+    } catch(e) {
+      console.log('SMTP error:', e.message);
+    }
+  }
+  return false; // fallback - code shown in response
+}
+
+// Request OTP
+app.post('/api/auth/request-otp', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email required' });
+  
+  // Only allow Kelvin's email
+  const allowed = (process.env.ALLOWED_EMAIL || 'kvazquez7455@gmail.com').toLowerCase();
+  if (email.toLowerCase() !== allowed) {
+    return res.status(403).json({ error: 'Access denied. This is a private system.' });
+  }
+  
+  const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
+  otpStore[email] = { code, expires: Date.now() + 10 * 60 * 1000 }; // 10 min
+  
+  const sent = await sendOTP(email, code);
+  
+  if (sent) {
+    res.json({ sent: true, message: 'Code sent to your email. Check kvazquez7455@gmail.com' });
+  } else {
+    // Show code directly if no SMTP configured yet
+    res.json({ sent: false, code, message: 'Add SMTP_USER and SMTP_PASS to Railway to send via email. For now use this code: ' + code });
+  }
+});
+
+// Verify OTP
+app.post('/api/auth/verify-otp', (req, res) => {
+  const { email, code } = req.body;
+  const stored = otpStore[email];
+  
+  if (!stored) return res.status(400).json({ error: 'No code requested. Request a new one.' });
+  if (Date.now() > stored.expires) return res.status(400).json({ error: 'Code expired. Request a new one.' });
+  if (stored.code !== code) return res.status(400).json({ error: 'Wrong code. Try again.' });
+  
+  // Valid - clear OTP and return session token
+  delete otpStore[email];
+  const token = crypto.randomBytes(32).toString('hex');
+  // Store token (simple in-memory for now)
+  otpStore['session_' + token] = { email, expires: Date.now() + 24 * 60 * 60 * 1000 }; // 24hr
+  
+  res.json({ success: true, token, message: 'Welcome back, Kelvin. PURVIS is ready.' });
+});
+
+// Verify session token
+app.post('/api/auth/verify-token', (req, res) => {
+  const { token } = req.body;
+  const session = otpStore['session_' + token];
+  if (!session || Date.now() > session.expires) {
+    return res.status(401).json({ valid: false });
+  }
+  res.json({ valid: true, email: session.email });
 });
 
 const PORT = process.env.PORT || 3000;
