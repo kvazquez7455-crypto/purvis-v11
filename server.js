@@ -950,3 +950,184 @@ setInterval(overnightRunner, 60 * 60 * 1000); // every hour
 setTimeout(overnightRunner, 30000);
 
 console.log('[PURVIS] Autonomous agent engine loaded — overnight runner scheduled every hour');
+
+// ============================================================
+// PURVIS PERSONAL RIGHT-HAND AGENT
+// Your personal AI — gives suggestions, builds workflows,
+// creates sub-agents, helps with betting, content, legal, life
+// ============================================================
+
+// Personal PURVIS — knows everything about Kelvin, proactive
+app.post('/api/purvis/personal', async (req, res) => {
+  try {
+    const { message, context = '', userId = 'kelvin' } = req.body;
+    const key = getNextKey('openai');
+    const openai = new OpenAI({ apiKey: key });
+
+    // Pull memory for context
+    const memory = readKV('memory');
+    const memContext = Object.entries(memory).slice(0, 20)
+      .map(([k,v]) => `${k}: ${v.value}`).join('\n');
+
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: `${PURVIS_SYSTEM}
+
+PERSONAL RIGHT-HAND AGENT MODE:
+You are Kelvin's personal right-hand man. You know everything about him:
+- His business, his legal case, his content goals, his mission
+- You proactively suggest next steps without being asked
+- You build workflows on the spot when he describes what he wants
+- You help him make the best decisions
+- You are direct, honest, and always on his side
+
+Kelvin's memory context:
+${memContext}
+
+When Kelvin gives you a prompt or instruction:
+1. Understand exactly what he wants
+2. Execute or build it immediately
+3. Suggest 2-3 next actions he should take
+4. If it involves content → generate it
+5. If it involves legal → draft it
+6. If it involves business → plan it
+7. Never leave him without a clear next step`
+        },
+        { role: 'user', content: message }
+      ],
+      max_tokens: 2000,
+      temperature: 0.7
+    });
+
+    const reply = result.choices[0].message.content;
+
+    // Save to memory
+    const mem = readKV('memory');
+    mem['last_personal_chat'] = { value: message.substring(0,200), category: 'personal', updated: new Date().toISOString() };
+    writeKV('memory', mem);
+
+    // Save to Supabase memory
+    await saveMemory(userId, 'user', message);
+    await saveMemory(userId, 'assistant', reply);
+
+    res.json({ reply, tokens: result.usage });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Sub-agent spawner — creates specialized agents for specific workflows
+app.post('/api/agents/spawn', async (req, res) => {
+  try {
+    const { agentType, task, inputs = {} } = req.body;
+    const key = getNextKey('openai');
+    const openai = new OpenAI({ apiKey: key });
+
+    const agentPrompts = {
+      content_creator: 'You are PURVIS Content Creator sub-agent. Your ONLY job is creating viral content. Generate hooks, scripts, captions, hashtags. Always output complete ready-to-post content.',
+      legal_drafter: 'You are PURVIS Legal sub-agent. Your ONLY job is drafting Florida legal documents. Output court-ready motions with proper headers, citations, and signature blocks.',
+      business_dev: 'You are PURVIS Business sub-agent. Your ONLY job is growing SunBiz LLC. Generate estimates, follow-up emails, lead strategies, and revenue plans.',
+      researcher: 'You are PURVIS Research sub-agent. Your ONLY job is deep research. Find facts, stats, strategies, and actionable intelligence on any topic.',
+      image_director: 'You are PURVIS Visual sub-agent. Your ONLY job is creating DALL-E prompts and Canva briefs. Generate cinematic, detailed image descriptions optimized for maximum visual impact.',
+      workflow_builder: 'You are PURVIS Workflow sub-agent. Your ONLY job is building automation workflows. Create step-by-step systems that run themselves.',
+      betting_analyst: 'You are PURVIS Betting sub-agent. Your ONLY job is analyzing sports betting opportunities using EV (Expected Value) math, line shopping, and bankroll management for the $100 to $1M mission.'
+    };
+
+    const systemPrompt = agentPrompts[agentType] || `You are a specialized PURVIS sub-agent for: ${agentType}. Execute the given task completely and return a full deliverable.`;
+
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `TASK: ${task}\nINPUTS: ${JSON.stringify(inputs)}\n\nExecute completely. Return full deliverable.` }
+      ],
+      max_tokens: 2000
+    });
+
+    const output = result.choices[0].message.content;
+
+    // Save agent result
+    const agents = readStore('agent_results');
+    agents.unshift({ id: Date.now(), agentType, task, output, date: new Date().toISOString() });
+    writeStore('agent_results', agents.slice(0, 50));
+
+    res.json({ agentType, task, output, id: agents[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get agent results
+app.get('/api/agents/results', (req, res) => {
+  res.json(readStore('agent_results').slice(0, 20));
+});
+
+// Workflow builder — builds complete automated workflows
+app.post('/api/workflow/build', async (req, res) => {
+  try {
+    const { goal, inputs = {} } = req.body;
+    const key = getNextKey('openai');
+    const openai = new OpenAI({ apiKey: key });
+
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: `${PURVIS_SYSTEM}
+You are building an automated workflow. Output a complete, executable workflow with:
+1. GOAL — what this achieves
+2. TRIGGER — what starts it
+3. STEPS — exact ordered actions
+4. TOOLS — what to use at each step
+5. OUTPUT — what it produces
+6. AUTOMATION — how to make it run itself
+7. MONEY LINK — how this connects to revenue` },
+        { role: 'user', content: `Build a complete workflow for: ${goal}\nContext: ${JSON.stringify(inputs)}` }
+      ],
+      max_tokens: 1500
+    });
+
+    res.json({ goal, workflow: result.choices[0].message.content });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Daily briefing — PURVIS tells Kelvin what to do today
+app.get('/api/purvis/briefing', async (req, res) => {
+  try {
+    const key = getNextKey('openai');
+    const openai = new OpenAI({ apiKey: key });
+    const mem = readKV('memory');
+    const balance = mem['purvis_mission']?.value || '0';
+    const lastAudit = mem['last_overnight_audit']?.value || 'none';
+    const leads = readStore('leads').length;
+    const pendingTasks = readStore('task_queue').filter(t => t.status === 'pending').length;
+
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: PURVIS_SYSTEM },
+        { role: 'user', content: `Generate Kelvin's daily briefing for today ${new Date().toLocaleDateString()}.
+Mission balance: $${balance} of $1,000,000 goal
+Active leads: ${leads}
+Pending tasks: ${pendingTasks}
+Last audit notes: ${lastAudit}
+
+Give Kelvin:
+1. TOP 3 PRIORITIES for today (specific actions)
+2. CONTENT to post today (ready to use)
+3. MONEY MOVE — one action that directly makes money today
+4. LEGAL UPDATE — one thing to do on case 2024-DR-012028-O
+5. MOTIVATION — one sentence, real talk
+
+Be direct. Be his right-hand man.` }
+      ],
+      max_tokens: 800
+    });
+
+    res.json({ briefing: result.choices[0].message.content, date: new Date().toLocaleDateString() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

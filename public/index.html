@@ -403,6 +403,10 @@ audio{width:100%;margin-top:8px;border-radius:8px}
       <div class="mob-drawer-item" onclick="mgo('memory')"><span class="dic">💾</span>Memory</div>
       <div class="mob-drawer-item" onclick="mgo('sleepmode')"><span class="dic">🌙</span>Sleep Mode / Queue</div>
       <div class="mob-drawer-item" onclick="mgo('search')"><span class="dic">🔍</span>Web Search</div>
+      <div class="mob-drawer-item" onclick="mgo('personal')"><span class="dic">🤝</span>Personal PURVIS</div>
+      <div class="mob-drawer-item" onclick="mgo('briefing')"><span class="dic">📋</span>Daily Briefing</div>
+      <div class="mob-drawer-item" onclick="mgo('subagents')"><span class="dic">⚡</span>Sub-Agents</div>
+      <div class="mob-drawer-item" onclick="mgo('workflows')"><span class="dic">🔄</span>Workflows</div>
       <div class="mob-drawer-item" onclick="mgo('youtube')"><span class="dic">📺</span>YouTube Engine</div>
       <div class="mob-drawer-item" onclick="mgo('social')"><span class="dic">📲</span>Social Media</div>
       <div class="mob-drawer-item" onclick="mgo('email')"><span class="dic">📧</span>Email / Gmail</div>
@@ -447,6 +451,7 @@ audio{width:100%;margin-top:8px;border-radius:8px}
       <button class="mnav-btn" onclick="mgo('content')" data-mt="content"><span class="mic">📱</span>Content</button>
       <button class="mnav-btn" onclick="mgo('image')" data-mt="image"><span class="mic">🎨</span>Images</button>
       <button class="mnav-btn" onclick="mgo('legal')" data-mt="legal"><span class="mic">⚖️</span>Legal</button>
+      <button class="mnav-btn" onclick="mgo('personal')" data-mt="personal"><span class="mic">🤝</span>My PURVIS</button>
       <button class="mnav-btn" onclick="openDrawer()"><span class="mic">☰</span>More</button>
     </div>
   </div>
@@ -472,6 +477,8 @@ audio{width:100%;margin-top:8px;border-radius:8px}
       <li onclick="go('memory')" data-t="memory"><span class="ic">💾</span><span class="lb">Memory</span></li>
       <li onclick="go('sleepmode')" data-t="sleepmode"><span class="ic">🌙</span><span class="lb">Sleep Mode</span></li>
       <li onclick="go('search')" data-t="search"><span class="ic">🔍</span><span class="lb">Web Search</span></li>
+      <li onclick="go('personal')" data-t="personal"><span class="ic">🤝</span><span class="lb">My PURVIS</span></li>
+      <li onclick="go('briefing')" data-t="briefing"><span class="ic">📋</span><span class="lb">Daily Briefing</span></li>
     </ul></nav>
     <div class="sf"><div class="dot"></div><span>PURVIS ONLINE</span></div>
   </div>
@@ -834,6 +841,86 @@ audio{width:100%;margin-top:8px;border-radius:8px}
           <button class="qbtn" style="flex:none;width:auto" onclick="searchQ('content creator income 2025 strategies')">💰 Creator Income</button>
         </div>
         <div id="searchOut" class="output" style="flex:1;min-height:300px">Enter a search query above. PURVIS will search the web and give you an analyzed, actionable summary.</div>
+      </div>
+    </div>
+
+
+    <!-- PERSONAL PURVIS -->
+    <div id="t-personal" class="tab">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
+        <div class="ch">
+          <h2>🤝 Personal PURVIS — Your Right-Hand Man</h2>
+          <span class="badge">ALWAYS ON YOUR SIDE</span>
+        </div>
+        <div style="background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);border-radius:10px;padding:12px;font-size:12px;color:var(--muted)">
+          Tell PURVIS anything. Give instructions. Ask for help. He knows your business, your case, your mission. He will execute, suggest, and build — not just talk.
+        </div>
+        <div class="clog tall" id="personallog" style="flex:1;min-height:300px;max-height:none">
+          <div class="msg sys"><div class="txt">I am your personal right-hand man. I know your business, your legal case, your content empire, your mission. Tell me what you need — I will execute it, suggest next steps, and never leave you without a plan. What do you want to do today?</div></div>
+        </div>
+        <div class="irow">
+          <textarea id="personalinput" rows="3" placeholder="Tell PURVIS what you want... e.g. Help me build a content calendar for this week, or What should I do today to make money, or Help me with my legal case..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendPersonal()}"></textarea>
+          <button class="btn" onclick="sendPersonal()">SEND</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="qbtn" style="flex:none;width:auto" onclick="personalQuick('What should I do TODAY to make money for my $100 to $1M mission?')">💰 What to do today</button>
+          <button class="qbtn" style="flex:none;width:auto" onclick="personalQuick('What is my strongest next move on case 2024-DR-012028-O?')">⚖️ Legal next move</button>
+          <button class="qbtn" style="flex:none;width:auto" onclick="personalQuick('Build me a full content plan for this week across all my tracks')">📱 Content plan</button>
+          <button class="qbtn" style="flex:none;width:auto" onclick="personalQuick('What is the best way to get my first plumbing lead this week in Orlando?')">🔧 Get leads</button>
+          <button class="qbtn" style="flex:none;width:auto" onclick="personalQuick('Review everything I have built so far and tell me what is missing')">🔍 Audit everything</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DAILY BRIEFING -->
+    <div id="t-briefing" class="tab">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
+        <div class="ch"><h2>📋 Daily Briefing</h2><span class="badge">YOUR DAY FROM PURVIS</span></div>
+        <button class="btn" onclick="getBriefing()" id="briefBtn">GET TODAY'S BRIEFING</button>
+        <div id="briefout" class="output" style="flex:1;min-height:300px;font-size:13px">
+          Click above — PURVIS will tell you exactly what to do today to move closer to your $1M mission.
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB-AGENTS -->
+    <div id="t-subagents" class="tab">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:14px">
+        <div class="ch"><h2>⚡ Sub-Agent Launcher</h2><span class="badge">SPECIALIZED EXECUTORS</span></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <select id="agenttype" style="flex:1;min-width:180px">
+            <option value="content_creator">📱 Content Creator</option>
+            <option value="legal_drafter">⚖️ Legal Drafter</option>
+            <option value="business_dev">💼 Business Developer</option>
+            <option value="researcher">🔬 Deep Researcher</option>
+            <option value="image_director">🎨 Image Director</option>
+            <option value="workflow_builder">🔄 Workflow Builder</option>
+            <option value="betting_analyst">🎲 Betting Analyst</option>
+          </select>
+          <button class="btn" onclick="spawnAgent()">SPAWN AGENT</button>
+        </div>
+        <textarea id="agenttask" rows="3" placeholder="What should this agent do? e.g. Create 5 viral Scripture Daily scripts for YouTube Shorts this week"></textarea>
+        <div id="agentout" class="output" style="flex:1;min-height:200px">Select an agent type, describe the task, and click SPAWN AGENT.</div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Recent Agent Results</div>
+          <div id="agentresults"><div class="empty">No agent results yet</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WORKFLOWS -->
+    <div id="t-workflows" class="tab">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
+        <div class="ch"><h2>🔄 Workflow Builder</h2><span class="badge">BUILD AUTOMATED SYSTEMS</span></div>
+        <input type="text" id="wfgoal" placeholder="What workflow do you want to build? e.g. Auto-post Scripture content daily to YouTube" style="width:100%">
+        <button class="btn" onclick="buildWorkflow()">BUILD WORKFLOW</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="qbtn" style="flex:none;width:auto" onclick="quickWorkflow('Daily content creation and posting workflow for YouTube Shorts')">📱 Daily Content</button>
+          <button class="qbtn" style="flex:none;width:auto" onclick="quickWorkflow('Plumbing lead intake to estimate to invoice automated workflow')">🔧 Lead to Invoice</button>
+          <button class="qbtn" style="flex:none;width:auto" onclick="quickWorkflow('Legal case management and motion filing workflow for 2024-DR-012028-O')">⚖️ Legal Workflow</button>
+          <button class="qbtn" style="flex:none;width:auto" onclick="quickWorkflow('$100 to $1M content monetization workflow using YouTube AdSense and affiliate')">💰 Money Workflow</button>
+        </div>
+        <div id="wfout" class="output" style="flex:1;min-height:300px">Enter your goal above and PURVIS will build a complete automated workflow for you.</div>
       </div>
     </div>
 
@@ -1514,6 +1601,94 @@ const origMgo = window.mgo;
 window.mgo = function(t) {
   origMgo(t);
   if (t === 'sleepmode') loadSleepStatus();
+};
+</script>
+
+
+<script>
+// PERSONAL PURVIS + SUB-AGENTS + WORKFLOWS + BRIEFING
+
+async function sendPersonal() {
+  const input = document.getElementById('personalinput').value.trim();
+  if (!input) return;
+  document.getElementById('personalinput').value = '';
+  addMsg('personallog', 'user', input);
+  const think = addMsg('personallog', 'ai', 'Thinking...', true);
+  try {
+    const d = await apiFetch('/api/purvis/personal', { message: input, userId: 'kelvin' });
+    think.remove();
+    addMsg('personallog', 'ai', d.reply);
+  } catch(e) { think.remove(); addMsg('personallog', 'sys', 'Error: ' + e.message); }
+}
+function personalQuick(msg) {
+  document.getElementById('personalinput').value = msg;
+  sendPersonal();
+}
+
+async function getBriefing() {
+  const btn = document.getElementById('briefBtn');
+  btn.textContent = 'Loading your briefing...';
+  btn.disabled = true;
+  try {
+    const d = await fetch('/api/purvis/briefing').then(r => r.json());
+    document.getElementById('briefout').textContent = d.briefing;
+  } catch(e) { document.getElementById('briefout').textContent = 'Error: ' + e.message; }
+  btn.textContent = 'REFRESH BRIEFING';
+  btn.disabled = false;
+}
+
+async function spawnAgent() {
+  const agentType = document.getElementById('agenttype').value;
+  const task = document.getElementById('agenttask').value.trim();
+  if (!task) return;
+  const out = document.getElementById('agentout');
+  out.textContent = 'Agent executing task...';
+  try {
+    const d = await apiFetch('/api/agents/spawn', { agentType, task });
+    out.textContent = d.output;
+    loadAgentResults();
+  } catch(e) { out.textContent = 'Error: ' + e.message; }
+}
+async function loadAgentResults() {
+  try {
+    const results = await fetch('/api/agents/results').then(r => r.json());
+    const el = document.getElementById('agentresults');
+    if (!results.length) { el.innerHTML = '<div class="empty">No results yet</div>'; return; }
+    el.innerHTML = results.slice(0,3).map(r => `
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:6px;cursor:pointer" onclick="document.getElementById('agentout').textContent=this.dataset.output">
+        <div style="font-size:12px;font-weight:700;color:var(--accent2)">${r.agentType.toUpperCase()}</div>
+        <div style="font-size:11px;color:var(--muted)">${r.task.substring(0,60)}...</div>
+      </div>`).join('');
+  } catch(e) {}
+}
+
+async function buildWorkflow() {
+  const goal = document.getElementById('wfgoal').value.trim();
+  if (!goal) return;
+  document.getElementById('wfout').textContent = 'Building workflow...';
+  try {
+    const d = await apiFetch('/api/workflow/build', { goal });
+    document.getElementById('wfout').textContent = d.workflow;
+  } catch(e) { document.getElementById('wfout').textContent = 'Error: ' + e.message; }
+}
+function quickWorkflow(goal) {
+  document.getElementById('wfgoal').value = goal;
+  buildWorkflow();
+  go('workflows');
+}
+
+// Auto-load briefing when tab opens
+const _origGo = window.go;
+window.go = function(t) {
+  _origGo(t);
+  if (t === 'briefing') getBriefing();
+  if (t === 'subagents') loadAgentResults();
+};
+const _origMgo = window.mgo;
+window.mgo = function(t) {
+  _origMgo(t);
+  if (t === 'briefing') getBriefing();
+  if (t === 'subagents') loadAgentResults();
 };
 </script>
 
