@@ -3,12 +3,17 @@
 
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 const OpenAI = require('openai');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Serve frontend
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 // ============ API KEY ROTATION SYSTEM ============
 const API_KEYS = {
