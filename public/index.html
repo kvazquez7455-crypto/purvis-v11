@@ -156,6 +156,185 @@ input:focus,select:focus{outline:none;border-color:var(--accent)}
 .modal h3{color:var(--accent2);margin-bottom:12px}
 audio{width:100%;margin-top:8px;border-radius:8px}
 @media(max-width:768px){.cgrid{grid-template-columns:1fr}.cside{display:none}.sb{width:56px}}
+
+/* ============================================================
+   MOBILE / TABLET — NATIVE APP FEEL
+   ============================================================ */
+
+/* Bottom nav bar for mobile */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  z-index: 100;
+  padding: 0;
+  height: 64px;
+}
+.mobile-nav-inner {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.mobile-nav-inner::-webkit-scrollbar { display: none; }
+.mnav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0 14px;
+  min-width: 64px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 10px;
+  border-top: 2px solid transparent;
+  transition: .15s;
+  white-space: nowrap;
+}
+.mnav-btn .mic { font-size: 20px; }
+.mnav-btn.on { color: var(--accent2); border-top-color: var(--accent); }
+.mnav-btn:active { background: rgba(124,58,237,.1); }
+
+/* Menu drawer for mobile */
+.mob-drawer {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+}
+.mob-drawer-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+}
+.mob-drawer-panel {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 280px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+.mob-drawer-panel h3 {
+  padding: 20px 18px 12px;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--border);
+}
+.mob-drawer-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(42,42,58,.4);
+  transition: .15s;
+}
+.mob-drawer-item:hover, .mob-drawer-item:active { background: rgba(124,58,237,.1); }
+.mob-drawer-item .dic { font-size: 20px; }
+
+/* Mobile topbar */
+.mob-topbar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  flex-shrink: 0;
+}
+.mob-topbar .mtitle { font-size: 15px; font-weight: 800; color: var(--accent2); }
+.mob-topbar .micons { display: flex; gap: 8px; }
+.mob-topbar .micons button {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* Mobile tab content */
+@media (max-width: 768px) {
+  /* Hide desktop sidebar */
+  .sb { display: none !important; }
+  /* Hide desktop topbar */
+  .tbar { display: none !important; }
+
+  /* Show mobile elements */
+  .mob-topbar { display: flex !important; }
+  .mobile-nav { display: block !important; }
+
+  /* App fills screen */
+  #app { flex-direction: column; height: 100dvh; overflow: hidden; }
+  .main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+  /* Tabs scroll freely */
+  .tab { padding: 12px 12px 80px; }
+  .tab.on { display: flex; flex: 1; overflow-y: auto; }
+
+  /* Command grid goes single column */
+  .cgrid { grid-template-columns: 1fr !important; }
+  .cside { display: none !important; }
+
+  /* Plumbing goes single col */
+  #t-plumbing .card > div[style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Canva grid single col */
+  #t-canva .card > div[style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Cards full width */
+  .card { border-radius: 10px; }
+
+  /* Chat logs */
+  .clog { max-height: 300px; }
+
+  /* Form grids */
+  .fgrid { grid-template-columns: 1fr !important; }
+
+  /* Bigger touch targets */
+  .btn { padding: 12px 18px; font-size: 14px; }
+  input, select, textarea { font-size: 16px !important; } /* Prevents iOS zoom */
+
+  /* PIN screen bigger on mobile */
+  .lbox { width: 92vw; max-width: 360px; padding: 32px 20px; }
+  .ppad button { padding: 18px; font-size: 24px; }
+
+  /* Image gallery 2 cols */
+  .igallery { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Mission in topbar */
+  .mission { font-size: 11px; padding: 3px 8px; }
+}
+
+/* Tablet tweaks */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sb { width: 56px !important; }
+  .sb .lb, .sb .logo, .sf span { display: none !important; }
+  .cgrid { grid-template-columns: 1fr 240px !important; }
+}
+
 </style>
 </head>
 <body>
@@ -179,6 +358,68 @@ audio{width:100%;margin-top:8px;border-radius:8px}
 
 <!-- APP -->
 <div id="app" class="hidden">
+
+  <!-- MOBILE TOPBAR -->
+  <div class="mob-topbar" id="mobTopbar">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:20px">🧠</span>
+      <span class="mtitle">PURVIS <span style="color:var(--green)">11</span></span>
+    </div>
+    <div class="micons">
+      <div class="mission" onclick="openMission()" style="font-size:11px;padding:4px 8px;border-radius:16px;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);color:var(--yellow);cursor:pointer">💰 <strong id="mbalMob">$0</strong></div>
+      <button onclick="toggleVoice()" id="vbtnMob" title="Voice">🎤</button>
+      <button onclick="openDrawer()" title="Menu">☰</button>
+    </div>
+  </div>
+
+  <!-- MOBILE DRAWER -->
+  <div class="mob-drawer hidden" id="mobDrawer">
+    <div class="mob-drawer-bg" onclick="closeDrawer()"></div>
+    <div class="mob-drawer-panel">
+      <div style="padding:20px 18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)">
+        <span style="font-size:24px">🧠</span>
+        <div>
+          <div style="font-size:16px;font-weight:900;color:var(--accent2)">PURVIS 11</div>
+          <div style="font-size:11px;color:var(--muted)">Unified AI Operator</div>
+        </div>
+        <button onclick="closeDrawer()" style="margin-left:auto;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <h3>All Engines</h3>
+      <div class="mob-drawer-item" onclick="mgo('cmd')"><span class="dic">⚡</span>Command Center</div>
+      <div class="mob-drawer-item" onclick="mgo('brain')"><span class="dic">🤖</span>AI Brain</div>
+      <div class="mob-drawer-item" onclick="mgo('content')"><span class="dic">📱</span>Content Farm</div>
+      <div class="mob-drawer-item" onclick="mgo('image')"><span class="dic">🎨</span>Image Generator</div>
+      <div class="mob-drawer-item" onclick="mgo('music')"><span class="dic">🎵</span>Music</div>
+      <div class="mob-drawer-item" onclick="mgo('research')"><span class="dic">🔬</span>Deep Research</div>
+      <div class="mob-drawer-item" onclick="mgo('legal')"><span class="dic">⚖️</span>Legal Engine</div>
+      <div class="mob-drawer-item" onclick="mgo('leads')"><span class="dic">💼</span>Leads / CRM</div>
+      <div class="mob-drawer-item" onclick="mgo('plumbing')"><span class="dic">🔧</span>Plumbing IPC</div>
+      <div class="mob-drawer-item" onclick="mgo('agents')"><span class="dic">🤖</span>Sub-Agents</div>
+      <div class="mob-drawer-item" onclick="mgo('memory')"><span class="dic">💾</span>Memory</div>
+      <div class="mob-drawer-item" onclick="mgo('youtube')"><span class="dic">📺</span>YouTube Engine</div>
+      <div class="mob-drawer-item" onclick="mgo('social')"><span class="dic">📲</span>Social Media</div>
+      <div class="mob-drawer-item" onclick="mgo('email')"><span class="dic">📧</span>Email / Gmail</div>
+      <div class="mob-drawer-item" onclick="mgo('canva')"><span class="dic">🖼️</span>Canva / CapCut</div>
+      <div style="padding:16px 18px;border-top:1px solid var(--border);margin-top:8px">
+        <button class="btn" style="width:100%;margin-bottom:8px" onclick="lockApp();closeDrawer()">🔒 Lock PURVIS</button>
+        <div style="font-size:11px;color:var(--muted);text-align:center">SunBiz LLC • Mission: $100 → $1M</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <div class="mobile-nav" id="mobileNav">
+    <div class="mobile-nav-inner">
+      <button class="mnav-btn on" onclick="mgo('cmd')" data-mt="cmd"><span class="mic">⚡</span>Command</button>
+      <button class="mnav-btn" onclick="mgo('brain')" data-mt="brain"><span class="mic">🤖</span>Brain</button>
+      <button class="mnav-btn" onclick="mgo('content')" data-mt="content"><span class="mic">📱</span>Content</button>
+      <button class="mnav-btn" onclick="mgo('image')" data-mt="image"><span class="mic">🎨</span>Images</button>
+      <button class="mnav-btn" onclick="mgo('legal')" data-mt="legal"><span class="mic">⚖️</span>Legal</button>
+      <button class="mnav-btn" onclick="openDrawer()"><span class="mic">☰</span>More</button>
+    </div>
+  </div>
+
+
   <div class="sb" id="sb">
     <div class="sbh">
       <span style="font-size:22px">🧠</span>
@@ -784,7 +1025,79 @@ function delLegal(id){
 function printLegal(){
   const txt=document.getElementById('lout').textContent;
   const w=window.open('','_blank');
-  w.document.write(`<html><head><title>PURVIS Legal Document</title><style>body{font-family:Times New Roman,serif;font-size:12pt;margin:1in;line-height:1.6;white-space:pre-wrap}</style></head><body>${txt}</body></html>`);
+  w.document.write(`<html><head><title>PURVIS Legal Document</title><style>body{font-family:Times New Roman,serif;font-size:12pt;margin:1in;line-height:1.6;white-space:pre-wrap}</style></head><body>${txt}
+<script>
+// PURVIS MOBILE ENGINE
+function openDrawer() {
+  document.getElementById('mobDrawer').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer() {
+  document.getElementById('mobDrawer').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+function mgo(t) {
+  go(t);
+  closeDrawer();
+  // Update mobile topbar title
+  const labels = {cmd:'⚡ Command',brain:'🤖 AI Brain',content:'📱 Content Farm',image:'🎨 Image Gen',music:'🎵 Music',research:'🔬 Research',legal:'⚖️ Legal',leads:'💼 Leads',plumbing:'🔧 Plumbing',agents:'🤖 Agents',memory:'💾 Memory',youtube:'📺 YouTube',social:'📲 Social',email:'📧 Email',canva:'🖼️ Canva'};
+  // Update bottom nav
+  document.querySelectorAll('.mnav-btn').forEach(b => {
+    b.classList.toggle('on', b.getAttribute('data-mt') === t);
+  });
+  // Sync mission balance on mobile topbar
+  syncMobileMission();
+}
+function syncMobileMission() {
+  const v = localStorage.getItem('purvis_mission') || '0';
+  const el = document.getElementById('mbalMob');
+  if (el) el.textContent = '$' + parseFloat(v).toFixed(2);
+}
+// Sync mission on load
+window.addEventListener('load', () => setTimeout(syncMobileMission, 500));
+
+// Detect mobile and auto-adjust
+function isMobile() { return window.innerWidth <= 768; }
+
+// PWA manifest injection for "Add to Home Screen"
+const manifest = {
+  name: 'PURVIS 11',
+  short_name: 'PURVIS',
+  description: 'Unified AI Operator System',
+  start_url: '/',
+  display: 'standalone',
+  background_color: '#0a0a0f',
+  theme_color: '#7c3aed',
+  icons: [{
+    src: 'https://api.qrserver.com/v1/create-qr-code/?size=192x192&data=PURVIS11',
+    sizes: '192x192',
+    type: 'image/png'
+  }]
+};
+const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+const url = URL.createObjectURL(blob);
+const link = document.createElement('link');
+link.rel = 'manifest'; link.href = url;
+document.head.appendChild(link);
+
+// Theme color meta for mobile browser chrome
+const meta = document.createElement('meta');
+meta.name = 'theme-color'; meta.content = '#7c3aed';
+document.head.appendChild(meta);
+
+// Apple mobile web app meta tags
+['apple-mobile-web-app-capable','mobile-web-app-capable'].forEach(n => {
+  const m = document.createElement('meta');
+  m.name = n; m.content = 'yes';
+  document.head.appendChild(m);
+});
+const statusMeta = document.createElement('meta');
+statusMeta.name = 'apple-mobile-web-app-status-bar-style';
+statusMeta.content = 'black-translucent';
+document.head.appendChild(statusMeta);
+</script>
+
+</body></html>`);
   w.document.close(); w.print();
 }
 
