@@ -1200,6 +1200,7 @@ app.get('/api/life-thread/summary', async (req, res) => {
   try {
     const memCtx = await buildMemoryContext('kelvin', LIFE_THREAD_ID);
     const key = process.env.OPENAI_API_KEY;
+    trackCall('llm');
     const result = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
@@ -1660,6 +1661,7 @@ async function callSportsbook({ endpoint, params = {} }) {
 
 // Sportsbook health check
 app.get('/api/sportsbook/health', async (req, res) => {
+  // Note: this uses one sportsbook call if key is present
   const key = process.env.SPORTSBOOK_API_KEY;
   const hasKey = !!key && key.length > 5;
   
@@ -1735,6 +1737,77 @@ Question: ${question}` }
   } catch(e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// ============================================================
+// PURVIS FINAL: LLM Health + Resource Policy (Coke Can Rule)
+// ============================================================
+
+// Resource policy — how PURVIS treats limited budgets
+const RESOURCE_POLICY = {
+  max_llm_calls_per_day: 200,
+  max_sportsbook_calls_per_day: 10,
+  sportsbook_credit_remaining: process.env.SPORTSBOOK_CREDIT || '$30',
+  coke_can_rule: 'Treat small test actions as coke-can money. Never risk more than asked. Always warn before expensive calls.',
+  llm_strategy: 'Single-pass by default. Cache reusable outputs. Only use GPT-4o when reasoning needed.',
+  description: 'PURVIS treats every API call as Kelvins real money. Always confirm before burning budget on risky actions.'
+};
+
+// Simple daily call tracker (in-memory, resets on restart)
+const dailyCallCount = { llm: 0, sportsbook: 0, date: new Date().toDateString() };
+function trackCall(type) {
+  if (dailyCallCount.date !== new Date().toDateString()) {
+    dailyCallCount.llm = 0; dailyCallCount.sportsbook = 0;
+    dailyCallCount.date = new Date().toDateString();
+  }
+  dailyCallCount[type] = (dailyCallCount[type] || 0) + 1;
+}
+function checkPolicy(type) {
+  const max = type === 'sportsbook' ? RESOURCE_POLICY.max_sportsbook_calls_per_day : RESOURCE_POLICY.max_llm_calls_per_day;
+  if ((dailyCallCount[type] || 0) >= max) {
+    return { allowed: false, message: `Daily limit of ${max} ${type} calls reached. Resets tomorrow.` };
+  }
+  return { allowed: true, callsUsed: dailyCallCount[type] || 0, callsRemaining: max - (dailyCallCount[type] || 0) };
+}
+
+// ---- LLM HEALTH ----
+app.get('/api/llm-health', async (req, res) => {
+  const key = process.env.OPENAI_API_KEY || '';
+  const hasKey = key.startsWith('sk-');
+  
+  if (!hasKey) {
+    return res.json({ hasKey: false, model: 'gpt-4o', ok: false, message: 'OPENAI_API_KEY not set in Railway environment variables' });
+  }
+
+  // Quick test call
+  try {
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: 'Reply with exactly: PURVIS ONLINE' }],
+      max_tokens: 10
+    });
+    trackCall('llm');
+    const reply = result.choices[0].message.content.trim();
+    res.json({
+      hasKey: true,
+      model: 'gpt-4o',
+      ok: reply.includes('PURVIS') || reply.includes('ONLINE'),
+      message: `OpenAI connected. Test reply: "${reply}"`,
+      dailyCallsUsed: dailyCallCount.llm,
+      resourcePolicy: RESOURCE_POLICY.llm_strategy
+    });
+  } catch(e) {
+    res.json({ hasKey: true, model: 'gpt-4o', ok: false, message: 'Key present but call failed: ' + e.message });
+  }
+});
+
+// ---- RESOURCE POLICY ENDPOINT ----
+app.get('/api/resource-policy', (req, res) => {
+  res.json({
+    policy: RESOURCE_POLICY,
+    todayUsage: { ...dailyCallCount },
+    cokeCanRule: RESOURCE_POLICY.coke_can_rule
+  });
 });
 
 // Serve SPA for all non-API routes
