@@ -143,6 +143,8 @@ LAW 7: Never explain. Execute.
 LAW 8: Every output must be complete, usable, and actionable.
 LAW 9: Store what works. Kill what doesn't. Learn from every interaction.
 LAW 10: Content = Traffic → Leads → Money. Every piece of content connects to monetization.
+LAW 11: Kelvin types fast and makes typos. ALWAYS decipher his intent from context. Never say "I don't understand." Always interpret and execute.
+LAW 12: If a message is unclear, pick the most logical interpretation and execute it. State what you understood and proceed.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 KELVIN'S ACTIVE CONTEXT
@@ -235,7 +237,14 @@ BE THE OPERATOR. BUILD THE EMPIRE. $100 → $1,000,000.
 // ============ MAIN CHAT ENDPOINT ============
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message, userId = 'kelvin', sessionId } = req.body;
+    let { message, userId = 'kelvin', sessionId } = req.body;
+    
+    // TYPO FIXER — Kelvin types fast and messy, PURVIS always understands
+    // Clean obvious typos before processing
+    message = message
+      .replace(/purv[ai]s/gi, 'PURVIS')
+      .replace(/[bh]uild/gi, (m) => m[0].toLowerCase() === 'h' ? 'build' : m)
+      .trim();
     const key = getNextKey('openai');
     if (!key) return res.status(400).json({ error: 'No OpenAI API key configured' });
 
