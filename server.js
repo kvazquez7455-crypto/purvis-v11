@@ -2706,6 +2706,378 @@ app.get('/api/learn/health', async (req, res) => {
   });
 });
 
+// ============================================================
+// PURVIS YOUTUBE DATA API v3 — Real search, trending, channels
+// Key: AIzaSyCGWXrWw2IurmpQxlcdXoRdrgdhRGPQxmk (in Railway)
+// Free: 10,000 units/day
+// ============================================================
+
+const YT_KEY = process.env.YOUTUBE_API_KEY || 'AIzaSyCGWXrWw2IurmpQxlcdXoRdrgdhRGPQxmk';
+const YT_BASE = 'https://www.googleapis.com/youtube/v3';
+
+// Real YouTube trending videos
+app.post('/api/youtube/trending', async (req, res) => {
+  try {
+    const { category = '', regionCode = 'US', maxResults = 10 } = req.body;
+    const url = `${YT_BASE}/videos?part=snippet,statistics&chart=mostPopular&regionCode=${regionCode}&maxResults=${maxResults}&key=${YT_KEY}${category ? '&videoCategoryId=' + category : ''}`;
+    const r = await httpGet(url);
+    const d = JSON.parse(r.body);
+    if (d.error) throw new Error(d.error.message);
+    const videos = (d.items || []).map(v => ({
+      title: v.snippet.title,
+      channel: v.snippet.channelTitle,
+      description: v.snippet.description?.substring(0, 150),
+      views: parseInt(v.statistics?.viewCount || 0).toLocaleString(),
+      likes: parseInt(v.statistics?.likeCount || 0).toLocaleString(),
+      publishedAt: v.snippet.publishedAt?.split('T')[0],
+      thumbnail: v.snippet.thumbnails?.medium?.url,
+      url: `https://youtube.com/watch?v=${v.id}`,
+      videoId: v.id
+    }));
+    res.json({ videos, count: videos.length, source: 'YouTube Data API v3' });
+  } catch(e) {
+    // Fallback to RSS if API fails
+    const fallback = await getYouTubeTrending();
+    res.json({ videos: fallback.map(t => ({ title: t })), source: 'RSS fallback', error: e.message });
+  }
+});
+
+// Search YouTube for any topic
+app.post('/api/youtube/search', async (req, res) => {
+  try {
+    const { query, maxResults = 10, type = 'video', order = 'relevance' } = req.body;
+    const url = `${YT_BASE}/search?part=snippet&q=${encodeURIComponent(query)}&maxResults=${maxResults}&type=${type}&order=${order}&key=${YT_KEY}`;
+    const r = await httpGet(url);
+    const d = JSON.parse(r.body);
+    if (d.error) throw new Error(d.error.message);
+    const items = (d.items || []).map(i => ({
+      title: i.snippet.title,
+      channel: i.snippet.channelTitle,
+      description: i.snippet.description?.substring(0, 100),
+      publishedAt: i.snippet.publishedAt?.split('T')[0],
+      thumbnail: i.snippet.thumbnails?.medium?.url,
+      url: `https://youtube.com/watch?v=${i.id.videoId}`,
+      videoId: i.id.videoId
+    }));
+    res.json({ query, items, count: items.length });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// YouTube SEO optimizer — analyze competitors and optimize Kelvin's content
+app.post('/api/youtube/optimize', async (req, res) => {
+  try {
+    const { script, niche, title } = req.body;
+    
+    // Search for top videos in the niche
+    let competitorData = '';
+    if (niche) {
+      try {
+        const url = `${YT_BASE}/search?part=snippet&q=${encodeURIComponent(niche)}&maxResults=5&type=video&order=viewCount&key=${YT_KEY}`;
+        const r = await httpGet(url);
+        const d = JSON.parse(r.body);
+        competitorData = (d.items || []).map(i => i.snippet.title).join(' | ');
+      } catch(e) {}
+    }
+
+    const result = await cachedAI(
+      `Optimize this YouTube ${niche || 'content'} for maximum views.
+Title to optimize: ${title || 'generate best title'}
+Script: ${script || 'generate from niche'}
+Top competitor titles: ${competitorData || 'not available'}
+
+Generate:
+1. 5 viral title options (A/B test these)
+2. SEO description (500 chars, keyword-rich)
+3. 20 relevant hashtags
+4. Best upload time for ${niche || 'this niche'}
+5. Thumbnail concept (text + visual)
+6. First 15 seconds hook (most important)`,
+      PURVIS_SYSTEM,
+      'youtube_seo',
+      1000
+    );
+    res.json({ result: result.response, fromCache: result.fromCache, competitorTitles: competitorData });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// YouTube channel stats
+app.post('/api/youtube/channel', async (req, res) => {
+  try {
+    const { channelId, username } = req.body;
+    const param = channelId ? `id=${channelId}` : `forUsername=${username}`;
+    const url = `${YT_BASE}/channels?part=snippet,statistics&${param}&key=${YT_KEY}`;
+    const r = await httpGet(url);
+    const d = JSON.parse(r.body);
+    if (d.error) throw new Error(d.error.message);
+    const ch = d.items?.[0];
+    if (!ch) return res.status(404).json({ error: 'Channel not found' });
+    res.json({
+      name: ch.snippet.title,
+      description: ch.snippet.description?.substring(0, 200),
+      subscribers: parseInt(ch.statistics?.subscriberCount || 0).toLocaleString(),
+      videos: ch.statistics?.videoCount,
+      views: parseInt(ch.statistics?.viewCount || 0).toLocaleString(),
+      country: ch.snippet.country,
+      url: `https://youtube.com/channel/${ch.id}`
+    });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Content idea generator using real YouTube trends
+app.post('/api/youtube/content-ideas', async (req, res) => {
+  try {
+    const { track } = req.body;
+    const trackQueries = {
+      scripture: 'Bible scripture YouTube Shorts viral 2025',
+      political: 'political commentary viral YouTube 2025',
+      plumbing: 'plumbing tips DIY viral YouTube',
+      motivation: 'motivational speech viral YouTube Shorts',
+      legal: 'know your rights legal awareness YouTube'
+    };
+    const query = trackQueries[track] || track;
+    
+    // Get real trending videos in this niche
+    const url = `${YT_BASE}/search?part=snippet&q=${encodeURIComponent(query)}&maxResults=10&type=video&order=viewCount&key=${YT_KEY}`;
+    const r = await httpGet(url);
+    const d = JSON.parse(r.body);
+    const topTitles = (d.items || []).map(i => i.snippet.title).join('\n');
+    
+    // Generate content ideas based on real trends
+    const result = await cachedAI(
+      `Based on these top-performing YouTube videos in the ${track} niche:\n${topTitles}\n\nGenerate 5 original content ideas for Kelvin's channel that:\n1. Follow proven viral patterns from these titles\n2. Connect to his content tracks (Scripture/Political/Plumbing/Motivation)\n3. Include hook, script outline, and thumbnail concept for each\n4. Are 60 seconds or less (YouTube Shorts)`,
+      PURVIS_SYSTEM,
+      'content_ideas',
+      1200
+    );
+    
+    res.json({ track, topTrendingTitles: topTitles.split('\n'), contentIdeas: result.response, fromCache: result.fromCache });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ============================================================
+// PURVIS US GOVERNMENT APIs — api.data.gov key
+// Congress, NASA, Federal Courts, Public Records — all FREE
+// ============================================================
+const GOV_KEY = process.env.GOVDATA_API_KEY || 'MBFDlnROIwcYgAw4kiUzDSIb5hk8k83tE7ZcmMdR';
+
+// Congress.gov — real bills, laws, votes
+app.post('/api/gov/congress', async (req, res) => {
+  try {
+    const { query, type = 'bill' } = req.body;
+    const url = `https://api.congress.gov/v3/bill?format=json&limit=5&api_key=${GOV_KEY}${query ? '&query=' + encodeURIComponent(query) : ''}`;
+    const r = await httpGet(url);
+    const d = JSON.parse(r.body);
+    const bills = (d.bills || []).map(b => ({
+      title: b.title,
+      number: b.type + b.number,
+      congress: b.congress,
+      status: b.latestAction?.text,
+      date: b.latestAction?.actionDate,
+      url: b.url
+    }));
+    res.json({ query, bills });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// NASA — space news and images (always great content)
+app.get('/api/gov/nasa', async (req, res) => {
+  try {
+    const r = await httpGet('https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&count=3');
+    const d = JSON.parse(r.body);
+    res.json({ images: d.map ? d.map(i => ({ title: i.title, date: i.date, explanation: i.explanation?.substring(0,200), url: i.url, hdurl: i.hdurl })) : [d] });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Federal Register — official government rules and regulations
+app.post('/api/gov/federal-register', async (req, res) => {
+  try {
+    const { query } = req.body;
+    const url = `https://www.federalregister.gov/api/v1/articles.json?conditions[term]=${encodeURIComponent(query)}&per_page=5&order=newest`;
+    const r = await httpGet(url);
+    const d = JSON.parse(r.body);
+    const articles = (d.results || []).map(a => ({
+      title: a.title,
+      agency: a.agencies?.[0]?.name,
+      date: a.publication_date,
+      abstract: a.abstract?.substring(0, 200),
+      url: a.html_url
+    }));
+    res.json({ query, articles });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// CourtListener — free federal court cases (great for legal research)
+app.post('/api/gov/court-cases', async (req, res) => {
+  try {
+    const { query } = req.body;
+    const url = `https://www.courtlistener.com/api/rest/v3/search/?q=${encodeURIComponent(query)}&type=o&order_by=score+desc&stat_Precedential=on&format=json`;
+    const r = await httpGet(url);
+    const d = JSON.parse(r.body);
+    const cases = (d.results || []).slice(0,5).map(c => ({
+      name: c.caseName,
+      court: c.court,
+      date: c.dateFiled,
+      citation: c.citation,
+      snippet: c.snippet?.substring(0,200),
+      url: 'https://www.courtlistener.com' + (c.absolute_url || '')
+    }));
+    res.json({ query, cases, total: d.count });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Florida-specific legal research
+app.post('/api/gov/florida-law', async (req, res) => {
+  try {
+    const { query } = req.body;
+    // Florida Statutes online search
+    const [courtCases, federalRegister] = await Promise.allSettled([
+      (async () => {
+        const url = `https://www.courtlistener.com/api/rest/v3/search/?q=${encodeURIComponent(query + ' Florida')}&type=o&order_by=score+desc&format=json`;
+        const r = await httpGet(url);
+        const d = JSON.parse(r.body);
+        return (d.results || []).slice(0,3).map(c => ({ name: c.caseName, court: c.court, date: c.dateFiled, url: 'https://www.courtlistener.com' + (c.absolute_url || '') }));
+      })(),
+      (async () => {
+        const url = `https://www.federalregister.gov/api/v1/articles.json?conditions[term]=${encodeURIComponent(query + ' Florida')}&per_page=3&order=newest`;
+        const r = await httpGet(url);
+        const d = JSON.parse(r.body);
+        return (d.results || []).slice(0,3).map(a => ({ title: a.title, date: a.publication_date, url: a.html_url }));
+      })()
+    ]);
+
+    const analysis = await cachedAI(
+      `Legal research for Florida: "${query}"\n\nRelated cases found: ${JSON.stringify(courtCases.value || []).substring(0,500)}\n\nGive Kelvin a practical legal summary: what does this mean, what are his rights, what motion should he file?`,
+      PURVIS_SYSTEM + '\nYou are a Florida legal assistant. Always mention case 2024-DR-012028-O and Rule 1.540(b) where relevant.',
+      'florida_law', 800
+    );
+
+    res.json({
+      query,
+      floridaCases: courtCases.value || [],
+      federalRules: federalRegister.value || [],
+      analysis: analysis.response,
+      resources: {
+        floridaStatutes: 'http://www.leg.state.fl.us/statutes/',
+        orangeCountyCourt: 'https://myeclerk.myorangeclerk.com/',
+        floridaSupremeCourt: 'https://www.floridasupremecourt.org/Decisions/Recent-Decisions',
+        yourCase: '2024-DR-012028-O'
+      }
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Government hearings and public videos (C-SPAN, Congress YouTube)
+app.post('/api/gov/hearings', async (req, res) => {
+  try {
+    const { query = 'florida family law' } = req.body;
+    // Search YouTube for government/court hearings (free with YT key)
+    const ytKey = process.env.YOUTUBE_API_KEY;
+    const channelIds = [
+      'UCpNQ4sQAGRMR-bZoTIGFKKg', // C-SPAN
+      'UCsVoOobxAQL6NbWY2t6E6Ig', // Senate Judiciary
+      'UC5Apa5EBhLqmkN-hF6T-eJA', // House Judiciary
+    ];
+    
+    let hearings = [];
+    if (ytKey) {
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query + ' hearing')}&maxResults=5&type=video&order=date&key=${ytKey}`;
+      const r = await httpGet(url);
+      const d = JSON.parse(r.body);
+      hearings = (d.items || []).map(i => ({
+        title: i.snippet.title,
+        channel: i.snippet.channelTitle,
+        date: i.snippet.publishedAt?.split('T')[0],
+        url: `https://youtube.com/watch?v=${i.id.videoId}`,
+        thumbnail: i.snippet.thumbnails?.medium?.url
+      }));
+    }
+
+    res.json({
+      query,
+      hearings,
+      freeResources: {
+        cspan: 'https://www.c-span.org/search/?query=' + encodeURIComponent(query),
+        congress: 'https://www.congress.gov/search?q=' + encodeURIComponent(query),
+        flSenate: 'https://www.flsenate.gov/Session/Committees',
+        flHouse: 'https://www.myfloridahouse.gov/Sections/Committees/committees.aspx'
+      }
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Update existing /api/free/congress to use real key
+// Master government search
+app.post('/api/gov/search', async (req, res) => {
+  try {
+    const { query, sources = ['congress', 'courts', 'federal_register'] } = req.body;
+    const results = {};
+
+    if (sources.includes('congress')) {
+      try {
+        const r = await httpGet(`https://api.congress.gov/v3/bill?format=json&limit=3&query=${encodeURIComponent(query)}&api_key=${GOV_KEY}`);
+        results.congress = JSON.parse(r.body).bills?.slice(0,3) || [];
+      } catch(e) { results.congress = []; }
+    }
+
+    if (sources.includes('courts')) {
+      try {
+        const r = await httpGet(`https://www.courtlistener.com/api/rest/v3/search/?q=${encodeURIComponent(query)}&type=o&format=json&stat_Precedential=on`);
+        results.courts = JSON.parse(r.body).results?.slice(0,3).map(c => ({ name: c.caseName, court: c.court, date: c.dateFiled })) || [];
+      } catch(e) { results.courts = []; }
+    }
+
+    if (sources.includes('federal_register')) {
+      try {
+        const r = await httpGet(`https://www.federalregister.gov/api/v1/articles.json?conditions[term]=${encodeURIComponent(query)}&per_page=3&order=newest`);
+        results.federalRegister = JSON.parse(r.body).results?.slice(0,3).map(a => ({ title: a.title, date: a.publication_date })) || [];
+      } catch(e) { results.federalRegister = []; }
+    }
+
+    // AI analysis of all government data
+    const analysis = await cachedAI(
+      `Government data search: "${query}"\n\nResults: ${JSON.stringify(results).substring(0,1000)}\n\nAnalyze this for Kelvin. What does it mean? What action should he take?`,
+      PURVIS_SYSTEM, 'gov_search', 600
+    );
+
+    res.json({ query, results, analysis: analysis.response, fromCache: analysis.fromCache });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// GOV API HEALTH
+app.get('/api/gov/health', async (req, res) => {
+  const hasGovKey = !!process.env.GOVDATA_API_KEY;
+  const hasYTKey = !!process.env.YOUTUBE_API_KEY;
+  
+  res.json({
+    ok: true,
+    govDataKey: hasGovKey ? 'SET ✅' : 'MISSING',
+    youtubeKey: hasYTKey ? 'SET ✅' : 'MISSING',
+    availableEndpoints: [
+      'POST /api/gov/congress — Search US bills and laws',
+      'POST /api/gov/court-cases — Federal court case search',
+      'POST /api/gov/florida-law — Florida legal research + AI analysis',
+      'POST /api/gov/hearings — Government hearings on YouTube',
+      'POST /api/gov/federal-register — Official government rules',
+      'POST /api/gov/search — Master search across all gov sources',
+      'GET /api/gov/nasa — NASA space images and news',
+      'POST /api/youtube/search — Real YouTube search',
+      'POST /api/youtube/trending — Real trending videos',
+      'POST /api/youtube/optimize — SEO optimizer with competitor data',
+      'POST /api/youtube/content-ideas — Content ideas from real trends',
+    ],
+    freeForever: true,
+    note: 'api.data.gov key gives access to 3000+ government datasets'
+  });
+});
+
 // Serve SPA for all non-API routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
