@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PURVIS 11 — Unified AI Operator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--border:#2a2a3a;
+  --accent:#7c3aed;--accent2:#a855f7;--green:#22c55e;--red:#ef4444;
+  --yellow:#eab308;--blue:#3b82f6;--text:#f1f1f5;--muted:#888899;--r:12px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;height:100vh;overflow:hidden}
+
+/* LOCK */
+#lock{position:fixed;inset:0;background:linear-gradient(135deg,#0a0a0f,#1a0a2e);display:flex;align-items:center;justify-content:center;z-index:9999}
+.lbox{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:40px 32px;width:320px;text-align:center;box-shadow:0 0 80px rgba(124,58,237,.4)}
+.lbox .icon{font-size:52px;margin-bottom:8px}
+.lbox h1{font-size:30px;font-weight:900;letter-spacing:4px;color:var(--accent2)}
+.lbox h1 span{color:var(--green)}
+.lbox p{color:var(--muted);font-size:11px;margin:6px 0 24px;letter-spacing:2px;text-transform:uppercase}
+.pdisp{font-size:36px;letter-spacing:16px;color:var(--accent2);font-family:monospace;margin-bottom:24px;height:48px}
+.ppad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.ppad button{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:22px;font-weight:700;padding:16px;border-radius:10px;cursor:pointer;transition:.15s}
+.ppad button:hover{background:var(--accent);border-color:var(--accent)}
+.ppad button:active{transform:scale(.95)}
+.ppad .zero{grid-column:2}
+.ppad .clr{font-size:12px}
+.perr{color:var(--red);font-size:13px;min-height:20px;margin-top:8px}
+
+/* LAYOUT */
+.hidden{display:none!important}
+#app{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sb{width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .25s;overflow:hidden}
+.sb.col{width:56px}
+.sbh{display:flex;align-items:center;gap:10px;padding:16px 14px;border-bottom:1px solid var(--border)}
+.sbh .logo{font-size:15px;font-weight:900;letter-spacing:2px;color:var(--accent2);white-space:nowrap}
+.sbh .logo span{color:var(--green)}
+.tog{margin-left:auto;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;flex-shrink:0}
+.tog:hover{color:var(--text)}
+nav ul{list-style:none;padding:8px 0;flex:1;overflow-y:auto}
+nav li{display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;border-left:3px solid transparent;transition:.15s;white-space:nowrap}
+nav li:hover{background:var(--bg3)}
+nav li.on{background:rgba(124,58,237,.15);border-left-color:var(--accent);color:var(--accent2)}
+nav li .ic{font-size:16px;flex-shrink:0}
+nav li .lb{font-size:13px;font-weight:500}
+.sb.col .lb,.sb.col .logo,.sb.col .sf span{display:none}
+.sf{padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.tbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);gap:12px;flex-shrink:0}
+.tbar-l{font-size:15px;font-weight:700;color:var(--accent2)}
+.tbar-r{display:flex;align-items:center;gap:10px}
+.mission{font-size:12px;color:var(--yellow);background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);padding:4px 12px;border-radius:20px;cursor:pointer;white-space:nowrap}
+.ibtn{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:16px;transition:.15s}
+.ibtn:hover{border-color:var(--accent)}
+.ibtn.rec{background:rgba(239,68,68,.2);border-color:var(--red);animation:pulse .8s infinite}
+
+/* TABS */
+.tab{display:none;flex:1;overflow-y:auto;padding:20px;flex-direction:column;gap:16px}
+.tab.on{display:flex}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px}
+.ch{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.ch h2{font-size:15px;font-weight:700}
+.badge{font-size:10px;letter-spacing:1px;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.4);color:var(--accent2);padding:3px 8px;border-radius:20px;text-transform:uppercase;margin-left:auto}
+
+/* CMD GRID */
+.cgrid{display:grid;grid-template-columns:1fr 300px;gap:16px;flex:1;min-height:0}
+.cmain{display:flex;flex-direction:column;gap:12px}
+.cside{display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+
+/* CHAT */
+.clog{flex:1;overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:180px;max-height:400px}
+.clog.tall{max-height:none;flex:1}
+.msg{display:flex;flex-direction:column;gap:3px}
+.msg .lbl{font-size:10px;color:var(--muted);padding:0 4px}
+.msg .txt{padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.msg.user .txt{background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3);margin-left:15%}
+.msg.ai .txt,.msg.sys .txt{background:var(--bg3);border:1px solid var(--border);margin-right:15%}
+.blink{animation:pulse .8s infinite;font-style:italic;color:var(--muted)}
+
+/* INPUTS */
+.irow{display:flex;gap:8px;margin-top:8px}
+textarea{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:13px;resize:none;font-family:inherit}
+textarea:focus{outline:none;border-color:var(--accent)}
+input[type=text],input[type=email],input[type=tel],input[type=number],input[type=password],select{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px;font-family:inherit}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+.btn{background:var(--accent);border:none;color:#fff;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.5px;white-space:nowrap;transition:.15s}
+.btn:hover{background:var(--accent2)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.sec{background:var(--bg3);border:1px solid var(--border);color:var(--text)}
+.btn.sec:hover{border-color:var(--accent)}
+.btn.sm{padding:6px 12px;font-size:11px}
+.btn.grn{background:#16a34a}
+.btn.grn:hover{background:var(--green)}
+.btn.red{background:#b91c1c}
+
+/* STAT CARD */
+.sc{padding:14px}
+.sc h3{font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+.srow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.srow:last-of-type{border:none}
+.g{color:var(--green);font-weight:700}
+.y{color:var(--yellow);font-weight:700}
+.r{color:var(--red);font-weight:700}
+.b{color:var(--blue)}
+
+/* QUICK BTNS */
+.qbtn{display:block;width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;cursor:pointer;text-align:left;font-size:12px;margin-bottom:6px;transition:.15s}
+.qbtn:hover{border-color:var(--accent);background:rgba(124,58,237,.1)}
+
+/* TABLES */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{background:var(--bg3);padding:8px 12px;text-align:left;color:var(--muted);border-bottom:1px solid var(--border)}
+.tbl td{padding:8px 12px;border-bottom:1px solid rgba(42,42,58,.5)}
+.tbl tr:hover td{background:var(--bg3)}
+.sbadge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
+.snew{background:rgba(59,130,246,.2);color:var(--blue)}
+.sactive{background:rgba(34,197,94,.2);color:var(--green)}
+
+/* MISC */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.empty{color:var(--muted);font-size:12px;text-align:center;padding:20px}
+.output{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;min-height:140px;white-space:pre-wrap;line-height:1.7;font-size:13px;overflow-y:auto}
+.imgout{background:var(--bg);border:1px solid var(--border);border-radius:8px;min-height:200px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.imgout img{max-width:100%;border-radius:8px}
+.igallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:12px}
+.igallery .gi{border-radius:8px;overflow:hidden;border:1px solid var(--border);position:relative}
+.igallery .gi img{width:100%;display:block}
+.igallery .gi .lbl{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.75);padding:4px 6px;font-size:10px;color:var(--muted)}
+.dfu-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.dfu-row:last-child{border:none}
+.dfu-row input{width:70px;text-align:center}
+.dfu-res{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:12px}
+.dfu-res p{font-size:13px;margin-bottom:6px}
+.dfu-res strong{color:var(--accent2)}
+.memitem{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.memitem .k{font-size:12px;font-weight:700;color:var(--accent2)}
+.memitem .v{font-size:12px;margin-top:2px}
+.memitem .c{font-size:10px;color:var(--muted);margin-top:2px}
+.autoitem{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
+.autoitem .n{font-size:13px;font-weight:600}
+.autoitem .m{font-size:11px;color:var(--muted);margin-top:3px}
+.rtask{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid var(--border);color:var(--muted)}
+.rtask:last-child{border:none}
+.modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:999;display:flex;align-items:center;justify-content:center}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:24px;width:360px}
+.modal h3{color:var(--accent2);margin-bottom:12px}
+audio{width:100%;margin-top:8px;border-radius:8px}
+@media(max-width:768px){.cgrid{grid-template-columns:1fr}.cside{display:none}.sb{width:56px}}
+</style>
+</head>
+<body>
+
+<!-- PIN SCREEN -->
+<div id="lock">
+  <div class="lbox">
+    <div class="icon">🧠</div>
+    <h1>PURVIS <span>11</span></h1>
+    <p>Unified AI Operator System</p>
+    <div class="pdisp" id="pd">_ _ _ _</div>
+    <div class="ppad">
+      <button onclick="pi('1')">1</button><button onclick="pi('2')">2</button><button onclick="pi('3')">3</button>
+      <button onclick="pi('4')">4</button><button onclick="pi('5')">5</button><button onclick="pi('6')">6</button>
+      <button onclick="pi('7')">7</button><button onclick="pi('8')">8</button><button onclick="pi('9')">9</button>
+      <button onclick="pi('0')" class="zero">0</button><button onclick="pc()" class="clr">CLR</button>
+    </div>
+    <div id="perr" class="perr"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <div class="sb" id="sb">
+    <div class="sbh">
+      <span style="font-size:22px">🧠</span>
+      <span class="logo">PURVIS <span>11</span></span>
+      <button class="tog" onclick="toggleSB()">☰</button>
+    </div>
+    <nav><ul>
+      <li class="on" onclick="go('cmd')" data-t="cmd"><span class="ic">⚡</span><span class="lb">Command</span></li>
+      <li onclick="go('brain')" data-t="brain"><span class="ic">🤖</span><span class="lb">AI Brain</span></li>
+      <li onclick="go('content')" data-t="content"><span class="ic">📱</span><span class="lb">Content Farm</span></li>
+      <li onclick="go('image')" data-t="image"><span class="ic">🎨</span><span class="lb">Image Gen</span></li>
+      <li onclick="go('music')" data-t="music"><span class="ic">🎵</span><span class="lb">Music</span></li>
+      <li onclick="go('research')" data-t="research"><span class="ic">🔬</span><span class="lb">Research</span></li>
+      <li onclick="go('legal')" data-t="legal"><span class="ic">⚖️</span><span class="lb">Legal Engine</span></li>
+      <li onclick="go('leads')" data-t="leads"><span class="ic">💼</span><span class="lb">Leads / CRM</span></li>
+      <li onclick="go('plumbing')" data-t="plumbing"><span class="ic">🔧</span><span class="lb">Plumbing IPC</span></li>
+      <li onclick="go('agents')" data-t="agents"><span class="ic">🤖</span><span class="lb">Sub-Agents</span></li>
+      <li onclick="go('memory')" data-t="memory"><span class="ic">💾</span><span class="lb">Memory</span></li>
+    </ul></nav>
+    <div class="sf"><div class="dot"></div><span>PURVIS ONLINE</span></div>
+  </div>
+
+  <div class="main">
+    <div class="tbar">
+      <div class="tbar-l" id="tlabel">⚡ Command Center</div>
+      <div class="tbar-r">
+        <div class="mission" onclick="openMission()" title="Click to update balance">💰 <strong id="mbal">$0</strong> → $1M</div>
+        <button class="ibtn" onclick="toggleVoice()" id="vbtn" title="Voice Input">🎤</button>
+        <button class="ibtn" onclick="lockApp()" title="Lock">🔒</button>
+      </div>
+    </div>
+
+    <!-- ===== COMMAND ===== -->
+    <div id="t-cmd" class="tab on">
+      <div class="cgrid" style="flex:1;min-height:0">
+        <div class="cmain">
+          <div class="card" style="flex:1;display:flex;flex-direction:column">
+            <div class="ch"><h2>⚡ Command Center</h2><span class="badge">OPERATOR MODE</span></div>
+            <div class="clog" id="cmdlog">
+              <div class="msg sys"><div class="txt">PURVIS 11 ONLINE — GPT-4o + DALL-E 3 + ElevenLabs + Supabase Memory. All engines hot. Enter any command.</div></div>
+            </div>
+            <div class="irow">
+              <textarea id="cmdinput" rows="2" placeholder="Command, task, or question..." onkeydown="ck(event)"></textarea>
+              <button class="btn" onclick="runCmd()" id="cbtn">EXECUTE</button>
+            </div>
+          </div>
+        </div>
+        <div class="cside">
+          <div class="card sc">
+            <h3>System Status</h3>
+            <div class="srow"><span>Brain (GPT-4o)</span><span id="ais" class="y">CHECKING...</span></div>
+            <div class="srow"><span>Image (DALL-E 3)</span><span class="g">READY</span></div>
+            <div class="srow"><span>Voice (ElevenLabs)</span><span class="g">READY</span></div>
+            <div class="srow"><span>Memory (Supabase)</span><span class="g">CONNECTED</span></div>
+            <div class="srow"><span>Research</span><span class="g">READY</span></div>
+          </div>
+          <div class="card sc">
+            <h3>Quick Actions</h3>
+            <button class="qbtn" onclick="qk('Generate a viral Scripture Daily YouTube Shorts script about David and Goliath')">📖 Scripture Daily</button>
+            <button class="qbtn" onclick="qk('Draft a motion to dismiss for Florida case 2024-DR-012028-O based on Napue violation')">⚖️ Legal Motion</button>
+            <button class="qbtn" onclick="qk('Generate plumbing estimate for full bathroom rough-in in Orlando Florida')">🔧 Plumbing Estimate</button>
+            <button class="qbtn" onclick="qk('Create viral political commentary content on government accountability')">📣 Political Content</button>
+            <button class="qbtn" onclick="go('image');document.getElementById('iprompt').value='David and Goliath epic cinematic battle scene, dramatic golden lighting, 4K'">🎨 Bible Image</button>
+            <button class="qbtn" onclick="qk('Deep research: best free ways to monetize YouTube Shorts in 2025')">🔬 Research</button>
+          </div>
+          <div class="card sc">
+            <h3>Recent Tasks</h3>
+            <div id="rtasks"><div class="empty">No tasks yet</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== AI BRAIN ===== -->
+    <div id="t-brain" class="tab">
+      <div class="card" style="flex:1;display:flex;flex-direction:column">
+        <div class="ch"><h2>🤖 AI Brain</h2><span class="badge">GPT-4o POWERED</span></div>
+        <div class="clog tall" id="brainlog">
+          <div class="msg sys"><div class="txt">AI Brain online. Powered by GPT-4o with Supabase memory. Every conversation is remembered. Ask anything.</div></div>
+        </div>
+        <div class="irow">
+          <textarea id="braininput" rows="2" placeholder="Ask anything — research, writing, strategy, code, analysis..." onkeydown="bk(event)"></textarea>
+          <button class="btn" onclick="sendBrain()">SEND</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CONTENT FARM ===== -->
+    <div id="t-content" class="tab">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
+        <div class="ch"><h2>📱 Content Farm</h2><span class="badge">AUTO ENGINE</span></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <select id="ctrack">
+            <option value="scripture">📖 Scripture Daily (NT)</option>
+            <option value="political">📣 Political Commentary</option>
+            <option value="plumbing">🔧 Plumbing Tips</option>
+            <option value="motivation">💪 Motivation / Mindset</option>
+            <option value="legal_awareness">⚖️ Legal Awareness</option>
+            <option value="custom">✏️ Custom Topic</option>
+          </select>
+          <input type="text" id="ctopic" placeholder="Topic override (optional)" style="flex:1;min-width:160px">
+          <button class="btn" onclick="genContent()">GENERATE</button>
+          <button class="btn sec" onclick="batchContent()">BATCH ×5</button>
+          <button class="btn sec" onclick="saveContent()">SAVE</button>
+          <button class="btn sec" onclick="speakContent()">🔊 SPEAK</button>
+        </div>
+        <div id="cout" class="output" style="flex:1;min-height:200px">Select a track and click GENERATE.</div>
+        <audio id="contentAudio" controls class="hidden"></audio>
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Saved Content (<span id="ccount">0</span>)</div>
+          <div id="csaved"><div class="empty">No saved content yet</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== IMAGE GEN ===== -->
+    <div id="t-image" class="tab">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
+        <div class="ch"><h2>🎨 Image Generator</h2><span class="badge">DALL-E 3</span></div>
+        <textarea id="iprompt" rows="3" placeholder="Describe your image... e.g. David and Goliath epic cinematic battle, dramatic sky, golden light, 4K"></textarea>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <select id="istyle">
+            <option value="cinematic epic, dramatic lighting">🎬 Cinematic</option>
+            <option value="photorealistic, ultra detailed">📷 Photorealistic</option>
+            <option value="digital art, vibrant colors">🎨 Digital Art</option>
+            <option value="oil painting, classical style">🖼️ Oil Painting</option>
+            <option value="anime style, vibrant">🌸 Anime</option>
+            <option value="watercolor, soft brushstrokes">💧 Watercolor</option>
+          </select>
+          <select id="isize">
+            <option value="1024x1024">Square 1:1</option>
+            <option value="1792x1024">Landscape 16:9</option>
+            <option value="1024x1792">Portrait 9:16 (Shorts)</option>
+          </select>
+          <button class="btn" onclick="genImage()">GENERATE WITH DALL-E 3</button>
+        </div>
+        <div id="iout" class="imgout"><span style="color:var(--muted)">Enter a prompt and click GENERATE</span></div>
+        <div class="igallery" id="igal"></div>
+      </div>
+    </div>
+
+    <!-- ===== MUSIC ===== -->
+    <div id="t-music" class="tab">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
+        <div class="ch"><h2>🎵 Music Generator</h2><span class="badge">SUNO / UDIO PROMPTS</span></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <input type="text" id="mprompt" placeholder="Describe your music... e.g. Epic gospel choir battle anthem" style="flex:2;min-width:200px">
+          <select id="mgenre">
+            <option value="Gospel">Gospel</option>
+            <option value="Hip Hop">Hip Hop</option>
+            <option value="R&B">R&B</option>
+            <option value="Pop">Pop</option>
+            <option value="Trap">Trap</option>
+            <option value="Cinematic">Cinematic</option>
+            <option value="Electronic">Electronic</option>
+            <option value="Country">Country</option>
+          </select>
+          <select id="mmood">
+            <option value="Powerful">Powerful</option>
+            <option value="Uplifting">Uplifting</option>
+            <option value="Dark">Dark</option>
+            <option value="Emotional">Emotional</option>
+            <option value="Hype">Hype</option>
+            <option value="Chill">Chill</option>
+          </select>
+          <button class="btn" onclick="genMusic()">GENERATE</button>
+        </div>
+        <div id="mout" class="output" style="flex:1;min-height:200px">Enter your music description and click GENERATE to get Suno AI and Udio prompts + production notes.</div>
+      </div>
+    </div>
+
+    <!-- ===== RESEARCH ===== -->
+    <div id="t-research" class="tab">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
+        <div class="ch"><h2>🔬 Deep Research Engine</h2><span class="badge">GPT-4o</span></div>
+        <div style="display:flex;gap:10px">
+          <input type="text" id="rtopic" placeholder="Research topic... e.g. Best free tools to monetize YouTube Shorts 2025" style="flex:1">
+          <button class="btn" onclick="doResearch()">RESEARCH</button>
+        </div>
+        <div id="rout" class="output" style="flex:1;min-height:300px">Enter a topic and click RESEARCH for a deep, comprehensive analysis.</div>
+      </div>
+    </div>
+
+    <!-- ===== LEGAL ===== -->
+    <div id="t-legal" class="tab">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
+        <div class="ch"><h2>⚖️ Legal Engine</h2><span class="badge">FLORIDA LAW</span></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <select id="ltype" style="flex:1;min-width:200px">
+            <option value="dismiss">Motion to Dismiss</option>
+            <option value="suppress">Motion to Suppress</option>
+            <option value="new_trial">Motion for New Trial</option>
+            <option value="admit_evidence">Motion to Admit Evidence</option>
+            <option value="injunction">Injunction Challenge</option>
+            <option value="analysis">Case Analysis</option>
+            <option value="rights">Rights Education</option>
+            <option value="1540b">Rule 1.540(b) Relief</option>
+            <option value="napue">Napue Violation Brief</option>
+          </select>
+          <input type="text" id="lcnum" value="2024-DR-012028-O" placeholder="Case #" style="flex:1;min-width:180px">
+          <button class="btn" onclick="genLegal()">GENERATE</button>
+          <button class="btn sec" onclick="saveLegal()">SAVE</button>
+          <button class="btn sec" onclick="printLegal()">PRINT/PDF</button>
+        </div>
+        <textarea id="lfacts" rows="4" placeholder="Enter your case facts, evidence, or describe your situation in plain language..."></textarea>
+        <div id="lout" class="output" style="flex:1;min-height:220px;max-height:400px;overflow-y:auto">Select motion type, enter facts, and click GENERATE.</div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Saved Documents (<span id="lcount">0</span>)</div>
+          <div id="lsaved"><div class="empty">No saved documents yet</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== LEADS ===== -->
+    <div id="t-leads" class="tab">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:14px">
+        <div class="ch"><h2>💼 Leads / CRM</h2><span class="badge">BUSINESS ENGINE</span></div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Add New Lead</div>
+          <div class="fgrid">
+            <input type="text" id="lname" placeholder="Full Name">
+            <input type="email" id="lemail" placeholder="Email">
+            <input type="tel" id="lphone" placeholder="Phone">
+            <select id="lsrc"><option value="website">Website</option><option value="referral">Referral</option><option value="social">Social Media</option><option value="cold">Cold Outreach</option><option value="other">Other</option></select>
+            <input type="text" id="lnotes" placeholder="Service / Notes">
+            <button class="btn grn" onclick="addLead()">ADD LEAD</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;flex:1">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">All Leads (<span id="leadcount">0</span>)</div>
+          <table class="tbl">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Source</th><th>Status</th><th>Notes</th><th>Actions</th></tr></thead>
+            <tbody id="leadtbl"><tr><td colspan="7" class="empty">No leads yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PLUMBING ===== -->
+    <div id="t-plumbing" class="tab">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:14px">
+        <div class="ch"><h2>🔧 Plumbing IPC Calculator</h2><span class="badge">IPC 2021 / FLORIDA</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1">
+          <div>
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">DFU Calculator</div>
+            <div class="dfu-row"><span>🚽 Toilets (4 DFU)</span><input type="number" id="dfut" value="0" min="0" oninput="calcDFU()"></div>
+            <div class="dfu-row"><span>🚿 Lavatories (1 DFU)</span><input type="number" id="dful" value="0" min="0" oninput="calcDFU()"></div>
+            <div class="dfu-row"><span>🛁 Tubs/Showers (2 DFU)</span><input type="number" id="dfub" value="0" min="0" oninput="calcDFU()"></div>
+            <div class="dfu-row"><span>🍽️ Kitchen Sinks (2 DFU)</span><input type="number" id="dfuk" value="0" min="0" oninput="calcDFU()"></div>
+            <div class="dfu-row"><span>🕳️ Floor Drains (2 DFU)</span><input type="number" id="dfuf" value="0" min="0" oninput="calcDFU()"></div>
+            <div class="dfu-row"><span>🫧 Dishwashers (2 DFU)</span><input type="number" id="dfud" value="0" min="0" oninput="calcDFU()"></div>
+            <div class="dfu-row"><span>👕 Washers (3 DFU)</span><input type="number" id="dfuw" value="0" min="0" oninput="calcDFU()"></div>
+            <div class="dfu-res">
+              <p>Total DFUs: <strong id="tdfu">0</strong></p>
+              <p>Building Drain: <strong id="dpipe">—</strong></p>
+              <p>Branch Size: <strong id="bpipe">—</strong></p>
+              <p style="font-size:11px;color:var(--muted);margin-top:6px" id="dfunote">Add fixtures above.</p>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Plumbing AI Assistant</div>
+            <div class="clog" id="plog" style="flex:1">
+              <div class="msg sys"><div class="txt">Plumbing AI ready. Ask about pipe sizing, Florida code, DFU tables, or request an estimate.</div></div>
+            </div>
+            <div class="irow">
+              <textarea id="pinput" rows="2" placeholder="Ask a plumbing question or request an estimate..." onkeydown="pk(event)"></textarea>
+              <button class="btn" onclick="askPlumbing()">ASK</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SUB-AGENTS ===== -->
+    <div id="t-agents" class="tab">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:14px">
+        <div class="ch"><h2>🤖 Sub-Agent Creator</h2><span class="badge">SPAWN ENGINE</span></div>
+        <div class="fgrid">
+          <input type="text" id="aname" placeholder="Agent Name (e.g. Justice Navigator)">
+          <input type="text" id="apurpose" placeholder="Purpose (e.g. Florida family law assistant)">
+          <input type="text" id="acaps" placeholder="Capabilities needed">
+          <button class="btn" onclick="createAgent()">CREATE AGENT</button>
+        </div>
+        <div id="agentout" class="output" style="flex:1;min-height:200px">Enter agent details and click CREATE AGENT to spawn a specialized sub-agent.</div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Saved Agents</div>
+          <div id="agentlist"><div class="empty">No agents created yet</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MEMORY ===== -->
+    <div id="t-memory" class="tab">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:14px">
+        <div class="ch"><h2>💾 Brain Memory</h2><span class="badge">SUPABASE + LOCAL</span></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <input type="text" id="mkey" placeholder="Key" style="flex:1;min-width:120px">
+          <input type="text" id="mval" placeholder="Value" style="flex:2;min-width:180px">
+          <select id="mcat"><option value="general">General</option><option value="business">Business</option><option value="legal">Legal</option><option value="content">Content</option><option value="personal">Personal</option></select>
+          <button class="btn" onclick="saveMem()">SAVE</button>
+          <button class="btn sec" onclick="loadMem()">REFRESH</button>
+        </div>
+        <div id="memlist" style="display:flex;flex-direction:column;gap:8px;flex:1;overflow-y:auto"></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MISSION MODAL -->
+<div id="mmodal" class="modal-wrap hidden">
+  <div class="modal">
+    <h3>💰 Mission: $100 → $1M</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Update your current balance</p>
+    <input type="number" id="mbalinput" placeholder="e.g. 173.29" style="width:100%;margin-bottom:12px">
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn sec" onclick="closeMission()">Cancel</button>
+      <button class="btn" onclick="updateMission()">UPDATE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// PURVIS 11 — FULL CLIENT ENGINE
+// ============================================================
+
+const API = window.location.origin; // points to our Node backend
+const PIN = '7271';
+let pval = '';
+let sbCol = false;
+let recognizing = false;
+let recog = null;
+const brainHistory = [];
+
+// ---- PIN ----
+function pi(d){ if(pval.length>=4) return; pval+=d; upd(); if(pval.length===4) setTimeout(chk,200); }
+function pc(){ pval=''; upd(); document.getElementById('perr').textContent=''; }
+function upd(){ document.getElementById('pd').textContent=['●','●','●','●'].map((_,i)=>i<pval.length?'●':'_').join(' '); }
+function chk(){
+  if(pval===PIN){
+    document.getElementById('lock').style.display='none';
+    document.getElementById('app').classList.remove('hidden');
+    init();
+  } else {
+    document.getElementById('perr').textContent='Wrong PIN. Try again.';
+    pval=''; upd();
+  }
+}
+function lockApp(){
+  pval=''; upd();
+  document.getElementById('perr').textContent='';
+  document.getElementById('lock').style.display='flex';
+  document.getElementById('app').classList.add('hidden');
+}
+
+// ---- NAV ----
+const tabLabels={cmd:'⚡ Command Center',brain:'🤖 AI Brain',content:'📱 Content Farm',image:'🎨 Image Generator',music:'🎵 Music Generator',research:'🔬 Deep Research',legal:'⚖️ Legal Engine',leads:'💼 Leads / CRM',plumbing:'🔧 Plumbing IPC',agents:'🤖 Sub-Agents',memory:'💾 Brain Memory'};
+function go(t){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('nav li').forEach(x=>x.classList.remove('on'));
+  document.getElementById('t-'+t).classList.add('on');
+  document.querySelector(`[data-t="${t}"]`).classList.add('on');
+  document.getElementById('tlabel').textContent=tabLabels[t]||t;
+}
+function toggleSB(){ sbCol=!sbCol; document.getElementById('sb').classList.toggle('col',sbCol); }
+
+// ---- INIT ----
+async function init(){
+  checkHealth();
+  loadMem();
+  loadLeads();
+  loadSavedContent();
+  loadSavedLegal();
+  loadAgents();
+  loadRecentTasks();
+  loadMission();
+}
+
+async function checkHealth(){
+  try{
+    const r=await fetch(`${API}/api/health`);
+    const d=await r.json();
+    if(d.status){
+      document.getElementById('ais').textContent='ACTIVE';
+      document.getElementById('ais').className='g';
+      addMsg('cmdlog','sys',`${d.status} — Model: ${d.version||'gpt-4o'} — Memory: Supabase`);
+    }
+  }catch(e){
+    document.getElementById('ais').textContent='OFFLINE';
+    document.getElementById('ais').className='r';
+    addMsg('cmdlog','sys','Backend offline. Start server with: npm start');
+  }
+}
+
+// ---- SHARED ----
+function addMsg(logId, role, text, isThink=false){
+  const log=document.getElementById(logId);
+  const d=document.createElement('div');
+  d.className=`msg ${role}`;
+  const lbl=document.createElement('div');
+  lbl.className='lbl';
+  lbl.textContent=role==='user'?'YOU':role==='sys'?'SYSTEM':'PURVIS';
+  const txt=document.createElement('div');
+  txt.className='txt'+(isThink?' blink':'');
+  txt.textContent=text;
+  d.appendChild(lbl); d.appendChild(txt);
+  log.appendChild(d);
+  log.scrollTop=log.scrollHeight;
+  return d;
+}
+async function apiFetch(path, body){
+  const r=await fetch(`${API}${path}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok){ const e=await r.json(); throw new Error(e.error||'Server error'); }
+  return r.json();
+}
+
+// ---- COMMAND ENGINE ----
+function ck(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();runCmd();} }
+function qk(cmd){ document.getElementById('cmdinput').value=cmd; runCmd(); }
+async function runCmd(){
+  const input=document.getElementById('cmdinput').value.trim();
+  if(!input) return;
+  document.getElementById('cmdinput').value='';
+  addMsg('cmdlog','user',input);
+  saveTask(input);
+  const think=addMsg('cmdlog','ai','Thinking...',true);
+  try{
+    const d=await apiFetch('/api/chat',{message:input,userId:'kelvin'});
+    think.remove();
+    addMsg('cmdlog','ai',d.reply);
+  }catch(e){
+    think.remove();
+    addMsg('cmdlog','sys','Error: '+e.message);
+  }
+}
+
+// ---- AI BRAIN ----
+function bk(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendBrain();} }
+async function sendBrain(){
+  const input=document.getElementById('braininput').value.trim();
+  if(!input) return;
+  document.getElementById('braininput').value='';
+  addMsg('brainlog','user',input);
+  brainHistory.push({role:'user',content:input});
+  const think=addMsg('brainlog','ai','Thinking...',true);
+  try{
+    const d=await apiFetch('/api/chat',{message:input,userId:'kelvin'});
+    think.remove();
+    addMsg('brainlog','ai',d.reply);
+    brainHistory.push({role:'assistant',content:d.reply});
+  }catch(e){
+    think.remove();
+    addMsg('brainlog','sys','Error: '+e.message);
+  }
+}
+
+// ---- CONTENT FARM ----
+async function genContent(){
+  const track=document.getElementById('ctrack').value;
+  const topic=document.getElementById('ctopic').value.trim();
+  const out=document.getElementById('cout');
+  out.textContent='Generating content...';
+  try{
+    const d=await apiFetch('/api/content-farm',{niche:track,platform:'YouTube Shorts / TikTok',count:1,style:topic||track});
+    out.textContent=d.content;
+  }catch(e){ out.textContent='Error: '+e.message; }
+}
+async function batchContent(){
+  const track=document.getElementById('ctrack').value;
+  const out=document.getElementById('cout');
+  out.textContent='Generating batch of 5...';
+  try{
+    const d=await apiFetch('/api/content-farm',{niche:track,platform:'YouTube Shorts / TikTok / Instagram',count:5,style:'viral engaging'});
+    out.textContent=d.content;
+  }catch(e){ out.textContent='Error: '+e.message; }
+}
+function saveContent(){
+  const txt=document.getElementById('cout').textContent;
+  if(!txt||txt==='Select a track and click GENERATE.') return;
+  const arr=JSON.parse(localStorage.getItem('purvis_content')||'[]');
+  arr.unshift({id:Date.now(),track:document.getElementById('ctrack').value,text:txt,date:new Date().toLocaleDateString()});
+  localStorage.setItem('purvis_content',JSON.stringify(arr));
+  loadSavedContent();
+}
+function loadSavedContent(){
+  const arr=JSON.parse(localStorage.getItem('purvis_content')||'[]');
+  document.getElementById('ccount').textContent=arr.length;
+  const el=document.getElementById('csaved');
+  if(!arr.length){el.innerHTML='<div class="empty">No saved content yet</div>';return;}
+  el.innerHTML=arr.map(x=>`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><div style="font-size:12px;font-weight:700;color:var(--accent2)">${x.track.toUpperCase()} — ${x.date}</div><div style="font-size:11px;color:var(--muted)">${x.text.substring(0,80)}...</div></div><button class="btn sec sm" onclick="delContent(${x.id})">🗑️</button></div>`).join('');
+}
+function delContent(id){
+  let arr=JSON.parse(localStorage.getItem('purvis_content')||'[]');
+  arr=arr.filter(x=>x.id!==id);
+  localStorage.setItem('purvis_content',JSON.stringify(arr));
+  loadSavedContent();
+}
+async function speakContent(){
+  const txt=document.getElementById('cout').textContent.substring(0,500);
+  if(!txt||txt==='Select a track and click GENERATE.') return;
+  try{
+    const r=await fetch(`${API}/api/voice`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt})});
+    if(!r.ok) throw new Error('Voice API failed');
+    const blob=await r.blob();
+    const url=URL.createObjectURL(blob);
+    const audio=document.getElementById('contentAudio');
+    audio.src=url; audio.classList.remove('hidden'); audio.play();
+  }catch(e){ alert('Voice error: '+e.message+'\n\nAdd ELEVENLABS_KEYS to your .env file.'); }
+}
+
+// ---- IMAGE GEN (DALL-E 3) ----
+async function genImage(){
+  const prompt=document.getElementById('iprompt').value.trim();
+  if(!prompt) return;
+  const style=document.getElementById('istyle').value;
+  const size=document.getElementById('isize').value;
+  const out=document.getElementById('iout');
+  out.innerHTML='<span style="color:var(--muted);animation:pulse 1s infinite">Generating with DALL-E 3... (10-20 sec)</span>';
+  try{
+    const d=await apiFetch('/api/image',{prompt:`${prompt}, ${style}`,size});
+    out.innerHTML=`<img src="${d.url}" alt="${prompt}" style="max-width:100%;border-radius:8px">`;
+    addToGallery(d.url,prompt);
+  }catch(e){
+    out.innerHTML=`<span style="color:var(--red)">Error: ${e.message}</span>`;
+  }
+}
+function addToGallery(url,prompt){
+  const gal=document.getElementById('igal');
+  const d=document.createElement('div');
+  d.className='gi';
+  d.innerHTML=`<img src="${url}" loading="lazy"><div class="lbl">${prompt.substring(0,40)}...</div>`;
+  gal.insertBefore(d,gal.firstChild);
+}
+
+// ---- MUSIC ----
+async function genMusic(){
+  const prompt=document.getElementById('mprompt').value.trim();
+  if(!prompt) return;
+  const genre=document.getElementById('mgenre').value;
+  const mood=document.getElementById('mmood').value;
+  const out=document.getElementById('mout');
+  out.textContent='Generating music prompts...';
+  try{
+    const d=await apiFetch('/api/music',{prompt,genre,mood});
+    out.textContent=d.music;
+  }catch(e){ out.textContent='Error: '+e.message; }
+}
+
+// ---- RESEARCH ----
+async function doResearch(){
+  const topic=document.getElementById('rtopic').value.trim();
+  if(!topic) return;
+  const out=document.getElementById('rout');
+  out.textContent='Researching... (may take 20-30 seconds)';
+  try{
+    const d=await apiFetch('/api/research',{topic,userId:'kelvin'});
+    out.textContent=d.research;
+  }catch(e){ out.textContent='Error: '+e.message; }
+}
+
+// ---- LEGAL ----
+async function genLegal(){
+  const motionType=document.getElementById('ltype').value;
+  const caseNumber=document.getElementById('lcnum').value.trim();
+  const facts=document.getElementById('lfacts').value.trim();
+  const out=document.getElementById('lout');
+  out.textContent='Generating legal document...';
+  try{
+    const d=await apiFetch('/api/chat',{
+      message:`Draft a complete Florida legal document: ${motionType} for case ${caseNumber||'2024-DR-012028-O'}. Facts: ${facts||'none provided'}. Use proper Florida court format, cite relevant case law including Napue v. Illinois and Florida Rule 1.540(b) where applicable. Include all sections: header, introduction, legal standard, argument, conclusion, signature block, and next steps.`,
+      userId:'kelvin'
+    });
+    out.textContent=d.reply;
+  }catch(e){ out.textContent='Error: '+e.message; }
+}
+function saveLegal(){
+  const txt=document.getElementById('lout').textContent;
+  if(!txt||txt==='Select motion type, enter facts, and click GENERATE.') return;
+  const arr=JSON.parse(localStorage.getItem('purvis_legal')||'[]');
+  arr.unshift({id:Date.now(),type:document.getElementById('ltype').value,cnum:document.getElementById('lcnum').value,text:txt,date:new Date().toLocaleDateString()});
+  localStorage.setItem('purvis_legal',JSON.stringify(arr));
+  loadSavedLegal();
+}
+function loadSavedLegal(){
+  const arr=JSON.parse(localStorage.getItem('purvis_legal')||'[]');
+  document.getElementById('lcount').textContent=arr.length;
+  const el=document.getElementById('lsaved');
+  if(!arr.length){el.innerHTML='<div class="empty">No saved documents yet</div>';return;}
+  el.innerHTML=arr.map(x=>`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><div style="font-size:12px;font-weight:700;color:var(--accent2)">${x.type.toUpperCase()} — ${x.cnum} — ${x.date}</div></div><div style="display:flex;gap:6px"><button class="btn sec sm" onclick="viewLegal(${x.id})">VIEW</button><button class="btn sec sm" onclick="delLegal(${x.id})">🗑️</button></div></div>`).join('');
+}
+function viewLegal(id){
+  const arr=JSON.parse(localStorage.getItem('purvis_legal')||'[]');
+  const item=arr.find(x=>x.id===id);
+  if(item){document.getElementById('lout').textContent=item.text;go('legal');}
+}
+function delLegal(id){
+  let arr=JSON.parse(localStorage.getItem('purvis_legal')||'[]');
+  arr=arr.filter(x=>x.id!==id);
+  localStorage.setItem('purvis_legal',JSON.stringify(arr));
+  loadSavedLegal();
+}
+function printLegal(){
+  const txt=document.getElementById('lout').textContent;
+  const w=window.open('','_blank');
+  w.document.write(`<html><head><title>PURVIS Legal Document</title><style>body{font-family:Times New Roman,serif;font-size:12pt;margin:1in;line-height:1.6;white-space:pre-wrap}</style></head><body>${txt}</body></html>`);
+  w.document.close(); w.print();
+}
+
+// ---- LEADS ----
+async function addLead(){
+  const name=document.getElementById('lname').value.trim();
+  if(!name){alert('Enter a name.');return;}
+  const lead={name,email:document.getElementById('lemail').value,phone:document.getElementById('lphone').value,source:document.getElementById('lsrc').value,notes:document.getElementById('lnotes').value,status:'new',date:new Date().toLocaleDateString()};
+  const arr=JSON.parse(localStorage.getItem('purvis_leads')||'[]');
+  arr.unshift({id:Date.now(),...lead});
+  localStorage.setItem('purvis_leads',JSON.stringify(arr));
+  ['lname','lemail','lphone','lnotes'].forEach(id=>document.getElementById(id).value='');
+  loadLeads();
+}
+function loadLeads(){
+  const arr=JSON.parse(localStorage.getItem('purvis_leads')||'[]');
+  document.getElementById('leadcount').textContent=arr.length;
+  const tb=document.getElementById('leadtbl');
+  if(!arr.length){tb.innerHTML='<tr><td colspan="7" class="empty">No leads yet</td></tr>';return;}
+  tb.innerHTML=arr.map(l=>`<tr><td>${l.name}</td><td>${l.email||'—'}</td><td>${l.phone||'—'}</td><td>${l.source}</td><td><span class="sbadge snew">${l.status}</span></td><td>${l.notes||'—'}</td><td><button class="btn red sm" onclick="delLead(${l.id})">🗑️</button></td></tr>`).join('');
+}
+function delLead(id){
+  let arr=JSON.parse(localStorage.getItem('purvis_leads')||'[]');
+  arr=arr.filter(l=>l.id!==id);
+  localStorage.setItem('purvis_leads',JSON.stringify(arr));
+  loadLeads();
+}
+
+// ---- PLUMBING ----
+const DFU=[{max:1,d:'1½"',b:'1¼"'},{max:3,d:'1½"',b:'1½"'},{max:6,d:'2"',b:'1½"'},{max:12,d:'2"',b:'2"'},{max:20,d:'3"',b:'2"'},{max:160,d:'3"',b:'3"'},{max:360,d:'4"',b:'3"'},{max:620,d:'5"',b:'4"'},{max:9999,d:'6"',b:'4"'}];
+function calcDFU(){
+  const vals={dfut:4,dful:1,dfub:2,dfuk:2,dfuf:2,dfud:2,dfuw:3};
+  let total=0;
+  for(const[id,v]of Object.entries(vals)) total+=(parseInt(document.getElementById(id)?.value)||0)*v;
+  document.getElementById('tdfu').textContent=total;
+  const row=DFU.find(r=>total<=r.max)||DFU[DFU.length-1];
+  document.getElementById('dpipe').textContent=row.d;
+  document.getElementById('bpipe').textContent=row.b;
+  document.getElementById('dfunote').textContent=total===0?'Add fixtures above.':`IPC Table 710.1: ${total} DFU → min ${row.d} building drain`;
+}
+function pk(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askPlumbing();}}
+async function askPlumbing(){
+  const input=document.getElementById('pinput').value.trim();
+  if(!input) return;
+  document.getElementById('pinput').value='';
+  addMsg('plog','user',input);
+  const think=addMsg('plog','ai','Thinking...',true);
+  try{
+    const d=await apiFetch('/api/chat',{message:`[PLUMBING IPC EXPERT MODE] ${input}`,userId:'kelvin'});
+    think.remove();
+    addMsg('plog','ai',d.reply);
+  }catch(e){think.remove();addMsg('plog','sys','Error: '+e.message);}
+}
+
+// ---- SUB-AGENTS ----
+async function createAgent(){
+  const name=document.getElementById('aname').value.trim();
+  const purpose=document.getElementById('apurpose').value.trim();
+  const caps=document.getElementById('acaps').value.trim();
+  if(!name||!purpose) return;
+  const out=document.getElementById('agentout');
+  out.textContent='Creating agent...';
+  try{
+    const d=await apiFetch('/api/create-agent',{agentName:name,purpose,capabilities:caps});
+    out.textContent=d.agent;
+    const arr=JSON.parse(localStorage.getItem('purvis_agents')||'[]');
+    arr.unshift({id:Date.now(),name,purpose,spec:d.agent,date:new Date().toLocaleDateString()});
+    localStorage.setItem('purvis_agents',JSON.stringify(arr));
+    loadAgents();
+  }catch(e){out.textContent='Error: '+e.message;}
+}
+function loadAgents(){
+  const arr=JSON.parse(localStorage.getItem('purvis_agents')||'[]');
+  const el=document.getElementById('agentlist');
+  if(!arr.length){el.innerHTML='<div class="empty">No agents created yet</div>';return;}
+  el.innerHTML=arr.map(a=>`<div class="autoitem" style="margin-bottom:6px"><div><div class="n">${a.name}</div><div class="m">${a.purpose} — ${a.date}</div></div><button class="btn sec sm" onclick="delAgent(${a.id})">🗑️</button></div>`).join('');
+}
+function delAgent(id){
+  let arr=JSON.parse(localStorage.getItem('purvis_agents')||'[]');
+  arr=arr.filter(a=>a.id!==id);
+  localStorage.setItem('purvis_agents',JSON.stringify(arr));
+  loadAgents();
+}
+
+// ---- MEMORY ----
+function saveMem(){
+  const key=document.getElementById('mkey').value.trim();
+  const val=document.getElementById('mval').value.trim();
+  if(!key||!val) return;
+  const mem=JSON.parse(localStorage.getItem('purvis_mem')||'{}');
+  mem[key]={value:val,category:document.getElementById('mcat').value,updated:new Date().toLocaleDateString()};
+  localStorage.setItem('purvis_mem',JSON.stringify(mem));
+  document.getElementById('mkey').value='';
+  document.getElementById('mval').value='';
+  loadMem();
+}
+function loadMem(){
+  const mem=JSON.parse(localStorage.getItem('purvis_mem')||'{}');
+  const el=document.getElementById('memlist');
+  const entries=Object.entries(mem);
+  if(!entries.length){el.innerHTML='<div class="empty">No memory stored yet</div>';return;}
+  el.innerHTML=entries.map(([k,v])=>`<div class="memitem"><div><div class="k">${k}</div><div class="v">${v.value}</div><div class="c">${v.category} · ${v.updated}</div></div><button class="btn sec sm" onclick="delMem('${k}')">🗑️</button></div>`).join('');
+}
+function delMem(key){
+  const mem=JSON.parse(localStorage.getItem('purvis_mem')||'{}');
+  delete mem[key];
+  localStorage.setItem('purvis_mem',JSON.stringify(mem));
+  loadMem();
+}
+
+// ---- TASKS LOG ----
+function saveTask(input){
+  const arr=JSON.parse(localStorage.getItem('purvis_tasks')||'[]');
+  arr.unshift({input:input.substring(0,70),time:new Date().toLocaleTimeString()});
+  localStorage.setItem('purvis_tasks',JSON.stringify(arr.slice(0,20)));
+  loadRecentTasks();
+}
+function loadRecentTasks(){
+  const arr=JSON.parse(localStorage.getItem('purvis_tasks')||'[]');
+  const el=document.getElementById('rtasks');
+  if(!arr.length){el.innerHTML='<div class="empty">No tasks yet</div>';return;}
+  el.innerHTML=arr.slice(0,5).map(t=>`<div class="rtask"><span>${t.input}</span><span>${t.time}</span></div>`).join('');
+}
+
+// ---- MISSION ----
+function loadMission(){const v=localStorage.getItem('purvis_mission')||'0';document.getElementById('mbal').textContent='$'+parseFloat(v).toFixed(2);}
+function openMission(){document.getElementById('mmodal').classList.remove('hidden');document.getElementById('mbalinput').value=localStorage.getItem('purvis_mission')||'';}
+function closeMission(){document.getElementById('mmodal').classList.add('hidden');}
+function updateMission(){const v=document.getElementById('mbalinput').value;localStorage.setItem('purvis_mission',v);loadMission();closeMission();}
+
+// ---- VOICE ----
+function toggleVoice(){
+  if(!('webkitSpeechRecognition'in window)&&!('SpeechRecognition'in window)){alert('Voice not supported. Use Chrome.');return;}
+  if(recognizing){recog.stop();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recog=new SR();recog.lang='en-US';recog.continuous=false;recog.interimResults=false;
+  recog.onresult=e=>{
+    document.getElementById('cmdinput').value=e.results[0][0].transcript;
+    recognizing=false;document.getElementById('vbtn').classList.remove('rec');
+    runCmd();
+  };
+  recog.onerror=()=>{recognizing=false;document.getElementById('vbtn').classList.remove('rec');};
+  recog.onend=()=>{recognizing=false;document.getElementById('vbtn').classList.remove('rec');};
+  recog.start();recognizing=true;document.getElementById('vbtn').classList.add('rec');
+}
+
+// ---- SEED MEMORY ----
+window.addEventListener('load',()=>{
+  const mem=JSON.parse(localStorage.getItem('purvis_mem')||'{}');
+  if(!mem['LLC Name']){
+    Object.assign(mem,{
+      'LLC Name':{value:'SunBiz LLC',category:'business',updated:new Date().toLocaleDateString()},
+      'Case Number':{value:'2024-DR-012028-O',category:'legal',updated:new Date().toLocaleDateString()},
+      'Mission':{value:'$100 → $1M',category:'personal',updated:new Date().toLocaleDateString()},
+      'Content Tracks':{value:'Scripture Daily, Political, Plumbing, Motivation, Legal Awareness',category:'content',updated:new Date().toLocaleDateString()},
+      'Location':{value:'Orlando, Florida',category:'personal',updated:new Date().toLocaleDateString()}
+    });
+    localStorage.setItem('purvis_mem',JSON.stringify(mem));
+  }
+});
+</script>
+</body>
+</html>
