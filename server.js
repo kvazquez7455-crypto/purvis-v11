@@ -499,3 +499,236 @@ Output a full structured report. Be the operator, not a chatbot.` }
     res.status(500).json({ error: err.message });
   }
 });
+
+// ============================================================
+// PURVIS AUTONOMOUS AGENT ENGINE
+// Runs overnight, builds itself, searches the web, executes tasks
+// No human needed — PURVIS works while Kelvin sleeps
+// ============================================================
+
+const https = require('https');
+
+// ---- TASK QUEUE (persistent) ----
+function getQueue() { return readStore('task_queue'); }
+function saveQueue(q) { writeStore('task_queue', q); }
+function getCompletedJobs() { return readStore('completed_jobs'); }
+function logJob(job) {
+  const done = getCompletedJobs();
+  done.unshift({ ...job, completedAt: new Date().toISOString() });
+  writeStore('completed_jobs', done.slice(0, 200));
+}
+
+// ---- ADD TASK TO QUEUE ----
+app.post('/api/queue/add', (req, res) => {
+  const q = getQueue();
+  const task = {
+    id: Date.now(),
+    ...req.body,
+    status: 'pending',
+    addedAt: new Date().toISOString()
+  };
+  q.push(task);
+  saveQueue(q);
+  res.json({ ok: true, task });
+});
+
+app.get('/api/queue', (req, res) => res.json(getQueue()));
+app.get('/api/queue/completed', (req, res) => res.json(getCompletedJobs().slice(0, 50)));
+
+app.delete('/api/queue/:id', (req, res) => {
+  let q = getQueue();
+  q = q.filter(t => t.id != req.params.id);
+  saveQueue(q);
+  res.json({ ok: true });
+});
+
+// ---- FREE WEB SEARCH (DuckDuckGo Instant Answer API — no key needed) ----
+function webSearch(query) {
+  return new Promise((resolve) => {
+    const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
+    https.get(url, (resp) => {
+      let data = '';
+      resp.on('data', chunk => data += chunk);
+      resp.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          const result = json.AbstractText || json.Answer ||
+            (json.RelatedTopics || []).slice(0, 3).map(t => t.Text).filter(Boolean).join(' | ') ||
+            'No instant answer found.';
+          resolve(result);
+        } catch { resolve('Search unavailable.'); }
+      });
+    }).on('error', () => resolve('Search error.'));
+  });
+}
+
+app.post('/api/search', async (req, res) => {
+  try {
+    const { query } = req.body;
+    const searchResult = await webSearch(query);
+    // Feed to GPT for deeper analysis
+    const key = getNextKey('openai');
+    const openai = new OpenAI({ apiKey: key });
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: PURVIS_SYSTEM },
+        { role: 'user', content: `Web search for: "${query}"\n\nSearch result: ${searchResult}\n\nAnalyze this and give Kelvin a useful, actionable summary.` }
+      ],
+      max_tokens: 600
+    });
+    res.json({ query, searchResult, analysis: result.choices[0].message.content });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- AUTONOMOUS TASK EXECUTOR ----
+async function executeTask(task) {
+  const key = getNextKey('openai');
+  if (!key) return { error: 'No OpenAI key' };
+  const openai = new OpenAI({ apiKey: key });
+
+  let result = '';
+
+  try {
+    // If task needs web search, do it first
+    let context = '';
+    if (task.needsSearch || task.type === 'research' || task.type === 'trending') {
+      context = await webSearch(task.searchQuery || task.instruction);
+      context = `\nWeb search context: ${context}\n`;
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: PURVIS_SYSTEM },
+        { role: 'user', content: `AUTONOMOUS TASK EXECUTION:\nTask: ${task.instruction}\nType: ${task.type || 'general'}\n${context}\nExecute this task completely and return the full result. Store key findings.` }
+      ],
+      max_tokens: 1500
+    });
+
+    result = completion.choices[0].message.content;
+
+    // Save result to memory
+    const mem = readKV('memory');
+    mem[`auto_task_${task.id}`] = {
+      value: result.substring(0, 500),
+      category: 'autonomous',
+      updated: new Date().toISOString()
+    };
+    writeKV('memory', mem);
+
+  } catch(e) {
+    result = 'Error: ' + e.message;
+  }
+
+  return { result };
+}
+
+// ---- OVERNIGHT SLEEP MODE RUNNER ----
+// Runs every hour — processes queue, generates content, self-improves
+async function overnightRunner() {
+  console.log(`[PURVIS OVERNIGHT] Running at ${new Date().toISOString()}`);
+
+  const key = getNextKey('openai');
+  if (!key) { console.log('[PURVIS] No OpenAI key — skipping'); return; }
+
+  const log = [];
+
+  try {
+    // 1. Process pending queue tasks
+    const queue = getQueue();
+    const pending = queue.filter(t => t.status === 'pending').slice(0, 5);
+    for (const task of pending) {
+      console.log(`[PURVIS] Executing task: ${task.instruction?.substring(0, 60)}`);
+      const res = await executeTask(task);
+      task.status = 'completed';
+      task.result = res.result;
+      task.completedAt = new Date().toISOString();
+      logJob(task);
+      log.push(`✅ Task done: ${task.instruction?.substring(0, 60)}`);
+    }
+    // Remove completed from queue
+    saveQueue(queue.filter(t => t.status === 'pending' && !pending.find(p => p.id === t.id)));
+
+    // 2. Auto-generate daily content (Scripture + Political)
+    const openai = new OpenAI({ apiKey: key });
+    const contentResult = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: PURVIS_SYSTEM },
+        { role: 'user', content: 'OVERNIGHT TASK: Generate 2 pieces of content for today — 1 Scripture Daily (New Testament) and 1 Political Commentary. Format each with TOPIC / HOOK / SCRIPT / HASHTAGS. Store for posting tomorrow.' }
+      ],
+      max_tokens: 1200
+    });
+    const dailyContent = contentResult.choices[0].message.content;
+
+    // Save to content store
+    const content = readStore('content');
+    content.unshift({
+      id: Date.now(),
+      track: 'overnight_auto',
+      topic: 'Daily Auto-Generated',
+      output: dailyContent,
+      date: new Date().toISOString(),
+      auto: true
+    });
+    writeStore('content', content.slice(0, 100));
+    log.push('✅ Daily content generated');
+
+    // 3. Self-audit — check for improvements
+    const auditResult = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: PURVIS_SYSTEM },
+        { role: 'user', content: `SELF-AUDIT: Review PURVIS status. Completed jobs today: ${log.length}. Suggest 3 specific improvements or next actions for Kelvin's content empire and plumbing business. Be specific and actionable.` }
+      ],
+      max_tokens: 600
+    });
+
+    // Save audit to memory
+    const mem = readKV('memory');
+    mem['last_overnight_audit'] = {
+      value: auditResult.choices[0].message.content.substring(0, 800),
+      category: 'system',
+      updated: new Date().toISOString()
+    };
+    mem['last_overnight_run'] = {
+      value: new Date().toLocaleString(),
+      category: 'system',
+      updated: new Date().toISOString()
+    };
+    writeKV('memory', mem);
+    log.push('✅ Self-audit complete');
+
+    console.log('[PURVIS OVERNIGHT] Done:', log.join(' | '));
+
+  } catch(e) {
+    console.error('[PURVIS OVERNIGHT ERROR]', e.message);
+  }
+}
+
+// ---- MANUAL TRIGGER (for testing / on-demand) ----
+app.post('/api/overnight/run', async (req, res) => {
+  res.json({ status: 'Overnight runner started', message: 'PURVIS is now executing all queued tasks and generating content. Check /api/queue/completed in a minute.' });
+  overnightRunner(); // run async
+});
+
+app.get('/api/overnight/status', (req, res) => {
+  const mem = readKV('memory');
+  res.json({
+    lastRun: mem['last_overnight_run']?.value || 'Never',
+    lastAudit: mem['last_overnight_audit']?.value || 'None yet',
+    queuePending: getQueue().filter(t => t.status === 'pending').length,
+    completedToday: getCompletedJobs().filter(j => new Date(j.completedAt) > new Date(Date.now() - 86400000)).length
+  });
+});
+
+// ---- SCHEDULE OVERNIGHT RUNNER (every hour) ----
+setInterval(overnightRunner, 60 * 60 * 1000); // every hour
+
+// Run once 30 seconds after startup
+setTimeout(overnightRunner, 30000);
+
+console.log('[PURVIS] Autonomous agent engine loaded — overnight runner scheduled every hour');

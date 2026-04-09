@@ -416,6 +416,8 @@ audio{width:100%;margin-top:8px;border-radius:8px}
       <div class="mob-drawer-item" onclick="mgo('plumbing')"><span class="dic">🔧</span>Plumbing IPC</div>
       <div class="mob-drawer-item" onclick="mgo('agents')"><span class="dic">🤖</span>Sub-Agents</div>
       <div class="mob-drawer-item" onclick="mgo('memory')"><span class="dic">💾</span>Memory</div>
+      <div class="mob-drawer-item" onclick="mgo('sleepmode')"><span class="dic">🌙</span>Sleep Mode / Queue</div>
+      <div class="mob-drawer-item" onclick="mgo('search')"><span class="dic">🔍</span>Web Search</div>
       <div class="mob-drawer-item" onclick="mgo('youtube')"><span class="dic">📺</span>YouTube Engine</div>
       <div class="mob-drawer-item" onclick="mgo('social')"><span class="dic">📲</span>Social Media</div>
       <div class="mob-drawer-item" onclick="mgo('email')"><span class="dic">📧</span>Email / Gmail</div>
@@ -483,6 +485,8 @@ audio{width:100%;margin-top:8px;border-radius:8px}
       <li onclick="go('plumbing')" data-t="plumbing"><span class="ic">🔧</span><span class="lb">Plumbing IPC</span></li>
       <li onclick="go('agents')" data-t="agents"><span class="ic">🤖</span><span class="lb">Sub-Agents</span></li>
       <li onclick="go('memory')" data-t="memory"><span class="ic">💾</span><span class="lb">Memory</span></li>
+      <li onclick="go('sleepmode')" data-t="sleepmode"><span class="ic">🌙</span><span class="lb">Sleep Mode</span></li>
+      <li onclick="go('search')" data-t="search"><span class="ic">🔍</span><span class="lb">Web Search</span></li>
     </ul></nav>
     <div class="sf"><div class="dot"></div><span>PURVIS ONLINE</span></div>
   </div>
@@ -768,6 +772,83 @@ audio{width:100%;margin-top:8px;border-radius:8px}
           <button class="btn sec" onclick="loadMem()">REFRESH</button>
         </div>
         <div id="memlist" style="display:flex;flex-direction:column;gap:8px;flex:1;overflow-y:auto"></div>
+      </div>
+    </div>
+
+
+    <!-- SLEEP MODE / TASK QUEUE -->
+    <div id="t-sleepmode" class="tab">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:14px">
+        <div class="ch"><h2>🌙 Sleep Mode — Autonomous Agent</h2><span class="badge">RUNS OVERNIGHT</span></div>
+        
+        <!-- Status -->
+        <div id="sleepStatus" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;gap:16px;flex-wrap:wrap">
+          <div style="flex:1;min-width:120px"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Last Run</div><div id="lastRun" style="font-size:13px;color:var(--green);font-weight:700">Checking...</div></div>
+          <div style="flex:1;min-width:120px"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Queue</div><div id="queueCount" style="font-size:13px;color:var(--yellow);font-weight:700">—</div></div>
+          <div style="flex:1;min-width:120px"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Done Today</div><div id="doneCount" style="font-size:13px;color:var(--accent2);font-weight:700">—</div></div>
+        </div>
+
+        <!-- Add Task -->
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Add Task to Queue (PURVIS will do it automatically)</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <input type="text" id="queueTask" placeholder="e.g. Research best YouTube Shorts trends this week" style="flex:1;min-width:200px">
+            <select id="queueType">
+              <option value="general">General</option>
+              <option value="research">Research (searches web)</option>
+              <option value="content">Generate Content</option>
+              <option value="legal">Legal Analysis</option>
+              <option value="business">Business Task</option>
+            </select>
+            <button class="btn" onclick="addToQueue()">ADD TO QUEUE</button>
+            <button class="btn grn" onclick="runNow()">▶ RUN NOW</button>
+          </div>
+        </div>
+
+        <!-- Quick Add Templates -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="qbtn" style="flex:none;width:auto" onclick="quickQueue('Generate 5 Scripture Daily scripts for this week', 'content')">📖 Scripture Week</button>
+          <button class="qbtn" style="flex:none;width:auto" onclick="quickQueue('Research top political news today and create commentary content', 'research')">📣 Political Today</button>
+          <button class="qbtn" style="flex:none;width:auto" onclick="quickQueue('Check for new plumbing leads and follow up opportunities in Orlando', 'business')">🔧 Lead Check</button>
+          <button class="qbtn" style="flex:none;width:auto" onclick="quickQueue('Analyze case 2024-DR-012028-O and identify strongest next legal move', 'legal')">⚖️ Legal Check</button>
+          <button class="qbtn" style="flex:none;width:auto" onclick="quickQueue('Research YouTube Shorts monetization strategies that work in 2025', 'research')">💰 Money Research</button>
+        </div>
+
+        <!-- Pending Queue -->
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Pending Queue</div>
+          <div id="pendingQueue"><div class="empty">No tasks queued. Add tasks above — PURVIS will run them automatically every hour.</div></div>
+        </div>
+
+        <!-- Completed Jobs -->
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Completed Jobs</div>
+          <div id="completedJobs"><div class="empty">No completed jobs yet</div></div>
+        </div>
+
+        <!-- Last Audit -->
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Last Self-Audit by PURVIS</div>
+          <div id="lastAuditOut" class="output" style="min-height:80px;font-size:12px">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEB SEARCH -->
+    <div id="t-search" class="tab">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
+        <div class="ch"><h2>🔍 Web Search</h2><span class="badge">FREE — NO KEY NEEDED</span></div>
+        <div style="display:flex;gap:10px">
+          <input type="text" id="searchQ" placeholder="Search anything... e.g. YouTube Shorts algorithm 2025" style="flex:1" onkeydown="if(event.key==='Enter')doSearch()">
+          <button class="btn" onclick="doSearch()">SEARCH</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="qbtn" style="flex:none;width:auto" onclick="searchQ('YouTube Shorts monetization 2025')">📺 YT Shorts</button>
+          <button class="qbtn" style="flex:none;width:auto" onclick="searchQ('plumbing contractor Orlando Florida leads')">🔧 Plumbing Leads</button>
+          <button class="qbtn" style="flex:none;width:auto" onclick="searchQ('Florida family law case 2024 appeals')">⚖️ FL Law</button>
+          <button class="qbtn" style="flex:none;width:auto" onclick="searchQ('content creator income 2025 strategies')">💰 Creator Income</button>
+        </div>
+        <div id="searchOut" class="output" style="flex:1;min-height:300px">Enter a search query above. PURVIS will search the web and give you an analyzed, actionable summary.</div>
       </div>
     </div>
 
@@ -1330,6 +1411,121 @@ function checkMobileVoiceFab() {
 }
 window.addEventListener('load', checkMobileVoiceFab);
 window.addEventListener('resize', checkMobileVoiceFab);
+</script>
+
+
+<script>
+// PURVIS SLEEP MODE + QUEUE + SEARCH ENGINE
+
+async function loadSleepStatus() {
+  try {
+    const d = await fetch('/api/overnight/status').then(r=>r.json());
+    document.getElementById('lastRun').textContent = d.lastRun || 'Never';
+    document.getElementById('queueCount').textContent = d.queuePending + ' pending';
+    document.getElementById('doneCount').textContent = d.completedToday + ' tasks';
+    document.getElementById('lastAuditOut').textContent = d.lastAudit || 'No audit yet — click RUN NOW to trigger first run.';
+  } catch(e) {}
+  await loadQueue();
+  await loadCompletedJobs();
+}
+
+async function loadQueue() {
+  try {
+    const q = await fetch('/api/queue').then(r=>r.json());
+    const el = document.getElementById('pendingQueue');
+    const pending = q.filter(t=>t.status==='pending');
+    if (!pending.length) { el.innerHTML='<div class="empty">Queue is empty. PURVIS is idle — add tasks above.</div>'; return; }
+    el.innerHTML = pending.map(t=>`
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--text)">${t.instruction?.substring(0,80)}</div>
+          <div style="font-size:10px;color:var(--muted)">${t.type?.toUpperCase()} · Added ${new Date(t.addedAt).toLocaleTimeString()}</div>
+        </div>
+        <button class="btn sec sm" onclick="removeTask(${t.id})">✕</button>
+      </div>`).join('');
+  } catch(e) {}
+}
+
+async function loadCompletedJobs() {
+  try {
+    const jobs = await fetch('/api/queue/completed').then(r=>r.json());
+    const el = document.getElementById('completedJobs');
+    if (!jobs.length) { el.innerHTML='<div class="empty">No completed jobs yet</div>'; return; }
+    el.innerHTML = jobs.slice(0,5).map(j=>`
+      <div style="background:var(--bg3);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:10px 14px;margin-bottom:6px;cursor:pointer" onclick="this.querySelector('.jresult').style.display=this.querySelector('.jresult').style.display==='none'?'block':'none'">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:12px;font-weight:600;color:var(--green)">✅ ${j.instruction?.substring(0,70)}</div>
+          <div style="font-size:10px;color:var(--muted)">${new Date(j.completedAt).toLocaleString()}</div>
+        </div>
+        <div class="jresult" style="display:none;margin-top:8px;font-size:12px;color:var(--text);line-height:1.5;white-space:pre-wrap">${j.result?.substring(0,400)}...</div>
+      </div>`).join('');
+  } catch(e) {}
+}
+
+async function addToQueue() {
+  const instruction = document.getElementById('queueTask').value.trim();
+  const type = document.getElementById('queueType').value;
+  if (!instruction) return;
+  await fetch('/api/queue/add', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({instruction, type, needsSearch: type==='research'}) });
+  document.getElementById('queueTask').value = '';
+  loadSleepStatus();
+}
+
+async function quickQueue(instruction, type) {
+  await fetch('/api/queue/add', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({instruction, type, needsSearch: type==='research'}) });
+  loadSleepStatus();
+  go('sleepmode');
+}
+
+async function removeTask(id) {
+  await fetch(`/api/queue/${id}`, {method:'DELETE'});
+  loadQueue();
+}
+
+async function runNow() {
+  const btn = event.target;
+  btn.textContent = '⚡ Running...';
+  btn.disabled = true;
+  try {
+    await fetch('/api/overnight/run', {method:'POST'});
+    setTimeout(() => {
+      btn.textContent = '▶ RUN NOW';
+      btn.disabled = false;
+      loadSleepStatus();
+    }, 8000);
+  } catch(e) {
+    btn.textContent = '▶ RUN NOW';
+    btn.disabled = false;
+  }
+}
+
+async function doSearch() {
+  const q = document.getElementById('searchQ').value.trim();
+  if (!q) return;
+  const out = document.getElementById('searchOut');
+  out.textContent = 'Searching the web...';
+  try {
+    const d = await fetch('/api/search', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q})}).then(r=>r.json());
+    out.textContent = (d.analysis || d.searchResult || 'No results found.');
+  } catch(e) { out.textContent = 'Error: ' + e.message; }
+}
+
+function searchQ(q) {
+  document.getElementById('searchQ').value = q;
+  doSearch();
+}
+
+// Load sleep status when tab opens
+const origGo = window.go;
+window.go = function(t) {
+  origGo(t);
+  if (t === 'sleepmode') loadSleepStatus();
+};
+const origMgo = window.mgo;
+window.mgo = function(t) {
+  origMgo(t);
+  if (t === 'sleepmode') loadSleepStatus();
+};
 </script>
 
 </body></html>`);
