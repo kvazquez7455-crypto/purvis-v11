@@ -3,2088 +3,2042 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>PURVIS 11</title>
-
-<!-- PWA Manifest — enables Add to Home Screen on ALL browsers -->
-<link rel="manifest" href="/manifest.json">
-
-<!-- iOS Safari PWA -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PURVIS 11">
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
-<link rel="apple-touch-startup-image" href="/icons/icon-512.png">
-
-<!-- Android Chrome PWA -->
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#7c3aed">
-<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
-
-<!-- General -->
-<meta name="description" content="PURVIS 11 — Unified AI Operator System">
-<meta name="application-name" content="PURVIS 11">
+<title>PURVIS 11</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--border:#2a2a3a;
-  --accent:#7c3aed;--accent2:#a855f7;--green:#22c55e;--red:#ef4444;
-  --yellow:#eab308;--blue:#3b82f6;--text:#f1f1f5;--muted:#888899;--r:12px;
-}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;height:100vh;overflow:hidden}
-
-/* LOCK */
-#lock{position:fixed;inset:0;background:linear-gradient(135deg,#0a0a0f,#1a0a2e);display:flex;align-items:center;justify-content:center;z-index:9999}
-.lbox{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:36px 24px;width:min(360px,95vw);text-align:center;box-shadow:0 0 80px rgba(124,58,237,.4)}
-.lbox .icon{font-size:52px;margin-bottom:8px}
-.lbox h1{font-size:30px;font-weight:900;letter-spacing:4px;color:var(--accent2)}
-.lbox h1 span{color:var(--green)}
-.lbox p{color:var(--muted);font-size:11px;margin:6px 0 24px;letter-spacing:2px;text-transform:uppercase}
-.pdisp{font-size:42px;letter-spacing:18px;color:var(--accent2);font-family:monospace;margin-bottom:28px;height:56px;display:flex;align-items:center;justify-content:center}
-.ppad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
-.ppad button{background:var(--bg3);border:2px solid var(--border);color:var(--text);font-size:28px;font-weight:700;padding:22px 16px;border-radius:14px;cursor:pointer;transition:.15s;min-height:70px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
-.ppad button:hover{background:var(--accent);border-color:var(--accent)}
-.ppad button:active{transform:scale(.92);background:var(--accent)}
-.ppad .zero{grid-column:2}
-.ppad .clr{font-size:14px}
-.perr{color:var(--red);font-size:13px;min-height:20px;margin-top:8px}
-
-/* LAYOUT */
-.hidden{display:none!important}
-#app{display:flex;height:100vh;overflow:hidden}
-
-/* SIDEBAR */
-.sb{width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .25s;overflow:hidden}
-.sb.col{width:56px}
-.sbh{display:flex;align-items:center;gap:10px;padding:16px 14px;border-bottom:1px solid var(--border)}
-.sbh .logo{font-size:15px;font-weight:900;letter-spacing:2px;color:var(--accent2);white-space:nowrap}
-.sbh .logo span{color:var(--green)}
-.tog{margin-left:auto;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;flex-shrink:0}
-.tog:hover{color:var(--text)}
-nav ul{list-style:none;padding:8px 0;flex:1;overflow-y:auto}
-nav li{display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;border-left:3px solid transparent;transition:.15s;white-space:nowrap}
-nav li:hover{background:var(--bg3)}
-nav li.on{background:rgba(124,58,237,.15);border-left-color:var(--accent);color:var(--accent2)}
-nav li .ic{font-size:16px;flex-shrink:0}
-nav li .lb{font-size:13px;font-weight:500}
-.sb.col .lb,.sb.col .logo,.sb.col .sf span{display:none}
-.sf{padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-
-/* MAIN */
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.tbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);gap:12px;flex-shrink:0}
-.tbar-l{font-size:15px;font-weight:700;color:var(--accent2)}
-.tbar-r{display:flex;align-items:center;gap:10px}
-.mission{font-size:12px;color:var(--yellow);background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);padding:4px 12px;border-radius:20px;cursor:pointer;white-space:nowrap}
-.ibtn{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:16px;transition:.15s}
-.ibtn:hover{border-color:var(--accent)}
-.ibtn.rec{background:rgba(239,68,68,.2);border-color:var(--red);animation:pulse .8s infinite}
-
-/* TABS */
-.tab{display:none;flex:1;overflow-y:auto;padding:20px;flex-direction:column;gap:16px}
-.tab.on{display:flex}
-
-/* CARDS */
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px}
-.ch{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.ch h2{font-size:15px;font-weight:700}
-.badge{font-size:10px;letter-spacing:1px;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.4);color:var(--accent2);padding:3px 8px;border-radius:20px;text-transform:uppercase;margin-left:auto}
-
-/* CMD GRID */
-.cgrid{display:grid;grid-template-columns:1fr 300px;gap:16px;flex:1;min-height:0}
-.cmain{display:flex;flex-direction:column;gap:12px}
-.cside{display:flex;flex-direction:column;gap:10px;overflow-y:auto}
-
-/* CHAT */
-.clog{flex:1;overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:180px;max-height:400px}
-.clog.tall{max-height:none;flex:1}
-.msg{display:flex;flex-direction:column;gap:3px}
-.msg .lbl{font-size:10px;color:var(--muted);padding:0 4px}
-.msg .txt{padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
-.msg.user .txt{background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3);margin-left:15%}
-.msg.ai .txt,.msg.sys .txt{background:var(--bg3);border:1px solid var(--border);margin-right:15%}
-.blink{animation:pulse .8s infinite;font-style:italic;color:var(--muted)}
-
-/* INPUTS */
-.irow{display:flex;gap:8px;margin-top:8px}
-textarea{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:13px;resize:none;font-family:inherit}
-textarea:focus{outline:none;border-color:var(--accent)}
-input[type=text],input[type=email],input[type=tel],input[type=number],input[type=password],select{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px;font-family:inherit}
-input:focus,select:focus{outline:none;border-color:var(--accent)}
-.btn{background:var(--accent);border:none;color:#fff;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.5px;white-space:nowrap;transition:.15s}
-.btn:hover{background:var(--accent2)}
-.btn:disabled{opacity:.4;cursor:not-allowed}
-.btn.sec{background:var(--bg3);border:1px solid var(--border);color:var(--text)}
-.btn.sec:hover{border-color:var(--accent)}
-.btn.sm{padding:6px 12px;font-size:11px}
-.btn.grn{background:#16a34a}
-.btn.grn:hover{background:var(--green)}
-.btn.red{background:#b91c1c}
-
-/* STAT CARD */
-.sc{padding:14px}
-.sc h3{font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
-.srow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
-.srow:last-of-type{border:none}
-.g{color:var(--green);font-weight:700}
-.y{color:var(--yellow);font-weight:700}
-.r{color:var(--red);font-weight:700}
-.b{color:var(--blue)}
-
-/* QUICK BTNS */
-.qbtn{display:block;width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;cursor:pointer;text-align:left;font-size:12px;margin-bottom:6px;transition:.15s}
-.qbtn:hover{border-color:var(--accent);background:rgba(124,58,237,.1)}
-
-/* TABLES */
-.tbl{width:100%;border-collapse:collapse;font-size:12px}
-.tbl th{background:var(--bg3);padding:8px 12px;text-align:left;color:var(--muted);border-bottom:1px solid var(--border)}
-.tbl td{padding:8px 12px;border-bottom:1px solid rgba(42,42,58,.5)}
-.tbl tr:hover td{background:var(--bg3)}
-.sbadge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
-.snew{background:rgba(59,130,246,.2);color:var(--blue)}
-.sactive{background:rgba(34,197,94,.2);color:var(--green)}
-
-/* MISC */
-.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
-.empty{color:var(--muted);font-size:12px;text-align:center;padding:20px}
-.output{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;min-height:140px;white-space:pre-wrap;line-height:1.7;font-size:13px;overflow-y:auto}
-.imgout{background:var(--bg);border:1px solid var(--border);border-radius:8px;min-height:200px;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.imgout img{max-width:100%;border-radius:8px}
-.igallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:12px}
-.igallery .gi{border-radius:8px;overflow:hidden;border:1px solid var(--border);position:relative}
-.igallery .gi img{width:100%;display:block}
-.igallery .gi .lbl{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.75);padding:4px 6px;font-size:10px;color:var(--muted)}
-.dfu-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
-.dfu-row:last-child{border:none}
-.dfu-row input{width:70px;text-align:center}
-.dfu-res{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:12px}
-.dfu-res p{font-size:13px;margin-bottom:6px}
-.dfu-res strong{color:var(--accent2)}
-.memitem{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.memitem .k{font-size:12px;font-weight:700;color:var(--accent2)}
-.memitem .v{font-size:12px;margin-top:2px}
-.memitem .c{font-size:10px;color:var(--muted);margin-top:2px}
-.autoitem{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
-.autoitem .n{font-size:13px;font-weight:600}
-.autoitem .m{font-size:11px;color:var(--muted);margin-top:3px}
-.rtask{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid var(--border);color:var(--muted)}
-.rtask:last-child{border:none}
-.modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:999;display:flex;align-items:center;justify-content:center}
-.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:24px;width:360px}
-.modal h3{color:var(--accent2);margin-bottom:12px}
-audio{width:100%;margin-top:8px;border-radius:8px}
-@media(max-width:768px){.cgrid{grid-template-columns:1fr}.cside{display:none}.sb{width:56px}}
-
-/* ============================================================
-   MOBILE / TABLET — NATIVE APP FEEL
-   ============================================================ */
-
-/* Bottom nav bar for mobile */
-.mobile-nav {
-  display: none;
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  background: var(--bg2);
-  border-top: 1px solid var(--border);
-  z-index: 100;
-  padding: 0;
-  height: 64px;
-}
-.mobile-nav-inner {
-  display: flex;
-  align-items: stretch;
-  height: 100%;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.mobile-nav-inner::-webkit-scrollbar { display: none; }
-.mnav-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  padding: 0 14px;
-  min-width: 64px;
-  background: none;
-  border: none;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 10px;
-  border-top: 2px solid transparent;
-  transition: .15s;
-  white-space: nowrap;
-}
-.mnav-btn .mic { font-size: 20px; }
-.mnav-btn.on { color: var(--accent2); border-top-color: var(--accent); }
-.mnav-btn:active { background: rgba(124,58,237,.1); }
-
-/* Menu drawer for mobile */
-.mob-drawer {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 500;
-}
-.mob-drawer-bg {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,.6);
-}
-.mob-drawer-panel {
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 280px;
-  background: var(--bg2);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  padding-bottom: 20px;
-}
-.mob-drawer-panel h3 {
-  padding: 20px 18px 12px;
-  font-size: 11px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  border-bottom: 1px solid var(--border);
-}
-.mob-drawer-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  border-bottom: 1px solid rgba(42,42,58,.4);
-  transition: .15s;
-}
-.mob-drawer-item:hover, .mob-drawer-item:active { background: rgba(124,58,237,.1); }
-.mob-drawer-item .dic { font-size: 20px; }
-
-/* Mobile topbar */
-.mob-topbar {
-  display: none;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  flex-shrink: 0;
-}
-.mob-topbar .mtitle { font-size: 15px; font-weight: 800; color: var(--accent2); }
-.mob-topbar .micons { display: flex; gap: 8px; }
-.mob-topbar .micons button {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 7px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-/* Mobile tab content */
-@media (max-width: 768px) {
-  /* Hide desktop sidebar */
-  .sb { display: none !important; }
-  /* Hide desktop topbar */
-  .tbar { display: none !important; }
-
-  /* Show mobile elements */
-  .mob-topbar { display: flex !important; }
-  .mobile-nav { display: block !important; }
-
-  /* App fills screen */
-  #app { flex-direction: column; height: 100dvh; overflow: hidden; }
-  .main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
-
-  /* Tabs scroll freely */
-  .tab { padding: 12px 12px 80px; }
-  .tab.on { display: flex; flex: 1; overflow-y: auto; }
-
-  /* Command grid goes single column */
-  .cgrid { grid-template-columns: 1fr !important; }
-  .cside { display: none !important; }
-
-  /* Plumbing goes single col */
-  #t-plumbing .card > div[style*="grid-template-columns:1fr 1fr"] {
-    grid-template-columns: 1fr !important;
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #1a1a24;
+    --bg4: #22223a;
+    --purple: #7c3aed;
+    --purple-light: #9d65f5;
+    --purple-dim: rgba(124,58,237,0.18);
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.14);
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --text: #f0eeff;
+    --text2: #b0a8d0;
+    --text3: #6b638a;
+    --border: rgba(124,58,237,0.22);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --nav-h: 72px;
+    --top-h: 58px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%; width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  #app {
+    display: flex; flex-direction: column;
+    height: 100%; width: 100%;
+    position: relative; overflow: hidden;
   }
 
-  /* Canva grid single col */
-  #t-canva .card > div[style*="grid-template-columns:1fr 1fr"] {
-    grid-template-columns: 1fr !important;
+  /* ── AUTH SCREEN ── */
+  #auth-screen {
+    position: fixed; inset: 0; z-index: 999;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 24px; padding: 32px;
+  }
+  #auth-screen .brain { font-size: 72px; filter: drop-shadow(0 0 32px var(--purple)); animation: pulse-glow 2.4s ease-in-out infinite; }
+  #auth-screen h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
+  #auth-screen p { color: var(--text2); font-size: 0.95rem; text-align: center; max-width: 280px; }
+  #auth-email {
+    width: 100%; max-width: 320px; padding: 14px 18px;
+    background: var(--bg3); border: 1.5px solid var(--border);
+    border-radius: var(--radius); color: var(--text);
+    font-size: 1rem; outline: none;
+    transition: border-color 0.2s;
+  }
+  #auth-email:focus { border-color: var(--purple); }
+  #auth-btn {
+    width: 100%; max-width: 320px; padding: 14px;
+    background: var(--purple); border: none; border-radius: var(--radius);
+    color: #fff; font-size: 1rem; font-weight: 600;
+    cursor: pointer; transition: background 0.2s, transform 0.1s;
+    min-height: 48px;
+  }
+  #auth-btn:active { transform: scale(0.98); background: var(--purple-light); }
+  #auth-err { color: var(--red); font-size: 0.85rem; display: none; }
+
+  /* ── TOP BAR ── */
+  #top-bar {
+    height: var(--top-h); min-height: var(--top-h);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 14px; gap: 8px;
+    background: rgba(10,10,15,0.95);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    position: relative; z-index: 50;
+    flex-shrink: 0;
+  }
+  .top-logo {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 1.15rem; font-weight: 800; letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .top-logo .logo-brain { font-size: 1.3rem; }
+  .mission-tracker {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 2px; cursor: pointer;
+  }
+  .mission-label { font-size: 0.62rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+  .mission-value {
+    font-size: 0.85rem; font-weight: 700; color: var(--green);
+    background: var(--green-dim); padding: 2px 10px; border-radius: 20px;
+    border: 1px solid rgba(34,197,94,0.3);
+  }
+  .top-actions { display: flex; align-items: center; gap: 8px; }
+  .top-btn {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text2); font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .top-btn:active { background: var(--purple-dim); color: var(--purple); }
+
+  /* ── MAIN CONTENT ── */
+  #main {
+    flex: 1; overflow: hidden; position: relative;
+  }
+  .tab-panel {
+    position: absolute; inset: 0;
+    overflow-y: auto; overflow-x: hidden;
+    display: none; flex-direction: column;
+    padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 80px);
+    -webkit-overflow-scrolling: touch;
+  }
+  .tab-panel.active { display: flex; }
+
+  /* ── BOTTOM NAV ── */
+  #bottom-nav {
+    height: calc(var(--nav-h) + var(--safe-bottom));
+    padding-bottom: var(--safe-bottom);
+    display: flex; align-items: flex-start;
+    background: rgba(10,10,15,0.97);
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    position: relative; z-index: 50;
+    flex-shrink: 0;
+  }
+  .nav-tab {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 4px; padding: 10px 4px;
+    cursor: pointer; transition: all 0.18s;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 44px;
+  }
+  .nav-tab .nav-icon { font-size: 1.3rem; transition: transform 0.18s; }
+  .nav-tab .nav-label { font-size: 0.62rem; font-weight: 500; color: var(--text3); transition: color 0.18s; letter-spacing: 0.03em; }
+  .nav-tab.active .nav-label { color: var(--purple-light); }
+  .nav-tab.active .nav-icon { transform: scale(1.15); }
+  .nav-tab:active .nav-icon { transform: scale(0.92); }
+
+  /* ── CHAT UI ── */
+  .chat-container {
+    display: flex; flex-direction: column;
+    height: 100%; padding: 0;
+  }
+  .chat-header {
+    padding: 16px 16px 10px; flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .chat-header h2 { font-size: 1rem; font-weight: 700; }
+  .chat-header p { font-size: 0.8rem; color: var(--text2); margin-top: 2px; }
+  .chat-messages {
+    flex: 1; overflow-y: auto; padding: 14px;
+    display: flex; flex-direction: column; gap: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .msg {
+    display: flex; gap: 8px;
+    animation: msg-in 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .msg.user { justify-content: flex-end; }
+  .msg.purvis { justify-content: flex-start; }
+  .msg-bubble {
+    max-width: 78%; padding: 11px 14px;
+    border-radius: 18px; font-size: 0.9rem; line-height: 1.45;
+    word-break: break-word;
+  }
+  .msg.user .msg-bubble {
+    background: var(--purple);
+    border-bottom-right-radius: 4px;
+  }
+  .msg.purvis .msg-bubble {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+    color: var(--text);
+  }
+  .msg-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--purple-dim); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; flex-shrink: 0; margin-top: 2px;
+  }
+  .typing-indicator {
+    display: flex; align-items: center; gap: 4px; padding: 12px 14px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 18px; border-bottom-left-radius: 4px;
+    width: fit-content;
+  }
+  .typing-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--text3);
+    animation: typing 1.2s ease-in-out infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  .chat-input-row {
+    padding: 10px 12px 12px; flex-shrink: 0;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .quick-chips {
+    display: flex; gap: 7px; overflow-x: auto; padding-bottom: 10px;
+    scrollbar-width: none;
+  }
+  .quick-chips::-webkit-scrollbar { display: none; }
+  .chip {
+    padding: 6px 14px; border-radius: 20px; white-space: nowrap;
+    font-size: 0.78rem; font-weight: 500;
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text2); cursor: pointer; flex-shrink: 0;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    min-height: 32px; display: flex; align-items: center;
+  }
+  .chip:active, .chip:hover { background: var(--purple-dim); border-color: var(--purple); color: var(--purple-light); }
+  .input-group {
+    display: flex; gap: 8px; align-items: flex-end;
+  }
+  .chat-input {
+    flex: 1; background: var(--bg3); border: 1.5px solid var(--border);
+    border-radius: 22px; color: var(--text); font-size: 0.95rem;
+    padding: 11px 16px; outline: none; resize: none;
+    min-height: 44px; max-height: 120px; font-family: inherit;
+    transition: border-color 0.2s;
+    overflow-y: auto;
+  }
+  .chat-input:focus { border-color: var(--purple); }
+  .chat-input::placeholder { color: var(--text3); }
+  .send-btn, .mic-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.15rem; flex-shrink: 0;
+    transition: transform 0.12s, background 0.15s;
+  }
+  .send-btn:active, .mic-btn:active { transform: scale(0.9); }
+  .send-btn { background: var(--purple); color: #fff; }
+  .mic-btn { background: var(--bg3); color: var(--text2); border: 1.5px solid var(--border); }
+  .mic-btn.listening { background: var(--red); color: #fff; border-color: var(--red); animation: pulse-red 0.8s ease-in-out infinite; }
+
+  /* ── TAB 1 – COMMAND CENTER ── */
+  /* reuses chat UI */
+
+  /* ── TAB 2 – MY PURVIS ── */
+  .daily-card {
+    margin: 14px; border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--purple-dim), var(--bg3));
+    border: 1px solid var(--border); padding: 14px 16px;
+    flex-shrink: 0;
+  }
+  .daily-card .card-tag { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--green); font-weight: 600; margin-bottom: 5px; }
+  .daily-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+  .daily-card p { font-size: 0.82rem; color: var(--text2); line-height: 1.4; }
+  .quick-prompts { padding: 0 14px 12px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+  .prompt-btn {
+    padding: 13px 16px; border-radius: var(--radius-sm);
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text2); text-align: left; cursor: pointer;
+    font-size: 0.88rem; font-family: inherit;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    min-height: 44px;
+  }
+  .prompt-btn:active { background: var(--purple-dim); border-color: var(--purple); color: var(--text); }
+
+  /* ── TAB 3 – CONTENT FARM ── */
+  .section-pad { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .section-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); font-weight: 600; margin-bottom: 6px; }
+  .track-selector { display: flex; gap: 8px; flex-wrap: wrap; }
+  .track-btn {
+    padding: 8px 16px; border-radius: 20px;
+    background: var(--bg3); border: 1.5px solid var(--border);
+    color: var(--text2); font-size: 0.83rem; font-weight: 500;
+    cursor: pointer; transition: all 0.15s; min-height: 36px;
+    font-family: inherit;
+  }
+  .track-btn.selected { background: var(--purple-dim); border-color: var(--purple); color: var(--purple-light); }
+  .track-btn:active { transform: scale(0.95); }
+  .big-btn {
+    padding: 15px 20px; border-radius: var(--radius);
+    font-size: 1rem; font-weight: 700; cursor: pointer;
+    border: none; transition: transform 0.12s, filter 0.15s;
+    min-height: 52px; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .big-btn:active { transform: scale(0.97); filter: brightness(0.9); }
+  .btn-purple { background: var(--purple); color: #fff; }
+  .btn-green { background: var(--green); color: #0a0a0f; }
+  .content-output {
+    border-radius: var(--radius); background: var(--bg3);
+    border: 1px solid var(--border); overflow: hidden; display: none;
+  }
+  .content-output.visible { display: block; animation: fade-up 0.3s ease; }
+  .output-section {
+    padding: 12px 14px; border-bottom: 1px solid var(--border);
+  }
+  .output-section:last-of-type { border-bottom: none; }
+  .output-tag { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--purple-light); font-weight: 600; margin-bottom: 5px; }
+  .output-text { font-size: 0.88rem; line-height: 1.5; color: var(--text); }
+  .output-actions {
+    display: flex; gap: 8px; padding: 12px 14px;
+    border-top: 1px solid var(--border); flex-wrap: wrap;
+  }
+  .action-btn {
+    padding: 8px 14px; border-radius: var(--radius-sm);
+    background: var(--bg4); border: 1px solid var(--border);
+    color: var(--text2); font-size: 0.8rem; font-weight: 500;
+    cursor: pointer; transition: all 0.15s; min-height: 36px;
+    font-family: inherit;
+  }
+  .action-btn:active { background: var(--purple-dim); color: var(--purple-light); }
+
+  /* ── TAB 4 – LEGAL ── */
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 0.78rem; color: var(--text2); font-weight: 500; }
+  .form-input, .form-select, .form-textarea {
+    background: var(--bg3); border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-size: 0.9rem; padding: 12px 14px; outline: none;
+    font-family: inherit; transition: border-color 0.2s;
+    width: 100%;
+  }
+  .form-select { appearance: none; -webkit-appearance: none; cursor: pointer; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--purple); }
+  .form-textarea { resize: vertical; min-height: 100px; }
+  .legal-output {
+    border-radius: var(--radius); background: var(--bg3);
+    border: 1px solid var(--border); padding: 16px;
+    display: none; font-size: 0.88rem; line-height: 1.65;
+    white-space: pre-wrap; color: var(--text);
+  }
+  .legal-output.visible { display: block; animation: fade-up 0.3s ease; }
+  .print-row { display: flex; gap: 8px; }
+  .print-row .action-btn { flex: 1; justify-content: center; display: flex; }
+
+  /* ── TAB 5 – MORE ── */
+  .more-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 10px; padding: 16px;
+  }
+  .more-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.12s;
+    min-height: 80px;
+  }
+  .more-card:active { transform: scale(0.94); background: var(--purple-dim); border-color: var(--purple); }
+  .more-icon { font-size: 1.6rem; }
+  .more-label { font-size: 0.72rem; font-weight: 600; color: var(--text2); text-align: center; }
+
+  /* ── FULL-SCREEN PANELS ── */
+  .panel {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--bg); display: flex; flex-direction: column;
+    transform: translateY(100%); transition: transform 0.32s cubic-bezier(0.32,0.72,0,1);
+    overflow: hidden;
+  }
+  .panel.open { transform: translateY(0); }
+  .panel-header {
+    height: var(--top-h); display: flex; align-items: center;
+    padding: 0 14px; gap: 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .panel-back {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); font-size: 1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .panel-back:active { background: var(--purple-dim); }
+  .panel-title { font-size: 1rem; font-weight: 700; }
+  .panel-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+  /* ── VOICE ORB ── */
+  #orb-btn {
+    position: fixed; bottom: calc(var(--nav-h) + var(--safe-bottom) + 14px); right: 18px;
+    width: 60px; height: 60px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, var(--purple-light), var(--purple));
+    border: none; cursor: pointer; z-index: 60;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    box-shadow: 0 0 24px rgba(124,58,237,0.55), 0 4px 16px rgba(0,0,0,0.4);
+    transition: transform 0.18s, box-shadow 0.18s;
+    animation: orb-idle 3s ease-in-out infinite;
+  }
+  #orb-btn:active { transform: scale(0.92); }
+
+  /* ── FULL-SCREEN VOICE MODAL ── */
+  #voice-modal {
+    position: fixed; inset: 0; z-index: 200;
+    background: #000;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    transform: scale(0.95) translateY(30px); opacity: 0;
+    pointer-events: none;
+    transition: transform 0.32s cubic-bezier(0.34,1.56,0.64,1), opacity 0.28s ease;
+  }
+  #voice-modal.open {
+    transform: scale(1) translateY(0); opacity: 1;
+    pointer-events: all;
+  }
+  .voice-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(124,58,237,0.12) 0%, transparent 70%);
+  }
+  .voice-orb-wrap { position: relative; margin-bottom: 32px; }
+  #main-orb {
+    width: 140px; height: 140px; border-radius: 50%;
+    background: radial-gradient(circle at 38% 35%, var(--purple-light), var(--purple) 60%, #3d1d8c);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3.2rem; position: relative;
+    transition: background 0.5s ease;
+    box-shadow: 0 0 60px rgba(124,58,237,0.5), 0 0 120px rgba(124,58,237,0.2);
+  }
+  #main-orb.listening {
+    background: radial-gradient(circle at 38% 35%, #ff6b6b, var(--red) 60%, #8b0000);
+    box-shadow: 0 0 60px rgba(239,68,68,0.55), 0 0 120px rgba(239,68,68,0.22);
+  }
+  #main-orb.thinking {
+    background: radial-gradient(circle at 38% 35%, #93c5fd, var(--blue) 60%, #1e3a8a);
+    box-shadow: 0 0 60px rgba(59,130,246,0.55), 0 0 120px rgba(59,130,246,0.22);
+  }
+  #main-orb.speaking {
+    background: radial-gradient(circle at 38% 35%, #86efac, var(--green) 60%, #14532d);
+    box-shadow: 0 0 60px rgba(34,197,94,0.55), 0 0 120px rgba(34,197,94,0.22);
+  }
+  .orb-ring {
+    position: absolute; inset: -14px; border-radius: 50%;
+    border: 2px solid rgba(124,58,237,0.3);
+    animation: orb-ring 2s ease-in-out infinite;
+  }
+  .orb-ring2 {
+    position: absolute; inset: -28px; border-radius: 50%;
+    border: 1.5px solid rgba(124,58,237,0.15);
+    animation: orb-ring 2s ease-in-out 0.5s infinite;
+  }
+  #main-orb.listening .orb-ring { border-color: rgba(239,68,68,0.45); animation: orb-pulse-ring 0.7s ease-in-out infinite; }
+  #main-orb.listening .orb-ring2 { border-color: rgba(239,68,68,0.2); animation: orb-pulse-ring 0.7s ease-in-out 0.2s infinite; }
+  #main-orb.speaking .orb-ring { border-color: rgba(34,197,94,0.45); animation: orb-pulse-ring 0.5s ease-in-out infinite; }
+  #main-orb.speaking .orb-ring2 { border-color: rgba(34,197,94,0.2); animation: orb-pulse-ring 0.5s ease-in-out 0.18s infinite; }
+
+  .voice-status { font-size: 1rem; font-weight: 600; color: var(--text2); margin-bottom: 8px; letter-spacing: 0.02em; }
+  #voice-transcript {
+    max-width: 320px; text-align: center; font-size: 0.9rem;
+    color: var(--text2); line-height: 1.5; min-height: 48px;
+    padding: 0 16px;
+  }
+  #voice-close {
+    position: absolute; top: 54px; right: 20px;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); font-size: 1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  #voice-close:active { background: var(--bg4); }
+  #voice-manual-btn {
+    margin-top: 28px; padding: 14px 36px;
+    background: var(--bg3); border: 1.5px solid var(--border);
+    color: var(--text2); border-radius: 30px;
+    font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    transition: all 0.15s; font-family: inherit;
+  }
+  #voice-manual-btn.active { background: rgba(239,68,68,0.2); border-color: var(--red); color: var(--red); }
+  #voice-manual-btn:active { transform: scale(0.96); }
+
+  /* ── MENU DRAWER ── */
+  #menu-drawer {
+    position: fixed; top: 0; right: -280px; width: 280px; height: 100%;
+    background: var(--bg2); border-left: 1px solid var(--border);
+    z-index: 150; transition: right 0.28s cubic-bezier(0.32,0.72,0,1);
+    padding: var(--top-h) 0 0; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  #menu-drawer.open { right: 0; }
+  #menu-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+    z-index: 149; display: none; backdrop-filter: blur(2px);
+  }
+  #menu-overlay.open { display: block; }
+  .menu-section { padding: 14px 16px 6px; }
+  .menu-section-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text3); font-weight: 600; padding: 0 4px 8px; }
+  .menu-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 12px; border-radius: var(--radius-sm);
+    cursor: pointer; transition: background 0.15s;
+    font-size: 0.9rem; color: var(--text2);
+  }
+  .menu-item:active { background: var(--purple-dim); color: var(--text); }
+  .menu-item .mi-icon { font-size: 1.1rem; width: 22px; text-align: center; }
+  .mission-card-menu {
+    margin: 12px 16px; border-radius: var(--radius);
+    background: var(--green-dim); border: 1px solid rgba(34,197,94,0.3);
+    padding: 14px 16px;
+  }
+  .mcm-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--green); font-weight: 600; }
+  .mcm-value { font-size: 1.6rem; font-weight: 800; color: var(--green); margin: 2px 0; }
+  .mcm-sub { font-size: 0.78rem; color: var(--text2); }
+
+  /* ── LOADING SPINNER ── */
+  .spinner {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    animation: spin 0.7s linear infinite; flex-shrink: 0;
   }
 
-  /* Cards full width */
-  .card { border-radius: 10px; }
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: calc(var(--nav-h) + var(--safe-bottom) + 90px); left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 20px; border-radius: 30px;
+    font-size: 0.85rem; font-weight: 500; z-index: 300;
+    opacity: 0; transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none; white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* Chat logs */
-  .clog { max-height: 300px; }
-
-  /* Form grids */
-  .fgrid { grid-template-columns: 1fr !important; }
-
-  /* Bigger touch targets */
-  .btn { padding: 12px 18px; font-size: 14px; }
-  input, select, textarea { font-size: 16px !important; } /* Prevents iOS zoom */
-
-  /* PIN screen bigger on mobile */
-  .lbox { width: 92vw; max-width: 360px; padding: 32px 20px; }
-  .ppad button { padding: 18px; font-size: 24px; }
-
-  /* Image gallery 2 cols */
-  .igallery { grid-template-columns: repeat(2, 1fr) !important; }
-
-  /* Mission in topbar */
-  .mission { font-size: 11px; padding: 3px 8px; }
-}
-
-/* Tablet tweaks */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .sb { width: 56px !important; }
-  .sb .lb, .sb .logo, .sf span { display: none !important; }
-  .cgrid { grid-template-columns: 1fr 240px !important; }
-}
-
+  /* ── ANIMATIONS ── */
+  @keyframes pulse-glow {
+    0%,100% { filter: drop-shadow(0 0 20px var(--purple)); }
+    50% { filter: drop-shadow(0 0 40px var(--purple-light)); }
+  }
+  @keyframes orb-idle {
+    0%,100% { box-shadow: 0 0 24px rgba(124,58,237,0.55), 0 4px 16px rgba(0,0,0,0.4); transform: scale(1); }
+    50% { box-shadow: 0 0 36px rgba(124,58,237,0.8), 0 4px 16px rgba(0,0,0,0.4); transform: scale(1.05); }
+  }
+  @keyframes orb-ring {
+    0%,100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.08); opacity: 0.3; }
+  }
+  @keyframes orb-pulse-ring {
+    0%,100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.12); opacity: 0.4; }
+  }
+  @keyframes typing {
+    0%,100% { transform: translateY(0); opacity: 0.4; }
+    50% { transform: translateY(-5px); opacity: 1; }
+  }
+  @keyframes msg-in {
+    0% { opacity: 0; transform: translateY(10px) scale(0.96); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes fade-up {
+    0% { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes pulse-red {
+    0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.55); }
+    50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+  }
+  
+  /* Status indicator */
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green);
+    display: inline-block; margin-left: 6px;
+    animation: pulse-green 2s ease-in-out infinite;
+  }
+  @keyframes pulse-green {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+  
+  /* Separator */
+  .sep { height: 1px; background: var(--border); margin: 4px 0; }
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 99px; }
 </style>
 </head>
 <body>
 
-<!-- PIN REMOVED - PURVIS OPENS DIRECTLY -->
-
-<!-- APP -->
-<div id="app">
-
-  <!-- MOBILE TOPBAR -->
-  <div class="mob-topbar" id="mobTopbar">
-    <div style="display:flex;align-items:center;gap:8px">
-      <span style="font-size:20px">🧠</span>
-      <span class="mtitle">PURVIS <span style="color:var(--green)">11</span></span>
-    </div>
-    <div class="micons">
-      <div class="mission" onclick="openMission()" style="font-size:11px;padding:4px 8px;border-radius:16px;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);color:var(--yellow);cursor:pointer">💰 <strong id="mbalMob">$0</strong></div>
-      <button onclick="toggleVoice()" id="vbtnMob" title="Voice">🎤</button>
-      <button onclick="openDrawer()" title="Menu">☰</button>
-    </div>
-  </div>
-
-  <!-- MOBILE DRAWER -->
-  <div class="mob-drawer hidden" id="mobDrawer">
-    <div class="mob-drawer-bg" onclick="closeDrawer()"></div>
-    <div class="mob-drawer-panel">
-      <div style="padding:20px 18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)">
-        <span style="font-size:24px">🧠</span>
-        <div>
-          <div style="font-size:16px;font-weight:900;color:var(--accent2)">PURVIS 11</div>
-          <div style="font-size:11px;color:var(--muted)">Unified AI Operator</div>
-        </div>
-        <button onclick="closeDrawer()" style="margin-left:auto;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
-      </div>
-      <h3>All Engines</h3>
-      <div class="mob-drawer-item" onclick="mgo('cmd')"><span class="dic">⚡</span>Command Center</div>
-      <div class="mob-drawer-item" onclick="mgo('brain')"><span class="dic">🤖</span>AI Brain</div>
-      <div class="mob-drawer-item" onclick="mgo('content')"><span class="dic">📱</span>Content Farm</div>
-      <div class="mob-drawer-item" onclick="mgo('image')"><span class="dic">🎨</span>Image Generator</div>
-      <div class="mob-drawer-item" onclick="mgo('music')"><span class="dic">🎵</span>Music</div>
-      <div class="mob-drawer-item" onclick="mgo('research')"><span class="dic">🔬</span>Deep Research</div>
-      <div class="mob-drawer-item" onclick="mgo('legal')"><span class="dic">⚖️</span>Legal Engine</div>
-      <div class="mob-drawer-item" onclick="mgo('leads')"><span class="dic">💼</span>Leads / CRM</div>
-      <div class="mob-drawer-item" onclick="mgo('plumbing')"><span class="dic">🔧</span>Plumbing IPC</div>
-      <div class="mob-drawer-item" onclick="mgo('agents')"><span class="dic">🤖</span>Sub-Agents</div>
-      <div class="mob-drawer-item" onclick="mgo('memory')"><span class="dic">💾</span>Memory</div>
-      <div class="mob-drawer-item" onclick="mgo('sleepmode')"><span class="dic">🌙</span>Sleep Mode / Queue</div>
-      <div class="mob-drawer-item" onclick="mgo('search')"><span class="dic">🔍</span>Web Search</div>
-      <div class="mob-drawer-item" onclick="mgo('personal')"><span class="dic">🤝</span>Personal PURVIS</div>
-      <div class="mob-drawer-item" onclick="mgo('briefing')"><span class="dic">📋</span>Daily Briefing</div>
-      <div class="mob-drawer-item" onclick="mgo('subagents')"><span class="dic">⚡</span>Sub-Agents</div>
-      <div class="mob-drawer-item" onclick="mgo('workflows')"><span class="dic">🔄</span>Workflows</div>
-      <div class="mob-drawer-item" onclick="mgo('youtube')"><span class="dic">📺</span>YouTube Engine</div>
-      <div class="mob-drawer-item" onclick="mgo('social')"><span class="dic">📲</span>Social Media</div>
-      <div class="mob-drawer-item" onclick="mgo('email')"><span class="dic">📧</span>Email / Gmail</div>
-      <div class="mob-drawer-item" onclick="mgo('canva')"><span class="dic">🖼️</span>Canva / CapCut</div>
-      <div style="padding:16px 18px;border-top:1px solid var(--border);margin-top:8px">
-        <button class="btn hidden" id="installBtn" style="width:100%;margin-bottom:8px;background:#16a34a" onclick="installPWA()">📲 Add PURVIS to Home Screen</button>
-        <button class="btn" style="width:100%;margin-bottom:8px" onclick="lockApp();closeDrawer()">🔒 Lock PURVIS</button>
-        <div style="font-size:11px;color:var(--muted);text-align:center">SunBiz LLC • Mission: $100 → $1M</div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- PURVIS VOICE CONVERSATION MODE -->
-  <div id="voiceMode" class="hidden" style="position:fixed;inset:0;background:linear-gradient(135deg,#0a0a0f,#1a0a2e);z-index:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px">
-    <div style="font-size:48px;animation:pulse 2s infinite">🧠</div>
-    <div style="font-size:22px;font-weight:900;color:#a855f7;letter-spacing:3px">PURVIS</div>
-    <div id="voiceStatus" style="font-size:14px;color:#888899;letter-spacing:2px;text-transform:uppercase">TAP TO SPEAK</div>
-    
-    <!-- Animated orb -->
-    <div id="voiceOrb" onclick="toggleVoiceConvo()" style="width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 40px rgba(124,58,237,.6);transition:.3s;font-size:40px">
-      🎤
-    </div>
-    
-    <!-- PURVIS reply text -->
-    <div id="voiceReply" style="max-width:320px;text-align:center;font-size:15px;line-height:1.6;color:#f1f1f5;min-height:60px;padding:0 20px"></div>
-    
-    <!-- Transcript -->
-    <div id="voiceTranscript" style="font-size:12px;color:#888899;font-style:italic;min-height:20px"></div>
-    
-    <button onclick="closeVoiceMode()" style="background:rgba(42,42,58,.8);border:1px solid #2a2a3a;color:#888899;padding:10px 24px;border-radius:20px;cursor:pointer;font-size:13px;margin-top:8px">✕ Close</button>
-  </div>
-
-  <!-- VOICE FAB BUTTON (always visible on mobile) -->
-  <button id="voiceFab" onclick="openVoiceMode()" style="display:none;position:fixed;bottom:76px;right:16px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);border:none;color:white;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,.5);z-index:90;align-items:center;justify-content:center">🎤</button>
-
-  <!-- MOBILE BOTTOM NAV -->
-  <div class="mobile-nav" id="mobileNav">
-    <div class="mobile-nav-inner">
-      <button class="mnav-btn on" onclick="mgo('cmd')" data-mt="cmd"><span class="mic">⚡</span>Command</button>
-      <button class="mnav-btn" onclick="mgo('brain')" data-mt="brain"><span class="mic">🤖</span>Brain</button>
-      <button class="mnav-btn" onclick="mgo('content')" data-mt="content"><span class="mic">📱</span>Content</button>
-      <button class="mnav-btn" onclick="mgo('image')" data-mt="image"><span class="mic">🎨</span>Images</button>
-      <button class="mnav-btn" onclick="mgo('legal')" data-mt="legal"><span class="mic">⚖️</span>Legal</button>
-      <button class="mnav-btn" onclick="mgo('personal')" data-mt="personal"><span class="mic">🤝</span>My PURVIS</button>
-      <button class="mnav-btn" onclick="openDrawer()"><span class="mic">☰</span>More</button>
-    </div>
-  </div>
-
-
-  <div class="sb" id="sb">
-    <div class="sbh">
-      <span style="font-size:22px">🧠</span>
-      <span class="logo">PURVIS <span>11</span></span>
-      <button class="tog" onclick="toggleSB()">☰</button>
-    </div>
-    <nav><ul>
-      <li class="on" onclick="go('cmd')" data-t="cmd"><span class="ic">⚡</span><span class="lb">Command</span></li>
-      <li onclick="go('brain')" data-t="brain"><span class="ic">🤖</span><span class="lb">AI Brain</span></li>
-      <li onclick="go('content')" data-t="content"><span class="ic">📱</span><span class="lb">Content Farm</span></li>
-      <li onclick="go('image')" data-t="image"><span class="ic">🎨</span><span class="lb">Image Gen</span></li>
-      <li onclick="go('music')" data-t="music"><span class="ic">🎵</span><span class="lb">Music</span></li>
-      <li onclick="go('research')" data-t="research"><span class="ic">🔬</span><span class="lb">Research</span></li>
-      <li onclick="go('legal')" data-t="legal"><span class="ic">⚖️</span><span class="lb">Legal Engine</span></li>
-      <li onclick="go('leads')" data-t="leads"><span class="ic">💼</span><span class="lb">Leads / CRM</span></li>
-      <li onclick="go('plumbing')" data-t="plumbing"><span class="ic">🔧</span><span class="lb">Plumbing IPC</span></li>
-      <li onclick="go('agents')" data-t="agents"><span class="ic">🤖</span><span class="lb">Sub-Agents</span></li>
-      <li onclick="go('memory')" data-t="memory"><span class="ic">💾</span><span class="lb">Memory</span></li>
-      <li onclick="go('sleepmode')" data-t="sleepmode"><span class="ic">🌙</span><span class="lb">Sleep Mode</span></li>
-      <li onclick="go('search')" data-t="search"><span class="ic">🔍</span><span class="lb">Web Search</span></li>
-      <li onclick="go('personal')" data-t="personal"><span class="ic">🤝</span><span class="lb">My PURVIS</span></li>
-      <li onclick="go('briefing')" data-t="briefing"><span class="ic">📋</span><span class="lb">Daily Briefing</span></li>
-    </ul></nav>
-    <div class="sf"><div class="dot"></div><span>PURVIS ONLINE</span></div>
-  </div>
-
-  <div class="main">
-    <div class="tbar">
-      <div class="tbar-l" id="tlabel">⚡ Command Center</div>
-      <div class="tbar-r">
-        <div class="mission" onclick="openMission()" title="Click to update balance">💰 <strong id="mbal">$0</strong> → $1M</div>
-        <button class="ibtn" onclick="toggleVoice()" id="vbtn" title="Voice Input">🎤</button>
-        <button class="ibtn" onclick="lockApp()" title="Lock">🔒</button>
-      </div>
-    </div>
-
-    <!-- ===== COMMAND ===== -->
-    <div id="t-cmd" class="tab on">
-      <div class="cgrid" style="flex:1;min-height:0">
-        <div class="cmain">
-          <div class="card" style="flex:1;display:flex;flex-direction:column">
-            <div class="ch"><h2>⚡ Command Center</h2><span class="badge">OPERATOR MODE</span></div>
-            <div class="clog" id="cmdlog">
-              <div class="msg sys"><div class="txt">PURVIS 11 ONLINE — GPT-4o + DALL-E 3 + ElevenLabs + Supabase Memory. All engines hot. Enter any command.</div></div>
-            </div>
-            <div class="irow">
-              <textarea id="cmdinput" rows="2" placeholder="Command, task, or question..." onkeydown="ck(event)"></textarea>
-              <button class="btn" onclick="runCmd()" id="cbtn">EXECUTE</button>
-            </div>
-          </div>
-        </div>
-        <div class="cside">
-          <div class="card sc">
-            <h3>System Status</h3>
-            <div class="srow"><span>Brain (GPT-4o)</span><span id="ais" class="y">CHECKING...</span></div>
-            <div class="srow"><span>Image (DALL-E 3)</span><span class="g">READY</span></div>
-            <div class="srow"><span>Voice (ElevenLabs)</span><span class="g">READY</span></div>
-            <div class="srow"><span>Memory (Supabase)</span><span class="g">CONNECTED</span></div>
-            <div class="srow"><span>Research</span><span class="g">READY</span></div>
-          </div>
-          <div class="card sc">
-            <h3>Quick Actions</h3>
-            <button class="qbtn" onclick="qk('Generate a viral Scripture Daily YouTube Shorts script about David and Goliath')">📖 Scripture Daily</button>
-            <button class="qbtn" onclick="qk('Draft a motion to dismiss for Florida case 2024-DR-012028-O based on Napue violation')">⚖️ Legal Motion</button>
-            <button class="qbtn" onclick="qk('Generate plumbing estimate for full bathroom rough-in in Orlando Florida')">🔧 Plumbing Estimate</button>
-            <button class="qbtn" onclick="qk('Create viral political commentary content on government accountability')">📣 Political Content</button>
-            <button class="qbtn" onclick="go('image');document.getElementById('iprompt').value='David and Goliath epic cinematic battle scene, dramatic golden lighting, 4K'">🎨 Bible Image</button>
-            <button class="qbtn" onclick="qk('Deep research: best free ways to monetize YouTube Shorts in 2025')">🔬 Research</button>
-          </div>
-          <div class="card sc">
-            <h3>Recent Tasks</h3>
-            <div id="rtasks"><div class="empty">No tasks yet</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== AI BRAIN ===== -->
-    <div id="t-brain" class="tab">
-      <div class="card" style="flex:1;display:flex;flex-direction:column">
-        <div class="ch"><h2>🤖 AI Brain</h2><span class="badge">GPT-4o POWERED</span></div>
-        <div class="clog tall" id="brainlog">
-          <div class="msg sys"><div class="txt">AI Brain online. Powered by GPT-4o with Supabase memory. Every conversation is remembered. Ask anything.</div></div>
-        </div>
-        <div class="irow">
-          <textarea id="braininput" rows="2" placeholder="Ask anything — research, writing, strategy, code, analysis..." onkeydown="bk(event)"></textarea>
-          <button class="btn" onclick="sendBrain()">SEND</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== CONTENT FARM ===== -->
-    <div id="t-content" class="tab">
-      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
-        <div class="ch"><h2>📱 Content Farm</h2><span class="badge">AUTO ENGINE</span></div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-          <select id="ctrack">
-            <option value="scripture">📖 Scripture Daily (NT)</option>
-            <option value="political">📣 Political Commentary</option>
-            <option value="plumbing">🔧 Plumbing Tips</option>
-            <option value="motivation">💪 Motivation / Mindset</option>
-            <option value="legal_awareness">⚖️ Legal Awareness</option>
-            <option value="custom">✏️ Custom Topic</option>
-          </select>
-          <input type="text" id="ctopic" placeholder="Topic override (optional)" style="flex:1;min-width:160px">
-          <button class="btn" onclick="genContent()">GENERATE</button>
-          <button class="btn sec" onclick="batchContent()">BATCH ×5</button>
-          <button class="btn sec" onclick="saveContent()">SAVE</button>
-          <button class="btn sec" onclick="speakContent()">🔊 SPEAK</button>
-        </div>
-        <div id="cout" class="output" style="flex:1;min-height:200px">Select a track and click GENERATE.</div>
-        <audio id="contentAudio" controls class="hidden"></audio>
-        <div>
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Saved Content (<span id="ccount">0</span>)</div>
-          <div id="csaved"><div class="empty">No saved content yet</div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== IMAGE GEN ===== -->
-    <div id="t-image" class="tab">
-      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
-        <div class="ch"><h2>🎨 Image Generator</h2><span class="badge">DALL-E 3</span></div>
-        <textarea id="iprompt" rows="3" placeholder="Describe your image... e.g. David and Goliath epic cinematic battle, dramatic sky, golden light, 4K"></textarea>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-          <select id="istyle">
-            <option value="cinematic epic, dramatic lighting">🎬 Cinematic</option>
-            <option value="photorealistic, ultra detailed">📷 Photorealistic</option>
-            <option value="digital art, vibrant colors">🎨 Digital Art</option>
-            <option value="oil painting, classical style">🖼️ Oil Painting</option>
-            <option value="anime style, vibrant">🌸 Anime</option>
-            <option value="watercolor, soft brushstrokes">💧 Watercolor</option>
-          </select>
-          <select id="isize">
-            <option value="1024x1024">Square 1:1</option>
-            <option value="1792x1024">Landscape 16:9</option>
-            <option value="1024x1792">Portrait 9:16 (Shorts)</option>
-          </select>
-          <button class="btn" onclick="genImage()">GENERATE WITH DALL-E 3</button>
-        </div>
-        <div id="iout" class="imgout"><span style="color:var(--muted)">Enter a prompt and click GENERATE</span></div>
-        <div class="igallery" id="igal"></div>
-      </div>
-    </div>
-
-    <!-- ===== MUSIC ===== -->
-    <div id="t-music" class="tab">
-      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
-        <div class="ch"><h2>🎵 Music Generator</h2><span class="badge">SUNO / UDIO PROMPTS</span></div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <input type="text" id="mprompt" placeholder="Describe your music... e.g. Epic gospel choir battle anthem" style="flex:2;min-width:200px">
-          <select id="mgenre">
-            <option value="Gospel">Gospel</option>
-            <option value="Hip Hop">Hip Hop</option>
-            <option value="R&B">R&B</option>
-            <option value="Pop">Pop</option>
-            <option value="Trap">Trap</option>
-            <option value="Cinematic">Cinematic</option>
-            <option value="Electronic">Electronic</option>
-            <option value="Country">Country</option>
-          </select>
-          <select id="mmood">
-            <option value="Powerful">Powerful</option>
-            <option value="Uplifting">Uplifting</option>
-            <option value="Dark">Dark</option>
-            <option value="Emotional">Emotional</option>
-            <option value="Hype">Hype</option>
-            <option value="Chill">Chill</option>
-          </select>
-          <button class="btn" onclick="genMusic()">GENERATE</button>
-        </div>
-        <div id="mout" class="output" style="flex:1;min-height:200px">Enter your music description and click GENERATE to get Suno AI and Udio prompts + production notes.</div>
-      </div>
-    </div>
-
-    <!-- ===== RESEARCH ===== -->
-    <div id="t-research" class="tab">
-      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
-        <div class="ch"><h2>🔬 Deep Research Engine</h2><span class="badge">GPT-4o</span></div>
-        <div style="display:flex;gap:10px">
-          <input type="text" id="rtopic" placeholder="Research topic... e.g. Best free tools to monetize YouTube Shorts 2025" style="flex:1">
-          <button class="btn" onclick="doResearch()">RESEARCH</button>
-        </div>
-        <div id="rout" class="output" style="flex:1;min-height:300px">Enter a topic and click RESEARCH for a deep, comprehensive analysis.</div>
-      </div>
-    </div>
-
-    <!-- ===== LEGAL ===== -->
-    <div id="t-legal" class="tab">
-      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
-        <div class="ch"><h2>⚖️ Legal Engine</h2><span class="badge">FLORIDA LAW</span></div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <select id="ltype" style="flex:1;min-width:200px">
-            <option value="dismiss">Motion to Dismiss</option>
-            <option value="suppress">Motion to Suppress</option>
-            <option value="new_trial">Motion for New Trial</option>
-            <option value="admit_evidence">Motion to Admit Evidence</option>
-            <option value="injunction">Injunction Challenge</option>
-            <option value="analysis">Case Analysis</option>
-            <option value="rights">Rights Education</option>
-            <option value="1540b">Rule 1.540(b) Relief</option>
-            <option value="napue">Napue Violation Brief</option>
-          </select>
-          <input type="text" id="lcnum" value="2024-DR-012028-O" placeholder="Case #" style="flex:1;min-width:180px">
-          <button class="btn" onclick="genLegal()">GENERATE</button>
-          <button class="btn sec" onclick="saveLegal()">SAVE</button>
-          <button class="btn sec" onclick="printLegal()">PRINT/PDF</button>
-        </div>
-        <textarea id="lfacts" rows="4" placeholder="Enter your case facts, evidence, or describe your situation in plain language..."></textarea>
-        <div id="lout" class="output" style="flex:1;min-height:220px;max-height:400px;overflow-y:auto">Select motion type, enter facts, and click GENERATE.</div>
-        <div>
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Saved Documents (<span id="lcount">0</span>)</div>
-          <div id="lsaved"><div class="empty">No saved documents yet</div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== LEADS ===== -->
-    <div id="t-leads" class="tab">
-      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:14px">
-        <div class="ch"><h2>💼 Leads / CRM</h2><span class="badge">BUSINESS ENGINE</span></div>
-        <div>
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Add New Lead</div>
-          <div class="fgrid">
-            <input type="text" id="lname" placeholder="Full Name">
-            <input type="email" id="lemail" placeholder="Email">
-            <input type="tel" id="lphone" placeholder="Phone">
-            <select id="lsrc"><option value="website">Website</option><option value="referral">Referral</option><option value="social">Social Media</option><option value="cold">Cold Outreach</option><option value="other">Other</option></select>
-            <input type="text" id="lnotes" placeholder="Service / Notes">
-            <button class="btn grn" onclick="addLead()">ADD LEAD</button>
-          </div>
-        </div>
-        <div style="overflow-x:auto;flex:1">
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">All Leads (<span id="leadcount">0</span>)</div>
-          <table class="tbl">
-            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Source</th><th>Status</th><th>Notes</th><th>Actions</th></tr></thead>
-            <tbody id="leadtbl"><tr><td colspan="7" class="empty">No leads yet</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== PLUMBING ===== -->
-    <div id="t-plumbing" class="tab">
-      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:14px">
-        <div class="ch"><h2>🔧 Plumbing IPC Calculator</h2><span class="badge">IPC 2021 / FLORIDA</span></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1">
-          <div>
-            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">DFU Calculator</div>
-            <div class="dfu-row"><span>🚽 Toilets (4 DFU)</span><input type="number" id="dfut" value="0" min="0" oninput="calcDFU()"></div>
-            <div class="dfu-row"><span>🚿 Lavatories (1 DFU)</span><input type="number" id="dful" value="0" min="0" oninput="calcDFU()"></div>
-            <div class="dfu-row"><span>🛁 Tubs/Showers (2 DFU)</span><input type="number" id="dfub" value="0" min="0" oninput="calcDFU()"></div>
-            <div class="dfu-row"><span>🍽️ Kitchen Sinks (2 DFU)</span><input type="number" id="dfuk" value="0" min="0" oninput="calcDFU()"></div>
-            <div class="dfu-row"><span>🕳️ Floor Drains (2 DFU)</span><input type="number" id="dfuf" value="0" min="0" oninput="calcDFU()"></div>
-            <div class="dfu-row"><span>🫧 Dishwashers (2 DFU)</span><input type="number" id="dfud" value="0" min="0" oninput="calcDFU()"></div>
-            <div class="dfu-row"><span>👕 Washers (3 DFU)</span><input type="number" id="dfuw" value="0" min="0" oninput="calcDFU()"></div>
-            <div class="dfu-res">
-              <p>Total DFUs: <strong id="tdfu">0</strong></p>
-              <p>Building Drain: <strong id="dpipe">—</strong></p>
-              <p>Branch Size: <strong id="bpipe">—</strong></p>
-              <p style="font-size:11px;color:var(--muted);margin-top:6px" id="dfunote">Add fixtures above.</p>
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Plumbing AI Assistant</div>
-            <div class="clog" id="plog" style="flex:1">
-              <div class="msg sys"><div class="txt">Plumbing AI ready. Ask about pipe sizing, Florida code, DFU tables, or request an estimate.</div></div>
-            </div>
-            <div class="irow">
-              <textarea id="pinput" rows="2" placeholder="Ask a plumbing question or request an estimate..." onkeydown="pk(event)"></textarea>
-              <button class="btn" onclick="askPlumbing()">ASK</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== SUB-AGENTS ===== -->
-    <div id="t-agents" class="tab">
-      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:14px">
-        <div class="ch"><h2>🤖 Sub-Agent Creator</h2><span class="badge">SPAWN ENGINE</span></div>
-        <div class="fgrid">
-          <input type="text" id="aname" placeholder="Agent Name (e.g. Justice Navigator)">
-          <input type="text" id="apurpose" placeholder="Purpose (e.g. Florida family law assistant)">
-          <input type="text" id="acaps" placeholder="Capabilities needed">
-          <button class="btn" onclick="createAgent()">CREATE AGENT</button>
-        </div>
-        <div id="agentout" class="output" style="flex:1;min-height:200px">Enter agent details and click CREATE AGENT to spawn a specialized sub-agent.</div>
-        <div>
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Saved Agents</div>
-          <div id="agentlist"><div class="empty">No agents created yet</div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== MEMORY ===== -->
-    <div id="t-memory" class="tab">
-      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:14px">
-        <div class="ch"><h2>💾 Brain Memory</h2><span class="badge">SUPABASE + LOCAL</span></div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <input type="text" id="mkey" placeholder="Key" style="flex:1;min-width:120px">
-          <input type="text" id="mval" placeholder="Value" style="flex:2;min-width:180px">
-          <select id="mcat"><option value="general">General</option><option value="business">Business</option><option value="legal">Legal</option><option value="content">Content</option><option value="personal">Personal</option></select>
-          <button class="btn" onclick="saveMem()">SAVE</button>
-          <button class="btn sec" onclick="loadMem()">REFRESH</button>
-        </div>
-        <div id="memlist" style="display:flex;flex-direction:column;gap:8px;flex:1;overflow-y:auto"></div>
-      </div>
-    </div>
-
-
-    <!-- SLEEP MODE / TASK QUEUE -->
-    <div id="t-sleepmode" class="tab">
-      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:14px">
-        <div class="ch"><h2>🌙 Sleep Mode — Autonomous Agent</h2><span class="badge">RUNS OVERNIGHT</span></div>
-        
-        <!-- Status -->
-        <div id="sleepStatus" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;gap:16px;flex-wrap:wrap">
-          <div style="flex:1;min-width:120px"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Last Run</div><div id="lastRun" style="font-size:13px;color:var(--green);font-weight:700">Checking...</div></div>
-          <div style="flex:1;min-width:120px"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Queue</div><div id="queueCount" style="font-size:13px;color:var(--yellow);font-weight:700">—</div></div>
-          <div style="flex:1;min-width:120px"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Done Today</div><div id="doneCount" style="font-size:13px;color:var(--accent2);font-weight:700">—</div></div>
-        </div>
-
-        <!-- Add Task -->
-        <div>
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Add Task to Queue (PURVIS will do it automatically)</div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <input type="text" id="queueTask" placeholder="e.g. Research best YouTube Shorts trends this week" style="flex:1;min-width:200px">
-            <select id="queueType">
-              <option value="general">General</option>
-              <option value="research">Research (searches web)</option>
-              <option value="content">Generate Content</option>
-              <option value="legal">Legal Analysis</option>
-              <option value="business">Business Task</option>
-            </select>
-            <button class="btn" onclick="addToQueue()">ADD TO QUEUE</button>
-            <button class="btn grn" onclick="runNow()">▶ RUN NOW</button>
-          </div>
-        </div>
-
-        <!-- Quick Add Templates -->
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="qbtn" style="flex:none;width:auto" onclick="quickQueue('Generate 5 Scripture Daily scripts for this week', 'content')">📖 Scripture Week</button>
-          <button class="qbtn" style="flex:none;width:auto" onclick="quickQueue('Research top political news today and create commentary content', 'research')">📣 Political Today</button>
-          <button class="qbtn" style="flex:none;width:auto" onclick="quickQueue('Check for new plumbing leads and follow up opportunities in Orlando', 'business')">🔧 Lead Check</button>
-          <button class="qbtn" style="flex:none;width:auto" onclick="quickQueue('Analyze case 2024-DR-012028-O and identify strongest next legal move', 'legal')">⚖️ Legal Check</button>
-          <button class="qbtn" style="flex:none;width:auto" onclick="quickQueue('Research YouTube Shorts monetization strategies that work in 2025', 'research')">💰 Money Research</button>
-        </div>
-
-        <!-- Pending Queue -->
-        <div>
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Pending Queue</div>
-          <div id="pendingQueue"><div class="empty">No tasks queued. Add tasks above — PURVIS will run them automatically every hour.</div></div>
-        </div>
-
-        <!-- Completed Jobs -->
-        <div>
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Completed Jobs</div>
-          <div id="completedJobs"><div class="empty">No completed jobs yet</div></div>
-        </div>
-
-        <!-- Last Audit -->
-        <div>
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Last Self-Audit by PURVIS</div>
-          <div id="lastAuditOut" class="output" style="min-height:80px;font-size:12px">Loading...</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- WEB SEARCH -->
-    <div id="t-search" class="tab">
-      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
-        <div class="ch"><h2>🔍 Web Search</h2><span class="badge">FREE — NO KEY NEEDED</span></div>
-        <div style="display:flex;gap:10px">
-          <input type="text" id="searchQ" placeholder="Search anything... e.g. YouTube Shorts algorithm 2025" style="flex:1" onkeydown="if(event.key==='Enter')doSearch()">
-          <button class="btn" onclick="doSearch()">SEARCH</button>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="qbtn" style="flex:none;width:auto" onclick="searchQ('YouTube Shorts monetization 2025')">📺 YT Shorts</button>
-          <button class="qbtn" style="flex:none;width:auto" onclick="searchQ('plumbing contractor Orlando Florida leads')">🔧 Plumbing Leads</button>
-          <button class="qbtn" style="flex:none;width:auto" onclick="searchQ('Florida family law case 2024 appeals')">⚖️ FL Law</button>
-          <button class="qbtn" style="flex:none;width:auto" onclick="searchQ('content creator income 2025 strategies')">💰 Creator Income</button>
-        </div>
-        <div id="searchOut" class="output" style="flex:1;min-height:300px">Enter a search query above. PURVIS will search the web and give you an analyzed, actionable summary.</div>
-      </div>
-    </div>
-
-
-    <!-- PERSONAL PURVIS -->
-    <div id="t-personal" class="tab">
-      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
-        <div class="ch">
-          <h2>🤝 Personal PURVIS — Your Right-Hand Man</h2>
-          <span class="badge">ALWAYS ON YOUR SIDE</span>
-        </div>
-        <div style="background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);border-radius:10px;padding:12px;font-size:12px;color:var(--muted)">
-          Tell PURVIS anything. Give instructions. Ask for help. He knows your business, your case, your mission. He will execute, suggest, and build — not just talk.
-        </div>
-        <div class="clog tall" id="personallog" style="flex:1;min-height:300px;max-height:none">
-          <div class="msg sys"><div class="txt">I am your personal right-hand man. I know your business, your legal case, your content empire, your mission. Tell me what you need — I will execute it, suggest next steps, and never leave you without a plan. What do you want to do today?</div></div>
-        </div>
-        <div class="irow">
-          <textarea id="personalinput" rows="3" placeholder="Tell PURVIS what you want... e.g. Help me build a content calendar for this week, or What should I do today to make money, or Help me with my legal case..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendPersonal()}"></textarea>
-          <button class="btn" onclick="sendPersonal()">SEND</button>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="qbtn" style="flex:none;width:auto" onclick="personalQuick('What should I do TODAY to make money for my $100 to $1M mission?')">💰 What to do today</button>
-          <button class="qbtn" style="flex:none;width:auto" onclick="personalQuick('What is my strongest next move on case 2024-DR-012028-O?')">⚖️ Legal next move</button>
-          <button class="qbtn" style="flex:none;width:auto" onclick="personalQuick('Build me a full content plan for this week across all my tracks')">📱 Content plan</button>
-          <button class="qbtn" style="flex:none;width:auto" onclick="personalQuick('What is the best way to get my first plumbing lead this week in Orlando?')">🔧 Get leads</button>
-          <button class="qbtn" style="flex:none;width:auto" onclick="personalQuick('Review everything I have built so far and tell me what is missing')">🔍 Audit everything</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- DAILY BRIEFING -->
-    <div id="t-briefing" class="tab">
-      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
-        <div class="ch"><h2>📋 Daily Briefing</h2><span class="badge">YOUR DAY FROM PURVIS</span></div>
-        <button class="btn" onclick="getBriefing()" id="briefBtn">GET TODAY'S BRIEFING</button>
-        <div id="briefout" class="output" style="flex:1;min-height:300px;font-size:13px">
-          Click above — PURVIS will tell you exactly what to do today to move closer to your $1M mission.
-        </div>
-      </div>
-    </div>
-
-    <!-- SUB-AGENTS -->
-    <div id="t-subagents" class="tab">
-      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:14px">
-        <div class="ch"><h2>⚡ Sub-Agent Launcher</h2><span class="badge">SPECIALIZED EXECUTORS</span></div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <select id="agenttype" style="flex:1;min-width:180px">
-            <option value="content_creator">📱 Content Creator</option>
-            <option value="legal_drafter">⚖️ Legal Drafter</option>
-            <option value="business_dev">💼 Business Developer</option>
-            <option value="researcher">🔬 Deep Researcher</option>
-            <option value="image_director">🎨 Image Director</option>
-            <option value="workflow_builder">🔄 Workflow Builder</option>
-            <option value="betting_analyst">🎲 Betting Analyst</option>
-          </select>
-          <button class="btn" onclick="spawnAgent()">SPAWN AGENT</button>
-        </div>
-        <textarea id="agenttask" rows="3" placeholder="What should this agent do? e.g. Create 5 viral Scripture Daily scripts for YouTube Shorts this week"></textarea>
-        <div id="agentout" class="output" style="flex:1;min-height:200px">Select an agent type, describe the task, and click SPAWN AGENT.</div>
-        <div>
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Recent Agent Results</div>
-          <div id="agentresults"><div class="empty">No agent results yet</div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- WORKFLOWS -->
-    <div id="t-workflows" class="tab">
-      <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
-        <div class="ch"><h2>🔄 Workflow Builder</h2><span class="badge">BUILD AUTOMATED SYSTEMS</span></div>
-        <input type="text" id="wfgoal" placeholder="What workflow do you want to build? e.g. Auto-post Scripture content daily to YouTube" style="width:100%">
-        <button class="btn" onclick="buildWorkflow()">BUILD WORKFLOW</button>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="qbtn" style="flex:none;width:auto" onclick="quickWorkflow('Daily content creation and posting workflow for YouTube Shorts')">📱 Daily Content</button>
-          <button class="qbtn" style="flex:none;width:auto" onclick="quickWorkflow('Plumbing lead intake to estimate to invoice automated workflow')">🔧 Lead to Invoice</button>
-          <button class="qbtn" style="flex:none;width:auto" onclick="quickWorkflow('Legal case management and motion filing workflow for 2024-DR-012028-O')">⚖️ Legal Workflow</button>
-          <button class="qbtn" style="flex:none;width:auto" onclick="quickWorkflow('$100 to $1M content monetization workflow using YouTube AdSense and affiliate')">💰 Money Workflow</button>
-        </div>
-        <div id="wfout" class="output" style="flex:1;min-height:300px">Enter your goal above and PURVIS will build a complete automated workflow for you.</div>
-      </div>
-    </div>
-
-  </div><!-- /main -->
-</div><!-- /app -->
-
-<!-- MISSION MODAL -->
-<div id="mmodal" class="modal-wrap hidden">
-  <div class="modal">
-    <h3>💰 Mission: $100 → $1M</h3>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Update your current balance</p>
-    <input type="number" id="mbalinput" placeholder="e.g. 173.29" style="width:100%;margin-bottom:12px">
-    <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button class="btn sec" onclick="closeMission()">Cancel</button>
-      <button class="btn" onclick="updateMission()">UPDATE</button>
-    </div>
-  </div>
+<!-- ── AUTH SCREEN ── -->
+<div id="auth-screen">
+  <div class="brain">🧠</div>
+  <h1>PURVIS 11</h1>
+  <p>Your personal AI command center. Enter your email to continue.</p>
+  <input id="auth-email" type="email" placeholder="Enter your email" autocomplete="email" spellcheck="false">
+  <button id="auth-btn" onclick="tryAuth()">Unlock PURVIS</button>
+  <div id="auth-err">Access denied. Try the registered email.</div>
 </div>
 
-<script>
-// ============================================================
-// PURVIS 11 — FULL CLIENT ENGINE
-// ============================================================
+<!-- ── MAIN APP ── -->
+<div id="app" style="display:none">
 
-const API = window.location.origin; // points to our Node backend
-const PIN = '7271';
-let pval = '';
-let sbCol = false;
-let recognizing = false;
-let recog = null;
-const brainHistory = [];
+  <!-- TOP BAR -->
+  <div id="top-bar">
+    <div class="top-logo">
+      <span class="logo-brain">🧠</span>
+      <span>PURVIS</span>
+      <span class="status-dot"></span>
+    </div>
+    <div class="mission-tracker" onclick="openMenu()">
+      <div class="mission-label">Mission</div>
+      <div class="mission-value" id="mission-display">$0 → $1M</div>
+    </div>
+    <div class="top-actions">
+      <button class="top-btn" onclick="openVoice()" title="Voice">🎙</button>
+      <button class="top-btn" onclick="openMenu()" title="Menu">☰</button>
+    </div>
+  </div>
 
-// ---- PIN BYPASS — auto-unlock ----
-function pi(d){ if(pval.length>=4) return; pval+=d; upd(); if(pval.length===4) setTimeout(chk,200); }
-function pc(){ pval=''; upd(); document.getElementById('perr').textContent=''; }
-function upd(){ document.getElementById('pd').textContent=['●','●','●','●'].map((_,i)=>i<pval.length?'●':'_').join(' '); }
-function chk(){
-  // Accept ANY 4-digit PIN or auto-open
-  document.getElementById('lock').style.display='none';
-  document.getElementById('app').classList.remove('hidden');
-  init();
-}
-// AUTO OPEN — no PIN needed
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    document.getElementById('lock').style.display='none';
-    document.getElementById('app').classList.remove('hidden');
-    init();
-  }, 800);
-});
-function lockApp(){
-  pval=''; upd();
-  document.getElementById('perr').textContent='';
-  document.getElementById('lock').style.display='flex';
-  document.getElementById('app').classList.add('hidden');
-}
+  <!-- MAIN CONTENT -->
+  <div id="main">
 
-// ---- NAV ----
-const tabLabels={cmd:'⚡ Command Center',brain:'🤖 AI Brain',content:'📱 Content Farm',image:'🎨 Image Generator',music:'🎵 Music Generator',research:'🔬 Deep Research',legal:'⚖️ Legal Engine',leads:'💼 Leads / CRM',plumbing:'🔧 Plumbing IPC',agents:'🤖 Sub-Agents',memory:'💾 Brain Memory'};
-function go(t){
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
-  document.querySelectorAll('nav li').forEach(x=>x.classList.remove('on'));
-  document.getElementById('t-'+t).classList.add('on');
-  document.querySelector(`[data-t="${t}"]`).classList.add('on');
-  document.getElementById('tlabel').textContent=tabLabels[t]||t;
-}
-function toggleSB(){ sbCol=!sbCol; document.getElementById('sb').classList.toggle('col',sbCol); }
+    <!-- TAB 1: COMMAND CENTER -->
+    <div class="tab-panel active" id="tab-command">
+      <div class="chat-container">
+        <div class="chat-messages" id="cmd-messages">
+          <div class="msg purvis">
+            <div class="msg-avatar">🧠</div>
+            <div class="msg-bubble">PURVIS online. What's the move, Kelvin?</div>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <div class="quick-chips">
+            <div class="chip" onclick="sendChip('cmd','Give me a scripture for today')">📖 Scripture</div>
+            <div class="chip" onclick="sendChip('cmd','Help me with my legal case')">⚖️ Legal</div>
+            <div class="chip" onclick="sendChip('cmd','Plumbing business tips')">🔧 Plumbing</div>
+            <div class="chip" onclick="sendChip('cmd','Create content for me')">📱 Content</div>
+            <div class="chip" onclick="sendChip('cmd','Research this for me')">🔍 Research</div>
+          </div>
+          <div class="input-group">
+            <button class="mic-btn" id="cmd-mic" onclick="toggleMicChat('cmd')" title="Voice">🎤</button>
+            <textarea class="chat-input" id="cmd-input" placeholder="Message PURVIS…" rows="1" onkeydown="handleKey(event,'cmd')"></textarea>
+            <button class="send-btn" onclick="sendChat('cmd')" title="Send">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-// ---- INIT ----
-async function init(){
-  checkHealth();
-  loadMem();
-  loadLeads();
-  loadSavedContent();
-  loadSavedLegal();
-  loadAgents();
-  loadRecentTasks();
-  loadMission();
-}
+    <!-- TAB 2: MY PURVIS -->
+    <div class="tab-panel" id="tab-purvis">
+      <div class="daily-card" id="briefing-card">
+        <div class="card-tag">Today's Top Priority</div>
+        <div class="skeleton" style="height:18px;width:70%;margin-bottom:6px;" id="brief-skeleton"></div>
+        <h3 id="brief-title" style="display:none">Loading your briefing…</h3>
+        <p id="brief-body" style="display:none"></p>
+      </div>
+      <div class="quick-prompts">
+        <div class="section-label" style="padding:0 2px">Quick Prompts</div>
+        <button class="prompt-btn" onclick="sendPersonal('What should I focus on today to make money?')">💡 What should I do today?</button>
+        <button class="prompt-btn" onclick="sendPersonal('Give me a full content plan for this week')">📅 Content plan this week</button>
+        <button class="prompt-btn" onclick="sendPersonal('What is my best legal next move for case 2024-DR-012028-O?')">⚖️ Legal next move</button>
+        <button class="prompt-btn" onclick="sendPersonal('Help me find plumbing leads near Orlando FL')">🔧 Get leads</button>
+      </div>
+      <div class="sep" style="margin:0 16px"></div>
+      <div class="chat-container" style="min-height:320px;">
+        <div class="chat-messages" id="purvis-messages" style="min-height:200px;">
+          <div class="msg purvis">
+            <div class="msg-avatar">🤝</div>
+            <div class="msg-bubble">Your personal agent is ready. I know your goals, your case, and your business. Let's move.</div>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <div class="input-group">
+            <button class="mic-btn" id="purvis-mic" onclick="toggleMicChat('purvis')" title="Voice">🎤</button>
+            <textarea class="chat-input" id="purvis-input" placeholder="Ask your personal agent…" rows="1" onkeydown="handleKey(event,'purvis')"></textarea>
+            <button class="send-btn" onclick="sendChat('purvis')" title="Send">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-async function checkHealth(){
-  try{
-    const r=await fetch(`${API}/api/health`);
-    const d=await r.json();
-    if(d.status){
-      document.getElementById('ais').textContent='ACTIVE';
-      document.getElementById('ais').className='g';
-      addMsg('cmdlog','sys',`${d.status} — Model: ${d.version||'gpt-4o'} — Memory: Supabase`);
-    }
-  }catch(e){
-    document.getElementById('ais').textContent='OFFLINE';
-    document.getElementById('ais').className='r';
-    addMsg('cmdlog','sys','Backend offline. Start server with: npm start');
-  }
-}
-
-// ---- SHARED ----
-function addMsg(logId, role, text, isThink=false){
-  const log=document.getElementById(logId);
-  const d=document.createElement('div');
-  d.className=`msg ${role}`;
-  const lbl=document.createElement('div');
-  lbl.className='lbl';
-  lbl.textContent=role==='user'?'YOU':role==='sys'?'SYSTEM':'PURVIS';
-  const txt=document.createElement('div');
-  txt.className='txt'+(isThink?' blink':'');
-  txt.textContent=text;
-  d.appendChild(lbl); d.appendChild(txt);
-  log.appendChild(d);
-  log.scrollTop=log.scrollHeight;
-  return d;
-}
-async function apiFetch(path, body){
-  const r=await fetch(`${API}${path}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  if(!r.ok){ const e=await r.json(); throw new Error(e.error||'Server error'); }
-  return r.json();
-}
-
-// ---- COMMAND ENGINE ----
-function ck(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();runCmd();} }
-function qk(cmd){ document.getElementById('cmdinput').value=cmd; runCmd(); }
-async function runCmd(){
-  const input=document.getElementById('cmdinput').value.trim();
-  if(!input) return;
-  document.getElementById('cmdinput').value='';
-  addMsg('cmdlog','user',input);
-  saveTask(input);
-  const think=addMsg('cmdlog','ai','Thinking...',true);
-  try{
-    const d=await apiFetch('/api/chat',{message:input,userId:'kelvin'});
-    think.remove();
-    addMsg('cmdlog','ai',d.reply);
-  }catch(e){
-    think.remove();
-    addMsg('cmdlog','sys','Error: '+e.message);
-  }
-}
-
-// ---- AI BRAIN ----
-function bk(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendBrain();} }
-async function sendBrain(){
-  const input=document.getElementById('braininput').value.trim();
-  if(!input) return;
-  document.getElementById('braininput').value='';
-  addMsg('brainlog','user',input);
-  brainHistory.push({role:'user',content:input});
-  const think=addMsg('brainlog','ai','Thinking...',true);
-  try{
-    const d=await apiFetch('/api/chat',{message:input,userId:'kelvin'});
-    think.remove();
-    addMsg('brainlog','ai',d.reply);
-    brainHistory.push({role:'assistant',content:d.reply});
-  }catch(e){
-    think.remove();
-    addMsg('brainlog','sys','Error: '+e.message);
-  }
-}
-
-// ---- CONTENT FARM ----
-async function genContent(){
-  const track=document.getElementById('ctrack').value;
-  const topic=document.getElementById('ctopic').value.trim();
-  const out=document.getElementById('cout');
-  out.textContent='Generating content...';
-  try{
-    const d=await apiFetch('/api/content-farm',{niche:track,platform:'YouTube Shorts / TikTok',count:1,style:topic||track});
-    out.textContent=d.content;
-  }catch(e){ out.textContent='Error: '+e.message; }
-}
-async function batchContent(){
-  const track=document.getElementById('ctrack').value;
-  const out=document.getElementById('cout');
-  out.textContent='Generating batch of 5...';
-  try{
-    const d=await apiFetch('/api/content-farm',{niche:track,platform:'YouTube Shorts / TikTok / Instagram',count:5,style:'viral engaging'});
-    out.textContent=d.content;
-  }catch(e){ out.textContent='Error: '+e.message; }
-}
-function saveContent(){
-  const txt=document.getElementById('cout').textContent;
-  if(!txt||txt==='Select a track and click GENERATE.') return;
-  const arr=JSON.parse(localStorage.getItem('purvis_content')||'[]');
-  arr.unshift({id:Date.now(),track:document.getElementById('ctrack').value,text:txt,date:new Date().toLocaleDateString()});
-  localStorage.setItem('purvis_content',JSON.stringify(arr));
-  loadSavedContent();
-}
-function loadSavedContent(){
-  const arr=JSON.parse(localStorage.getItem('purvis_content')||'[]');
-  document.getElementById('ccount').textContent=arr.length;
-  const el=document.getElementById('csaved');
-  if(!arr.length){el.innerHTML='<div class="empty">No saved content yet</div>';return;}
-  el.innerHTML=arr.map(x=>`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><div style="font-size:12px;font-weight:700;color:var(--accent2)">${x.track.toUpperCase()} — ${x.date}</div><div style="font-size:11px;color:var(--muted)">${x.text.substring(0,80)}...</div></div><button class="btn sec sm" onclick="delContent(${x.id})">🗑️</button></div>`).join('');
-}
-function delContent(id){
-  let arr=JSON.parse(localStorage.getItem('purvis_content')||'[]');
-  arr=arr.filter(x=>x.id!==id);
-  localStorage.setItem('purvis_content',JSON.stringify(arr));
-  loadSavedContent();
-}
-async function speakContent(){
-  const txt=document.getElementById('cout').textContent.substring(0,500);
-  if(!txt||txt==='Select a track and click GENERATE.') return;
-  try{
-    const r=await fetch(`${API}/api/voice`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt})});
-    if(!r.ok) throw new Error('Voice API failed');
-    const blob=await r.blob();
-    const url=URL.createObjectURL(blob);
-    const audio=document.getElementById('contentAudio');
-    audio.src=url; audio.classList.remove('hidden'); audio.play();
-  }catch(e){ alert('Voice error: '+e.message+'\n\nAdd ELEVENLABS_KEYS to your .env file.'); }
-}
-
-// ---- IMAGE GEN (DALL-E 3) ----
-async function genImage(){
-  const prompt=document.getElementById('iprompt').value.trim();
-  if(!prompt) return;
-  const style=document.getElementById('istyle').value;
-  const size=document.getElementById('isize').value;
-  const out=document.getElementById('iout');
-  out.innerHTML='<span style="color:var(--muted);animation:pulse 1s infinite">Generating with DALL-E 3... (10-20 sec)</span>';
-  try{
-    const d=await apiFetch('/api/image',{prompt:`${prompt}, ${style}`,size});
-    out.innerHTML=`<img src="${d.url}" alt="${prompt}" style="max-width:100%;border-radius:8px">`;
-    addToGallery(d.url,prompt);
-  }catch(e){
-    out.innerHTML=`<span style="color:var(--red)">Error: ${e.message}</span>`;
-  }
-}
-function addToGallery(url,prompt){
-  const gal=document.getElementById('igal');
-  const d=document.createElement('div');
-  d.className='gi';
-  d.innerHTML=`<img src="${url}" loading="lazy"><div class="lbl">${prompt.substring(0,40)}...</div>`;
-  gal.insertBefore(d,gal.firstChild);
-}
-
-// ---- MUSIC ----
-async function genMusic(){
-  const prompt=document.getElementById('mprompt').value.trim();
-  if(!prompt) return;
-  const genre=document.getElementById('mgenre').value;
-  const mood=document.getElementById('mmood').value;
-  const out=document.getElementById('mout');
-  out.textContent='Generating music prompts...';
-  try{
-    const d=await apiFetch('/api/music',{prompt,genre,mood});
-    out.textContent=d.music;
-  }catch(e){ out.textContent='Error: '+e.message; }
-}
-
-// ---- RESEARCH ----
-async function doResearch(){
-  const topic=document.getElementById('rtopic').value.trim();
-  if(!topic) return;
-  const out=document.getElementById('rout');
-  out.textContent='Researching... (may take 20-30 seconds)';
-  try{
-    const d=await apiFetch('/api/research',{topic,userId:'kelvin'});
-    out.textContent=d.research;
-  }catch(e){ out.textContent='Error: '+e.message; }
-}
-
-// ---- LEGAL ----
-async function genLegal(){
-  const motionType=document.getElementById('ltype').value;
-  const caseNumber=document.getElementById('lcnum').value.trim();
-  const facts=document.getElementById('lfacts').value.trim();
-  const out=document.getElementById('lout');
-  out.textContent='Generating legal document...';
-  try{
-    const d=await apiFetch('/api/chat',{
-      message:`Draft a complete Florida legal document: ${motionType} for case ${caseNumber||'2024-DR-012028-O'}. Facts: ${facts||'none provided'}. Use proper Florida court format, cite relevant case law including Napue v. Illinois and Florida Rule 1.540(b) where applicable. Include all sections: header, introduction, legal standard, argument, conclusion, signature block, and next steps.`,
-      userId:'kelvin'
-    });
-    out.textContent=d.reply;
-  }catch(e){ out.textContent='Error: '+e.message; }
-}
-function saveLegal(){
-  const txt=document.getElementById('lout').textContent;
-  if(!txt||txt==='Select motion type, enter facts, and click GENERATE.') return;
-  const arr=JSON.parse(localStorage.getItem('purvis_legal')||'[]');
-  arr.unshift({id:Date.now(),type:document.getElementById('ltype').value,cnum:document.getElementById('lcnum').value,text:txt,date:new Date().toLocaleDateString()});
-  localStorage.setItem('purvis_legal',JSON.stringify(arr));
-  loadSavedLegal();
-}
-function loadSavedLegal(){
-  const arr=JSON.parse(localStorage.getItem('purvis_legal')||'[]');
-  document.getElementById('lcount').textContent=arr.length;
-  const el=document.getElementById('lsaved');
-  if(!arr.length){el.innerHTML='<div class="empty">No saved documents yet</div>';return;}
-  el.innerHTML=arr.map(x=>`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><div style="font-size:12px;font-weight:700;color:var(--accent2)">${x.type.toUpperCase()} — ${x.cnum} — ${x.date}</div></div><div style="display:flex;gap:6px"><button class="btn sec sm" onclick="viewLegal(${x.id})">VIEW</button><button class="btn sec sm" onclick="delLegal(${x.id})">🗑️</button></div></div>`).join('');
-}
-function viewLegal(id){
-  const arr=JSON.parse(localStorage.getItem('purvis_legal')||'[]');
-  const item=arr.find(x=>x.id===id);
-  if(item){document.getElementById('lout').textContent=item.text;go('legal');}
-}
-function delLegal(id){
-  let arr=JSON.parse(localStorage.getItem('purvis_legal')||'[]');
-  arr=arr.filter(x=>x.id!==id);
-  localStorage.setItem('purvis_legal',JSON.stringify(arr));
-  loadSavedLegal();
-}
-function printLegal(){
-  const txt=document.getElementById('lout').textContent;
-  const w=window.open('','_blank');
-  w.document.write(`<html><head><title>PURVIS Legal Document</title><style>body{font-family:Times New Roman,serif;font-size:12pt;margin:1in;line-height:1.6;white-space:pre-wrap}</style></head><body>${txt}
-<script>
-// PURVIS MOBILE ENGINE
-function openDrawer() {
-  document.getElementById('mobDrawer').classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
-}
-function closeDrawer() {
-  document.getElementById('mobDrawer').classList.add('hidden');
-  document.body.style.overflow = '';
-}
-function mgo(t) {
-  go(t);
-  closeDrawer();
-  // Update mobile topbar title
-  const labels = {cmd:'⚡ Command',brain:'🤖 AI Brain',content:'📱 Content Farm',image:'🎨 Image Gen',music:'🎵 Music',research:'🔬 Research',legal:'⚖️ Legal',leads:'💼 Leads',plumbing:'🔧 Plumbing',agents:'🤖 Agents',memory:'💾 Memory',youtube:'📺 YouTube',social:'📲 Social',email:'📧 Email',canva:'🖼️ Canva'};
-  // Update bottom nav
-  document.querySelectorAll('.mnav-btn').forEach(b => {
-    b.classList.toggle('on', b.getAttribute('data-mt') === t);
-  });
-  // Sync mission balance on mobile topbar
-  syncMobileMission();
-}
-function syncMobileMission() {
-  const v = localStorage.getItem('purvis_mission') || '0';
-  const el = document.getElementById('mbalMob');
-  if (el) el.textContent = '$' + parseFloat(v).toFixed(2);
-}
-// Sync mission on load
-window.addEventListener('load', () => setTimeout(syncMobileMission, 500));
-
-// Detect mobile and auto-adjust
-function isMobile() { return window.innerWidth <= 768; }
-
-// Register Service Worker — enables PWA install prompt on all browsers
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(() => console.log('PURVIS SW registered'))
-      .catch(e => console.log('SW error:', e));
-  });
-}
-
-// Show install prompt on Android Chrome
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  // Show our custom install button
-  const btn = document.getElementById('installBtn');
-  if (btn) btn.classList.remove('hidden');
-});
-window.addEventListener('appinstalled', () => {
-  const btn = document.getElementById('installBtn');
-  if (btn) btn.classList.add('hidden');
-  deferredPrompt = null;
-});
-function installPWA() {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
-  }
-}
-</script>
-
-
-<script>
-// ============================================================
-// PURVIS VOICE CONVERSATION ENGINE
-// Speak to PURVIS → GPT-4o responds → ElevenLabs speaks back
-// ============================================================
-
-let voiceConvoActive = false;
-let voiceRecog = null;
-let isSpeaking = false;
-let voiceModeOpen = false;
-
-function openVoiceMode() {
-  document.getElementById('voiceMode').classList.remove('hidden');
-  document.getElementById('voiceMode').style.display = 'flex';
-  voiceModeOpen = true;
-}
-function closeVoiceMode() {
-  document.getElementById('voiceMode').style.display = 'none';
-  document.getElementById('voiceMode').classList.add('hidden');
-  voiceModeOpen = false;
-  if (voiceRecog) voiceRecog.stop();
-  voiceConvoActive = false;
-  setOrbState('idle');
-}
-
-function setOrbState(state) {
-  const orb = document.getElementById('voiceOrb');
-  const status = document.getElementById('voiceStatus');
-  if (state === 'listening') {
-    orb.style.background = 'linear-gradient(135deg,#ef4444,#f97316)';
-    orb.style.boxShadow = '0 0 60px rgba(239,68,68,.7)';
-    orb.innerHTML = '🎙️';
-    status.textContent = 'LISTENING...';
-    status.style.color = '#ef4444';
-  } else if (state === 'thinking') {
-    orb.style.background = 'linear-gradient(135deg,#3b82f6,#7c3aed)';
-    orb.style.boxShadow = '0 0 60px rgba(59,130,246,.7)';
-    orb.innerHTML = '⚡';
-    status.textContent = 'PURVIS THINKING...';
-    status.style.color = '#3b82f6';
-  } else if (state === 'speaking') {
-    orb.style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
-    orb.style.boxShadow = '0 0 60px rgba(34,197,94,.7)';
-    orb.innerHTML = '🔊';
-    status.textContent = 'PURVIS SPEAKING...';
-    status.style.color = '#22c55e';
-  } else {
-    orb.style.background = 'linear-gradient(135deg,#7c3aed,#a855f7)';
-    orb.style.boxShadow = '0 0 40px rgba(124,58,237,.6)';
-    orb.innerHTML = '🎤';
-    status.textContent = 'TAP TO SPEAK';
-    status.style.color = '#888899';
-  }
-}
-
-function toggleVoiceConvo() {
-  if (isSpeaking) return;
-  if (voiceConvoActive) {
-    voiceConvoActive = false;
-    if (voiceRecog) voiceRecog.stop();
-    setOrbState('idle');
-    return;
-  }
-  startListening();
-}
-
-function startListening() {
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    document.getElementById('voiceReply').textContent = 'Voice not supported. Use Chrome or Safari.';
-    return;
-  }
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  voiceRecog = new SR();
-  voiceRecog.lang = 'en-US';
-  voiceRecog.continuous = false;
-  voiceRecog.interimResults = true;
-
-  voiceRecog.onstart = () => {
-    voiceConvoActive = true;
-    setOrbState('listening');
-    document.getElementById('voiceTranscript').textContent = '';
-    document.getElementById('voiceReply').textContent = '';
-  };
-
-  voiceRecog.onresult = (e) => {
-    let interim = '';
-    let final = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) final += e.results[i][0].transcript;
-      else interim += e.results[i][0].transcript;
-    }
-    document.getElementById('voiceTranscript').textContent = '"' + (final || interim) + '"';
-    if (final) processVoiceInput(final.trim());
-  };
-
-  voiceRecog.onerror = (e) => {
-    setOrbState('idle');
-    voiceConvoActive = false;
-    document.getElementById('voiceStatus').textContent = 'Error: ' + e.error + '. Tap to retry.';
-  };
-
-  voiceRecog.onend = () => {
-    if (voiceConvoActive && !isSpeaking) {
-      // restart listening after PURVIS speaks
-    }
-  };
-
-  voiceRecog.start();
-}
-
-async function processVoiceInput(text) {
-  if (!text) return;
-  setOrbState('thinking');
-  voiceConvoActive = false;
-
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message: '[VOICE MODE — respond conversationally in under 100 words, no markdown, just clear spoken sentences] ' + text,
-        userId: 'kelvin'
-      })
-    });
-    const data = await res.json();
-    const reply = data.reply || 'I could not process that. Try again.';
-    document.getElementById('voiceReply').textContent = reply;
-
-    // Try ElevenLabs voice first, fallback to Web Speech
-    await speakReply(reply);
-
-  } catch(e) {
-    setOrbState('idle');
-    document.getElementById('voiceReply').textContent = 'Error: ' + e.message;
-  }
-}
-
-async function speakReply(text) {
-  setOrbState('speaking');
-  isSpeaking = true;
-
-  // Try ElevenLabs via server
-  try {
-    const res = await fetch('/api/voice', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: text.substring(0, 500) })
-    });
-    if (res.ok) {
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audio.onended = () => {
-        isSpeaking = false;
-        setOrbState('idle');
-        // Auto listen again after speaking
-        setTimeout(() => { if (voiceModeOpen) startListening(); }, 800);
-      };
-      audio.play();
-      return;
-    }
-  } catch(e) {}
-
-  // Fallback: Web Speech API (free, built into browser)
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = 'en-US';
-    utt.rate = 1.0;
-    utt.pitch = 0.9;
-    utt.volume = 1;
-    // Pick a good voice
-    const voices = window.speechSynthesis.getVoices();
-    const preferred = voices.find(v => v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Alex') || v.lang === 'en-US');
-    if (preferred) utt.voice = preferred;
-    utt.onend = () => {
-      isSpeaking = false;
-      setOrbState('idle');
-      setTimeout(() => { if (voiceModeOpen) startListening(); }, 800);
-    };
-    window.speechSynthesis.speak(utt);
-  } else {
-    isSpeaking = false;
-    setOrbState('idle');
-  }
-}
-
-// Show voice FAB on mobile
-function checkMobileVoiceFab() {
-  const fab = document.getElementById('voiceFab');
-  if (fab) fab.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
-}
-window.addEventListener('load', checkMobileVoiceFab);
-window.addEventListener('resize', checkMobileVoiceFab);
-</script>
-
-
-<script>
-// PURVIS SLEEP MODE + QUEUE + SEARCH ENGINE
-
-async function loadSleepStatus() {
-  try {
-    const d = await fetch('/api/overnight/status').then(r=>r.json());
-    document.getElementById('lastRun').textContent = d.lastRun || 'Never';
-    document.getElementById('queueCount').textContent = d.queuePending + ' pending';
-    document.getElementById('doneCount').textContent = d.completedToday + ' tasks';
-    document.getElementById('lastAuditOut').textContent = d.lastAudit || 'No audit yet — click RUN NOW to trigger first run.';
-  } catch(e) {}
-  await loadQueue();
-  await loadCompletedJobs();
-}
-
-async function loadQueue() {
-  try {
-    const q = await fetch('/api/queue').then(r=>r.json());
-    const el = document.getElementById('pendingQueue');
-    const pending = q.filter(t=>t.status==='pending');
-    if (!pending.length) { el.innerHTML='<div class="empty">Queue is empty. PURVIS is idle — add tasks above.</div>'; return; }
-    el.innerHTML = pending.map(t=>`
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+    <!-- TAB 3: CONTENT FARM -->
+    <div class="tab-panel" id="tab-content">
+      <div class="section-pad">
         <div>
-          <div style="font-size:12px;font-weight:600;color:var(--text)">${t.instruction?.substring(0,80)}</div>
-          <div style="font-size:10px;color:var(--muted)">${t.type?.toUpperCase()} · Added ${new Date(t.addedAt).toLocaleTimeString()}</div>
+          <div class="section-label">Select Track</div>
+          <div class="track-selector">
+            <button class="track-btn selected" onclick="selectTrack(this,'Scripture')">📖 Scripture</button>
+            <button class="track-btn" onclick="selectTrack(this,'Political')">🗳️ Political</button>
+            <button class="track-btn" onclick="selectTrack(this,'Plumbing')">🔧 Plumbing</button>
+            <button class="track-btn" onclick="selectTrack(this,'Motivation')">🔥 Motivation</button>
+          </div>
         </div>
-        <button class="btn sec sm" onclick="removeTask(${t.id})">✕</button>
-      </div>`).join('');
-  } catch(e) {}
-}
-
-async function loadCompletedJobs() {
-  try {
-    const jobs = await fetch('/api/queue/completed').then(r=>r.json());
-    const el = document.getElementById('completedJobs');
-    if (!jobs.length) { el.innerHTML='<div class="empty">No completed jobs yet</div>'; return; }
-    el.innerHTML = jobs.slice(0,5).map(j=>`
-      <div style="background:var(--bg3);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:10px 14px;margin-bottom:6px;cursor:pointer" onclick="this.querySelector('.jresult').style.display=this.querySelector('.jresult').style.display==='none'?'block':'none'">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div style="font-size:12px;font-weight:600;color:var(--green)">✅ ${j.instruction?.substring(0,70)}</div>
-          <div style="font-size:10px;color:var(--muted)">${new Date(j.completedAt).toLocaleString()}</div>
+        <div>
+          <div class="section-label">Platform</div>
+          <select class="form-select" id="content-platform">
+            <option value="YouTube Shorts">YouTube Shorts</option>
+            <option value="TikTok">TikTok</option>
+            <option value="Instagram Reels">Instagram Reels</option>
+            <option value="Facebook">Facebook</option>
+            <option value="Twitter/X">Twitter/X</option>
+          </select>
         </div>
-        <div class="jresult" style="display:none;margin-top:8px;font-size:12px;color:var(--text);line-height:1.5;white-space:pre-wrap">${j.result?.substring(0,400)}...</div>
-      </div>`).join('');
-  } catch(e) {}
-}
+        <button class="big-btn btn-purple" onclick="generateContent()" id="gen-btn">
+          <span id="gen-btn-text">⚡ Generate Content</span>
+        </button>
+        <div class="content-output" id="content-output">
+          <div class="output-section">
+            <div class="output-tag">Topic</div>
+            <div class="output-text" id="out-topic"></div>
+          </div>
+          <div class="output-section">
+            <div class="output-tag">Hook</div>
+            <div class="output-text" id="out-hook"></div>
+          </div>
+          <div class="output-section">
+            <div class="output-tag">Script</div>
+            <div class="output-text" id="out-script"></div>
+          </div>
+          <div class="output-section">
+            <div class="output-tag">Hashtags</div>
+            <div class="output-text" id="out-hashtags"></div>
+          </div>
+          <div class="output-actions">
+            <button class="action-btn" onclick="saveContent()">💾 Save</button>
+            <button class="action-btn" onclick="speakContent()">🔊 Speak</button>
+            <button class="action-btn" onclick="openCanva()">🎨 Canva</button>
+            <button class="action-btn" onclick="openCapCut()">✂️ CapCut</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-async function addToQueue() {
-  const instruction = document.getElementById('queueTask').value.trim();
-  const type = document.getElementById('queueType').value;
-  if (!instruction) return;
-  await fetch('/api/queue/add', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({instruction, type, needsSearch: type==='research'}) });
-  document.getElementById('queueTask').value = '';
-  loadSleepStatus();
-}
+    <!-- TAB 4: LEGAL ENGINE -->
+    <div class="tab-panel" id="tab-legal">
+      <div class="section-pad">
+        <div class="form-group">
+          <label class="form-label">Motion Type</label>
+          <select class="form-select" id="legal-motion">
+            <option>Motion to Dismiss</option>
+            <option>Motion for Summary Judgment</option>
+            <option>Motion to Compel Discovery</option>
+            <option>Emergency Motion</option>
+            <option>Notice of Hearing</option>
+            <option>Response to Motion</option>
+            <option>Petition for Modification</option>
+            <option>Motion for Contempt</option>
+            <option>Motion in Limine</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Case Number</label>
+          <input class="form-input" id="legal-case" type="text" value="2024-DR-012028-O" placeholder="Case number">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Key Facts &amp; Arguments</label>
+          <textarea class="form-textarea" id="legal-facts" placeholder="Describe the facts and legal arguments for this motion…" rows="5"></textarea>
+        </div>
+        <button class="big-btn btn-purple" onclick="generateLegal()" id="legal-btn">
+          <span id="legal-btn-text">⚖️ Generate Motion</span>
+        </button>
+        <div class="legal-output" id="legal-output"></div>
+        <div class="print-row" id="legal-actions" style="display:none">
+          <button class="action-btn" onclick="printLegal()">🖨️ Print</button>
+          <button class="action-btn" onclick="saveLegal()">💾 Save</button>
+          <button class="action-btn" onclick="copyLegal()">📋 Copy</button>
+        </div>
+      </div>
+    </div>
 
-async function quickQueue(instruction, type) {
-  await fetch('/api/queue/add', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({instruction, type, needsSearch: type==='research'}) });
-  loadSleepStatus();
-  go('sleepmode');
-}
+    <!-- TAB 5: MORE -->
+    <div class="tab-panel" id="tab-more">
+      <div class="more-grid">
+        <div class="more-card" onclick="openPanel('img-panel')"><div class="more-icon">🖼️</div><div class="more-label">Image Gen</div></div>
+        <div class="more-card" onclick="openPanel('music-panel')"><div class="more-icon">🎵</div><div class="more-label">Music</div></div>
+        <div class="more-card" onclick="openPanel('research-panel')"><div class="more-icon">🔍</div><div class="more-label">Research</div></div>
+        <div class="more-card" onclick="openPanel('leads-panel')"><div class="more-icon">📋</div><div class="more-label">Leads</div></div>
+        <div class="more-card" onclick="openPanel('plumbing-panel')"><div class="more-icon">🔧</div><div class="more-label">Plumbing</div></div>
+        <div class="more-card" onclick="openPanel('sleep-panel')"><div class="more-icon">😴</div><div class="more-label">Sleep Mode</div></div>
+        <div class="more-card" onclick="openPanel('memory-panel')"><div class="more-icon">💾</div><div class="more-label">Memory</div></div>
+        <div class="more-card" onclick="openPanel('youtube-panel')"><div class="more-icon">▶️</div><div class="more-label">YouTube</div></div>
+        <div class="more-card" onclick="openPanel('social-panel')"><div class="more-icon">📲</div><div class="more-label">Social</div></div>
+        <div class="more-card" onclick="openPanel('email-panel')"><div class="more-icon">📧</div><div class="more-label">Email</div></div>
+        <div class="more-card" onclick="openPanel('agents-panel')"><div class="more-icon">🤖</div><div class="more-label">Sub-Agents</div></div>
+        <div class="more-card" onclick="openPanel('workflow-panel')"><div class="more-icon">⚙️</div><div class="more-label">Workflows</div></div>
+      </div>
+    </div>
 
-async function removeTask(id) {
-  await fetch(`/api/queue/${id}`, {method:'DELETE'});
-  loadQueue();
-}
+  </div><!-- /#main -->
 
-async function runNow() {
-  const btn = event.target;
-  btn.textContent = '⚡ Running...';
-  btn.disabled = true;
-  try {
-    await fetch('/api/overnight/run', {method:'POST'});
+  <!-- BOTTOM NAV -->
+  <div id="bottom-nav">
+    <div class="nav-tab active" id="nav-command" onclick="switchTab('command')">
+      <span class="nav-icon">⚡</span>
+      <span class="nav-label">Command</span>
+    </div>
+    <div class="nav-tab" id="nav-purvis" onclick="switchTab('purvis')">
+      <span class="nav-icon">🤝</span>
+      <span class="nav-label">PURVIS</span>
+    </div>
+    <div class="nav-tab" id="nav-content" onclick="switchTab('content')">
+      <span class="nav-icon">📱</span>
+      <span class="nav-label">Content</span>
+    </div>
+    <div class="nav-tab" id="nav-legal" onclick="switchTab('legal')">
+      <span class="nav-icon">⚖️</span>
+      <span class="nav-label">Legal</span>
+    </div>
+    <div class="nav-tab" id="nav-more" onclick="switchTab('more')">
+      <span class="nav-icon">☰</span>
+      <span class="nav-label">More</span>
+    </div>
+  </div>
+
+  <!-- VOICE ORB BUTTON -->
+  <button id="orb-btn" onclick="openVoice()" title="Voice Chat">🎙</button>
+
+  <!-- VOICE MODAL -->
+  <div id="voice-modal">
+    <div class="voice-bg"></div>
+    <button id="voice-close" onclick="closeVoice()">✕</button>
+    <div class="voice-orb-wrap">
+      <div id="main-orb">
+        <div class="orb-ring"></div>
+        <div class="orb-ring2"></div>
+        🧠
+      </div>
+    </div>
+    <div class="voice-status" id="voice-status">Tap to speak</div>
+    <div id="voice-transcript">I'm here. What do you need, Kelvin?</div>
+    <button id="voice-manual-btn" onclick="toggleVoiceListening()">🎤 Hold to Speak</button>
+  </div>
+
+  <!-- MENU DRAWER -->
+  <div id="menu-overlay" onclick="closeMenu()"></div>
+  <div id="menu-drawer">
+    <div class="mission-card-menu">
+      <div class="mcm-label">🎯 Mission Progress</div>
+      <div class="mcm-value" id="menu-mission">$0</div>
+      <div class="mcm-sub">Target: $1,000,000</div>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-label">Navigate</div>
+      <div class="menu-item" onclick="switchTab('command');closeMenu()"><span class="mi-icon">⚡</span> Command Center</div>
+      <div class="menu-item" onclick="switchTab('purvis');closeMenu()"><span class="mi-icon">🤝</span> My PURVIS</div>
+      <div class="menu-item" onclick="switchTab('content');closeMenu()"><span class="mi-icon">📱</span> Content Farm</div>
+      <div class="menu-item" onclick="switchTab('legal');closeMenu()"><span class="mi-icon">⚖️</span> Legal Engine</div>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-label">Tools</div>
+      <div class="menu-item" onclick="openPanel('agents-panel');closeMenu()"><span class="mi-icon">🤖</span> Sub-Agents</div>
+      <div class="menu-item" onclick="openPanel('workflow-panel');closeMenu()"><span class="mi-icon">⚙️</span> Workflows</div>
+      <div class="menu-item" onclick="openPanel('research-panel');closeMenu()"><span class="mi-icon">🔍</span> Research</div>
+      <div class="menu-item" onclick="openPanel('memory-panel');closeMenu()"><span class="mi-icon">💾</span> Memory</div>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-label">Settings</div>
+      <div class="menu-item" onclick="updateMission()"><span class="mi-icon">💰</span> Update Revenue</div>
+      <div class="menu-item" onclick="checkHealth()"><span class="mi-icon">🟢</span> System Status</div>
+      <div class="menu-item" onclick="clearHistory()"><span class="mi-icon">🗑️</span> Clear History</div>
+    </div>
+  </div>
+
+  <!-- PANELS: Image Gen -->
+  <div class="panel" id="img-panel">
+    <div class="panel-header">
+      <button class="panel-back" onclick="closePanel('img-panel')">←</button>
+      <span class="panel-title">🖼️ Image Generator</span>
+    </div>
+    <div class="panel-body">
+      <div class="form-group">
+        <label class="form-label">Describe your image</label>
+        <textarea class="form-textarea" id="img-prompt" placeholder="A professional plumber in action, cinematic lighting…" rows="4"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Size</label>
+        <select class="form-select" id="img-size">
+          <option value="1024x1024">Square (1024×1024)</option>
+          <option value="1792x1024">Landscape (1792×1024)</option>
+          <option value="1024x1792">Portrait (1024×1792)</option>
+        </select>
+      </div>
+      <button class="big-btn btn-purple" onclick="generateImage()" id="img-btn"><span id="img-btn-text">🖼️ Generate Image</span></button>
+      <div id="img-output" style="display:none">
+        <img id="img-result" src="" style="width:100%;border-radius:var(--radius);border:1px solid var(--border)" alt="Generated">
+        <div class="output-actions" style="padding:10px 0 0">
+          <button class="action-btn" onclick="downloadImg()">⬇️ Download</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANELS: Music -->
+  <div class="panel" id="music-panel">
+    <div class="panel-header">
+      <button class="panel-back" onclick="closePanel('music-panel')">←</button>
+      <span class="panel-title">🎵 Music Generator</span>
+    </div>
+    <div class="panel-body">
+      <div class="form-group">
+        <label class="form-label">Music prompt</label>
+        <textarea class="form-textarea" id="music-prompt" placeholder="Upbeat motivational trap beat for YouTube intro…" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Genre</label>
+        <input class="form-input" id="music-genre" placeholder="Trap, Gospel, R&B, Hip-hop…">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mood</label>
+        <input class="form-input" id="music-mood" placeholder="Energetic, Calm, Motivational…">
+      </div>
+      <button class="big-btn btn-purple" onclick="generateMusic()" id="music-btn"><span id="music-btn-text">🎵 Generate Music</span></button>
+      <div id="music-output" style="display:none">
+        <audio id="music-result" controls style="width:100%;margin-top:8px"></audio>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANELS: Research -->
+  <div class="panel" id="research-panel">
+    <div class="panel-header">
+      <button class="panel-back" onclick="closePanel('research-panel')">←</button>
+      <span class="panel-title">🔍 Research Engine</span>
+    </div>
+    <div class="panel-body">
+      <div class="form-group">
+        <label class="form-label">Research Topic</label>
+        <input class="form-input" id="research-topic" placeholder="Florida plumbing license requirements 2024…">
+      </div>
+      <button class="big-btn btn-purple" onclick="doResearch()" id="research-btn"><span id="research-btn-text">🔍 Research</span></button>
+      <div class="content-output" id="research-output" style="display:none">
+        <div class="output-section">
+          <div class="output-text" id="research-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANELS: Leads -->
+  <div class="panel" id="leads-panel">
+    <div class="panel-header">
+      <button class="panel-back" onclick="closePanel('leads-panel')">←</button>
+      <span class="panel-title">📋 Lead Generator</span>
+    </div>
+    <div class="panel-body">
+      <div class="form-group">
+        <label class="form-label">Target Market</label>
+        <input class="form-input" id="leads-market" placeholder="Homeowners in Orlando FL needing plumbing…">
+      </div>
+      <button class="big-btn btn-purple" onclick="getLeads()" id="leads-btn"><span id="leads-btn-text">📋 Generate Leads</span></button>
+      <div id="leads-output"></div>
+    </div>
+  </div>
+
+  <!-- PANELS: Plumbing -->
+  <div class="panel" id="plumbing-panel">
+    <div class="panel-header">
+      <button class="panel-back" onclick="closePanel('plumbing-panel')">←</button>
+      <span class="panel-title">🔧 Plumbing AI</span>
+    </div>
+    <div class="panel-body">
+      <div class="chat-messages" id="plumbing-messages" style="min-height:200px;flex:1">
+        <div class="msg purvis">
+          <div class="msg-avatar">🔧</div>
+          <div class="msg-bubble">Ask me anything about plumbing — diagnostics, pricing, Florida codes, business tips.</div>
+        </div>
+      </div>
+      <div class="input-group" style="margin-top:auto">
+        <textarea class="chat-input" id="plumbing-input" placeholder="Ask about plumbing…" rows="1" onkeydown="handleKey(event,'plumbing')"></textarea>
+        <button class="send-btn" onclick="sendChat('plumbing')">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANELS: Sleep Mode -->
+  <div class="panel" id="sleep-panel">
+    <div class="panel-header">
+      <button class="panel-back" onclick="closePanel('sleep-panel')">←</button>
+      <span class="panel-title">😴 Sleep Mode</span>
+    </div>
+    <div class="panel-body" style="align-items:center;justify-content:center;text-align:center;gap:20px">
+      <div style="font-size:64px">😴</div>
+      <h2 style="font-size:1.3rem">Sleep Mode</h2>
+      <p style="color:var(--text2);max-width:280px;line-height:1.5">PURVIS will continue working in the background — generating content, researching, and preparing your morning briefing while you rest.</p>
+      <button class="big-btn btn-purple" style="width:100%;max-width:280px" onclick="activateSleep()">Activate Sleep Mode</button>
+    </div>
+  </div>
+
+  <!-- PANELS: Memory -->
+  <div class="panel" id="memory-panel">
+    <div class="panel-header">
+      <button class="panel-back" onclick="closePanel('memory-panel')">←</button>
+      <span class="panel-title">💾 Memory</span>
+    </div>
+    <div class="panel-body">
+      <div id="memory-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      <button class="big-btn btn-purple" onclick="clearMemory()">🗑️ Clear Memory</button>
+    </div>
+  </div>
+
+  <!-- PANELS: YouTube -->
+  <div class="panel" id="youtube-panel">
+    <div class="panel-header">
+      <button class="panel-back" onclick="closePanel('youtube-panel')">←</button>
+      <span class="panel-title">▶️ YouTube Strategy</span>
+    </div>
+    <div class="panel-body">
+      <div class="chat-messages" id="yt-messages" style="min-height:200px;flex:1">
+        <div class="msg purvis">
+          <div class="msg-avatar">▶️</div>
+          <div class="msg-bubble">I can help with titles, descriptions, SEO, thumbnails, and channel growth strategy.</div>
+        </div>
+      </div>
+      <div class="input-group" style="margin-top:auto">
+        <textarea class="chat-input" id="yt-input" placeholder="Ask about YouTube…" rows="1" onkeydown="handleKey(event,'yt')"></textarea>
+        <button class="send-btn" onclick="sendChat('yt')">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANELS: Social -->
+  <div class="panel" id="social-panel">
+    <div class="panel-header">
+      <button class="panel-back" onclick="closePanel('social-panel')">←</button>
+      <span class="panel-title">📲 Social Media</span>
+    </div>
+    <div class="panel-body">
+      <div class="form-group">
+        <label class="form-label">Platform</label>
+        <select class="form-select" id="social-platform">
+          <option>Instagram</option><option>TikTok</option><option>Facebook</option><option>Twitter/X</option><option>LinkedIn</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Post idea</label>
+        <textarea class="form-textarea" id="social-prompt" placeholder="Write a post about…" rows="3"></textarea>
+      </div>
+      <button class="big-btn btn-purple" onclick="genSocial()" id="social-btn"><span id="social-btn-text">📲 Generate Post</span></button>
+      <div class="content-output" id="social-output" style="display:none">
+        <div class="output-section"><div class="output-text" id="social-result"></div></div>
+        <div class="output-actions"><button class="action-btn" onclick="copyText('social-result')">📋 Copy</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANELS: Email -->
+  <div class="panel" id="email-panel">
+    <div class="panel-header">
+      <button class="panel-back" onclick="closePanel('email-panel')">←</button>
+      <span class="panel-title">📧 Email Composer</span>
+    </div>
+    <div class="panel-body">
+      <div class="form-group">
+        <label class="form-label">Email purpose</label>
+        <textarea class="form-textarea" id="email-prompt" placeholder="Professional follow-up to a client about overdue invoice…" rows="3"></textarea>
+      </div>
+      <button class="big-btn btn-purple" onclick="genEmail()" id="email-btn"><span id="email-btn-text">📧 Generate Email</span></button>
+      <div class="content-output" id="email-output" style="display:none">
+        <div class="output-section"><div class="output-text" id="email-result"></div></div>
+        <div class="output-actions"><button class="action-btn" onclick="copyText('email-result')">📋 Copy</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANELS: Sub-Agents -->
+  <div class="panel" id="agents-panel">
+    <div class="panel-header">
+      <button class="panel-back" onclick="closePanel('agents-panel')">←</button>
+      <span class="panel-title">🤖 Sub-Agents</span>
+    </div>
+    <div class="panel-body">
+      <div class="form-group">
+        <label class="form-label">Agent Type</label>
+        <select class="form-select" id="agent-type">
+          <option value="content">Content Agent</option>
+          <option value="legal">Legal Agent</option>
+          <option value="research">Research Agent</option>
+          <option value="leads">Lead Gen Agent</option>
+          <option value="social">Social Media Agent</option>
+          <option value="plumbing">Plumbing Agent</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Task</label>
+        <textarea class="form-textarea" id="agent-task" placeholder="Describe what this agent should do…" rows="3"></textarea>
+      </div>
+      <button class="big-btn btn-purple" onclick="spawnAgent()" id="agents-btn"><span id="agents-btn-text">🤖 Spawn Agent</span></button>
+      <div id="agent-output"></div>
+    </div>
+  </div>
+
+  <!-- PANELS: Workflows -->
+  <div class="panel" id="workflow-panel">
+    <div class="panel-header">
+      <button class="panel-back" onclick="closePanel('workflow-panel')">←</button>
+      <span class="panel-title">⚙️ Workflow Builder</span>
+    </div>
+    <div class="panel-body">
+      <div class="form-group">
+        <label class="form-label">Goal</label>
+        <textarea class="form-textarea" id="workflow-goal" placeholder="Automatically post content to all platforms every day at 9am…" rows="4"></textarea>
+      </div>
+      <button class="big-btn btn-purple" onclick="buildWorkflow()" id="workflow-btn"><span id="workflow-btn-text">⚙️ Build Workflow</span></button>
+      <div id="workflow-output"></div>
+    </div>
+  </div>
+
+</div><!-- /#app -->
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ── AUTH ──────────────────────────────────────────────────────────────
+const ALLOWED_EMAIL = 'kvazquez7455@gmail.com';
+const AUTH_KEY = 'purvis_authorized';
+
+function tryAuth() {
+  const val = document.getElementById('auth-email').value.trim().toLowerCase();
+  if (val === ALLOWED_EMAIL) {
+    localStorage.setItem(AUTH_KEY, '1');
+    bootApp();
+  } else {
+    document.getElementById('auth-err').style.display = 'block';
+    document.getElementById('auth-email').style.borderColor = 'var(--red)';
     setTimeout(() => {
-      btn.textContent = '▶ RUN NOW';
-      btn.disabled = false;
-      loadSleepStatus();
-    }, 8000);
-  } catch(e) {
-    btn.textContent = '▶ RUN NOW';
-    btn.disabled = false;
+      document.getElementById('auth-err').style.display = 'none';
+      document.getElementById('auth-email').style.borderColor = 'var(--border)';
+    }, 2800);
+  }
+}
+document.getElementById('auth-email').addEventListener('keydown', e => { if (e.key === 'Enter') tryAuth(); });
+
+function bootApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  loadMission();
+  loadBriefing();
+  restoreHistory();
+  loadMemoryPanel();
+}
+
+// Check on load
+if (localStorage.getItem(AUTH_KEY) === '1') {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  loadMission();
+  setTimeout(loadBriefing, 200);
+  setTimeout(restoreHistory, 100);
+  setTimeout(loadMemoryPanel, 300);
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────
+let currentTrack = 'Scripture';
+let currentContent = null;
+let currentLegal = null;
+let isChatMicOn = {};
+let chatRecognitions = {};
+let activePanel = null;
+
+// ── NAVIGATION ────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ── MISSION ───────────────────────────────────────────────────────────
+function loadMission() {
+  const val = localStorage.getItem('purvis_revenue') || '0';
+  const formatted = '$' + Number(val).toLocaleString();
+  document.getElementById('mission-display').textContent = formatted + ' → $1M';
+  document.getElementById('menu-mission').textContent = formatted;
+}
+function updateMission() {
+  const val = prompt('Enter current revenue ($):');
+  if (val && !isNaN(val)) {
+    localStorage.setItem('purvis_revenue', val);
+    loadMission();
+    closeMenu();
+    showToast('Revenue updated!');
   }
 }
 
-async function doSearch() {
-  const q = document.getElementById('searchQ').value.trim();
-  if (!q) return;
-  const out = document.getElementById('searchOut');
-  out.textContent = 'Searching the web...';
+// ── MENU ──────────────────────────────────────────────────────────────
+function openMenu() {
+  document.getElementById('menu-drawer').classList.add('open');
+  document.getElementById('menu-overlay').classList.add('open');
+}
+function closeMenu() {
+  document.getElementById('menu-drawer').classList.remove('open');
+  document.getElementById('menu-overlay').classList.remove('open');
+}
+
+// ── PANELS ────────────────────────────────────────────────────────────
+function openPanel(id) {
+  const p = document.getElementById(id);
+  if (p) {
+    p.classList.add('open');
+    activePanel = id;
+    if (id === 'memory-panel') loadMemoryPanel();
+  }
+}
+function closePanel(id) {
+  const p = document.getElementById(id);
+  if (p) p.classList.remove('open');
+  activePanel = null;
+}
+
+// ── CHAT HISTORY ──────────────────────────────────────────────────────
+function saveMsgHistory(chatId, role, text) {
+  const key = 'purvis_chat_' + chatId;
+  const hist = JSON.parse(localStorage.getItem(key) || '[]');
+  hist.push({ role, text, ts: Date.now() });
+  if (hist.length > 100) hist.splice(0, hist.length - 100);
+  localStorage.setItem(key, JSON.stringify(hist));
+}
+
+function restoreHistory() {
+  ['cmd', 'purvis', 'plumbing', 'yt'].forEach(id => {
+    const key = 'purvis_chat_' + id;
+    const hist = JSON.parse(localStorage.getItem(key) || '[]');
+    const msgContainer = id === 'cmd' ? 'cmd-messages' :
+                         id === 'purvis' ? 'purvis-messages' :
+                         id === 'plumbing' ? 'plumbing-messages' : 'yt-messages';
+    if (hist.length > 0) {
+      const container = document.getElementById(msgContainer);
+      if (!container) return;
+      container.innerHTML = '';
+      const recent = hist.slice(-30);
+      recent.forEach(m => {
+        appendMsg(msgContainer, m.role, m.text, false);
+      });
+    }
+  });
+}
+
+function clearHistory() {
+  ['cmd','purvis','plumbing','yt'].forEach(id => {
+    localStorage.removeItem('purvis_chat_' + id);
+  });
+  // Reset message containers
+  document.getElementById('cmd-messages').innerHTML = '<div class="msg purvis"><div class="msg-avatar">🧠</div><div class="msg-bubble">PURVIS online. What\'s the move, Kelvin?</div></div>';
+  document.getElementById('purvis-messages').innerHTML = '<div class="msg purvis"><div class="msg-avatar">🤝</div><div class="msg-bubble">Your personal agent is ready.</div></div>';
+  closeMenu();
+  showToast('Chat history cleared');
+}
+
+// ── MEMORY PANEL ──────────────────────────────────────────────────────
+function loadMemoryPanel() {
+  const container = document.getElementById('memory-list');
+  if (!container) return;
+  const saved = getSavedContent();
+  if (saved.length === 0) {
+    container.innerHTML = '<p style="color:var(--text3);text-align:center;font-size:0.88rem;padding:20px">No saved items yet.</p>';
+    return;
+  }
+  container.innerHTML = saved.slice(-10).reverse().map((item, i) => `
+    <div class="content-output visible" style="margin:0">
+      <div class="output-section">
+        <div class="output-tag">${item.type || 'Content'} • ${new Date(item.ts).toLocaleDateString()}</div>
+        <div class="output-text">${item.text.substring(0,200)}${item.text.length>200?'…':''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function clearMemory() {
+  localStorage.removeItem('purvis_saved');
+  loadMemoryPanel();
+  showToast('Memory cleared');
+}
+
+function getSavedContent() {
+  return JSON.parse(localStorage.getItem('purvis_saved') || '[]');
+}
+
+function saveToMemory(type, text) {
+  const saved = getSavedContent();
+  saved.push({ type, text, ts: Date.now() });
+  localStorage.setItem('purvis_saved', JSON.stringify(saved));
+}
+
+// ── APPEND MESSAGE ────────────────────────────────────────────────────
+function appendMsg(containerId, role, text, save = true) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  if (role === 'purvis') {
+    const av = document.createElement('div');
+    av.className = 'msg-avatar';
+    av.textContent = '🧠';
+    div.appendChild(av);
+  }
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.textContent = text;
+  div.appendChild(bubble);
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  if (save) {
+    const chatId = containerId.replace('-messages', '');
+    saveMsgHistory(chatId, role, text);
+  }
+}
+
+function showTyping(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const div = document.createElement('div');
+  div.className = 'msg purvis';
+  div.id = 'typing-' + containerId;
+  const av = document.createElement('div');
+  av.className = 'msg-avatar';
+  av.textContent = '🧠';
+  div.appendChild(av);
+  const indicator = document.createElement('div');
+  indicator.className = 'typing-indicator';
+  indicator.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  div.appendChild(indicator);
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function removeTyping(containerId) {
+  const el = document.getElementById('typing-' + containerId);
+  if (el) el.remove();
+}
+
+// ── API CALL ──────────────────────────────────────────────────────────
+async function apiCall(endpoint, body) {
   try {
-    const d = await fetch('/api/search', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q})}).then(r=>r.json());
-    out.textContent = (d.analysis || d.searchResult || 'No results found.');
-  } catch(e) { out.textContent = 'Error: ' + e.message; }
+    const res = await fetch(window.location.origin + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    throw new Error('PURVIS API unavailable: ' + e.message);
+  }
 }
 
-function searchQ(q) {
-  document.getElementById('searchQ').value = q;
-  doSearch();
-}
-
-// Load sleep status when tab opens
-const origGo = window.go;
-window.go = function(t) {
-  origGo(t);
-  if (t === 'sleepmode') loadSleepStatus();
-};
-const origMgo = window.mgo;
-window.mgo = function(t) {
-  origMgo(t);
-  if (t === 'sleepmode') loadSleepStatus();
-};
-</script>
-
-
-<script>
-// PERSONAL PURVIS + SUB-AGENTS + WORKFLOWS + BRIEFING
-
-async function sendPersonal() {
-  const input = document.getElementById('personalinput').value.trim();
-  if (!input) return;
-  document.getElementById('personalinput').value = '';
-  addMsg('personallog', 'user', input);
-  const think = addMsg('personallog', 'ai', 'Thinking...', true);
+async function apiGet(endpoint) {
   try {
-    const d = await apiFetch('/api/purvis/personal', { message: input, userId: 'kelvin' });
-    think.remove();
-    addMsg('personallog', 'ai', d.reply);
-  } catch(e) { think.remove(); addMsg('personallog', 'sys', 'Error: ' + e.message); }
-}
-function personalQuick(msg) {
-  document.getElementById('personalinput').value = msg;
-  sendPersonal();
+    const res = await fetch(window.location.origin + endpoint);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    throw new Error('API error: ' + e.message);
+  }
 }
 
-async function getBriefing() {
-  const btn = document.getElementById('briefBtn');
-  btn.textContent = 'Loading your briefing...';
+// ── SEND CHAT (shared) ────────────────────────────────────────────────
+const chatConfig = {
+  cmd:      { inputId: 'cmd-input',      messagesId: 'cmd-messages',      endpoint: '/api/chat',           bodyFn: m => ({ message: m, userId: 'kelvin' }) },
+  purvis:   { inputId: 'purvis-input',   messagesId: 'purvis-messages',   endpoint: '/api/purvis/personal', bodyFn: m => ({ message: m, userId: 'kelvin' }) },
+  plumbing: { inputId: 'plumbing-input', messagesId: 'plumbing-messages', endpoint: '/api/chat',           bodyFn: m => ({ message: 'PLUMBING EXPERT MODE: ' + m, userId: 'kelvin' }) },
+  yt:       { inputId: 'yt-input',       messagesId: 'yt-messages',       endpoint: '/api/chat',           bodyFn: m => ({ message: 'YOUTUBE STRATEGY: ' + m, userId: 'kelvin' }) },
+};
+
+async function sendChat(chatId) {
+  const cfg = chatConfig[chatId];
+  if (!cfg) return;
+  const input = document.getElementById(cfg.inputId);
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  input.style.height = 'auto';
+  appendMsg(cfg.messagesId, 'user', msg);
+  showTyping(cfg.messagesId);
+  try {
+    const data = await apiCall(cfg.endpoint, cfg.bodyFn(msg));
+    removeTyping(cfg.messagesId);
+    const reply = data.response || data.message || data.content || 'Got it.';
+    appendMsg(cfg.messagesId, 'purvis', reply);
+    speakText(reply);
+  } catch (e) {
+    removeTyping(cfg.messagesId);
+    appendMsg(cfg.messagesId, 'purvis', 'I'm having trouble connecting right now. Check the server connection.');
+  }
+}
+
+function handleKey(e, chatId) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChat(chatId);
+  }
+  // Auto-grow
+  const ta = e.target;
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+}
+
+function sendChip(chatId, text) {
+  const cfg = chatConfig[chatId];
+  if (!cfg) return;
+  document.getElementById(cfg.inputId).value = text;
+  sendChat(chatId);
+}
+
+// ── MY PURVIS – personal agent ────────────────────────────────────────
+function sendPersonal(msg) {
+  document.getElementById('purvis-input').value = msg;
+  sendChat('purvis');
+  // scroll to chat
+  document.getElementById('purvis-messages').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── BRIEFING ──────────────────────────────────────────────────────────
+async function loadBriefing() {
+  try {
+    const data = await apiGet('/api/purvis/briefing');
+    const title = data.title || data.priority || 'Focus on revenue-generating activities today';
+    const body = data.body || data.message || data.briefing || '';
+    document.getElementById('brief-skeleton').style.display = 'none';
+    document.getElementById('brief-title').style.display = 'block';
+    document.getElementById('brief-title').textContent = title;
+    if (body) {
+      document.getElementById('brief-body').style.display = 'block';
+      document.getElementById('brief-body').textContent = body;
+    }
+  } catch {
+    document.getElementById('brief-skeleton').style.display = 'none';
+    document.getElementById('brief-title').style.display = 'block';
+    document.getElementById('brief-title').textContent = 'Generate content, follow up on leads, work on your legal case.';
+  }
+}
+
+// ── CONTENT FARM ──────────────────────────────────────────────────────
+function selectTrack(btn, track) {
+  currentTrack = track;
+  document.querySelectorAll('.track-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+async function generateContent() {
+  const btn = document.getElementById('gen-btn');
+  const btnText = document.getElementById('gen-btn-text');
+  btnText.innerHTML = '<div class="spinner"></div>';
   btn.disabled = true;
+
+  const platform = document.getElementById('content-platform').value;
   try {
-    const d = await fetch('/api/purvis/briefing').then(r => r.json());
-    document.getElementById('briefout').textContent = d.briefing;
-  } catch(e) { document.getElementById('briefout').textContent = 'Error: ' + e.message; }
-  btn.textContent = 'REFRESH BRIEFING';
+    const data = await apiCall('/api/content-farm', {
+      niche: currentTrack,
+      platform,
+      count: 1,
+      style: 'engaging'
+    });
+    const c = data.content?.[0] || data;
+    currentContent = {
+      topic: c.topic || c.title || currentTrack + ' content',
+      hook: c.hook || c.opening || 'Did you know…',
+      script: c.script || c.body || c.content || JSON.stringify(c).substring(0, 400),
+      hashtags: c.hashtags || c.tags || '#' + currentTrack.toLowerCase() + ' #content #shorts'
+    };
+    document.getElementById('out-topic').textContent = currentContent.topic;
+    document.getElementById('out-hook').textContent = currentContent.hook;
+    document.getElementById('out-script').textContent = currentContent.script;
+    document.getElementById('out-hashtags').textContent = Array.isArray(currentContent.hashtags) ? currentContent.hashtags.join(' ') : currentContent.hashtags;
+    document.getElementById('content-output').classList.add('visible');
+  } catch (e) {
+    showToast('Could not connect to content API');
+  }
+  btnText.textContent = '⚡ Generate Content';
   btn.disabled = false;
 }
 
-async function spawnAgent() {
-  const agentType = document.getElementById('agenttype').value;
-  const task = document.getElementById('agenttask').value.trim();
-  if (!task) return;
-  const out = document.getElementById('agentout');
-  out.textContent = 'Agent executing task...';
+function saveContent() {
+  if (!currentContent) return;
+  const text = [currentContent.topic, currentContent.hook, currentContent.script, currentContent.hashtags].join('\n\n');
+  saveToMemory('Content', text);
+  // Also save to localStorage array
+  const saved = JSON.parse(localStorage.getItem('purvis_content') || '[]');
+  saved.push({ ...currentContent, ts: Date.now(), track: currentTrack });
+  localStorage.setItem('purvis_content', JSON.stringify(saved));
+  showToast('Content saved!');
+}
+
+function speakContent() {
+  if (!currentContent) return;
+  const text = currentContent.hook + '. ' + currentContent.script;
+  speakText(text);
+}
+
+function openCanva() {
+  window.open('https://www.canva.com/create/youtube-thumbnails/', '_blank');
+}
+function openCapCut() {
+  window.open('https://www.capcut.com/', '_blank');
+}
+
+// ── LEGAL ENGINE ──────────────────────────────────────────────────────
+async function generateLegal() {
+  const btnText = document.getElementById('legal-btn-text');
+  const btn = document.getElementById('legal-btn');
+  btnText.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+
+  const motion = document.getElementById('legal-motion').value;
+  const caseNum = document.getElementById('legal-case').value;
+  const facts = document.getElementById('legal-facts').value;
+
+  const prompt = `Generate a professional ${motion} for Florida family court case ${caseNum}. Facts and arguments: ${facts}. Format as a proper legal motion with caption, introduction, argument sections, and signature block.`;
+
   try {
-    const d = await apiFetch('/api/agents/spawn', { agentType, task });
-    out.textContent = d.output;
-    loadAgentResults();
-  } catch(e) { out.textContent = 'Error: ' + e.message; }
-}
-async function loadAgentResults() {
-  try {
-    const results = await fetch('/api/agents/results').then(r => r.json());
-    const el = document.getElementById('agentresults');
-    if (!results.length) { el.innerHTML = '<div class="empty">No results yet</div>'; return; }
-    el.innerHTML = results.slice(0,3).map(r => `
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:6px;cursor:pointer" onclick="document.getElementById('agentout').textContent=this.dataset.output">
-        <div style="font-size:12px;font-weight:700;color:var(--accent2)">${r.agentType.toUpperCase()}</div>
-        <div style="font-size:11px;color:var(--muted)">${r.task.substring(0,60)}...</div>
-      </div>`).join('');
-  } catch(e) {}
-}
-
-async function buildWorkflow() {
-  const goal = document.getElementById('wfgoal').value.trim();
-  if (!goal) return;
-  document.getElementById('wfout').textContent = 'Building workflow...';
-  try {
-    const d = await apiFetch('/api/workflow/build', { goal });
-    document.getElementById('wfout').textContent = d.workflow;
-  } catch(e) { document.getElementById('wfout').textContent = 'Error: ' + e.message; }
-}
-function quickWorkflow(goal) {
-  document.getElementById('wfgoal').value = goal;
-  buildWorkflow();
-  go('workflows');
-}
-
-// Auto-load briefing when tab opens
-const _origGo = window.go;
-window.go = function(t) {
-  _origGo(t);
-  if (t === 'briefing') getBriefing();
-  if (t === 'subagents') loadAgentResults();
-};
-const _origMgo = window.mgo;
-window.mgo = function(t) {
-  _origMgo(t);
-  if (t === 'briefing') getBriefing();
-  if (t === 'subagents') loadAgentResults();
-};
-</script>
-
-</body></html>`);
-  w.document.close(); w.print();
-}
-
-// ---- LEADS ----
-async function addLead(){
-  const name=document.getElementById('lname').value.trim();
-  if(!name){alert('Enter a name.');return;}
-  const lead={name,email:document.getElementById('lemail').value,phone:document.getElementById('lphone').value,source:document.getElementById('lsrc').value,notes:document.getElementById('lnotes').value,status:'new',date:new Date().toLocaleDateString()};
-  const arr=JSON.parse(localStorage.getItem('purvis_leads')||'[]');
-  arr.unshift({id:Date.now(),...lead});
-  localStorage.setItem('purvis_leads',JSON.stringify(arr));
-  ['lname','lemail','lphone','lnotes'].forEach(id=>document.getElementById(id).value='');
-  loadLeads();
-}
-function loadLeads(){
-  const arr=JSON.parse(localStorage.getItem('purvis_leads')||'[]');
-  document.getElementById('leadcount').textContent=arr.length;
-  const tb=document.getElementById('leadtbl');
-  if(!arr.length){tb.innerHTML='<tr><td colspan="7" class="empty">No leads yet</td></tr>';return;}
-  tb.innerHTML=arr.map(l=>`<tr><td>${l.name}</td><td>${l.email||'—'}</td><td>${l.phone||'—'}</td><td>${l.source}</td><td><span class="sbadge snew">${l.status}</span></td><td>${l.notes||'—'}</td><td><button class="btn red sm" onclick="delLead(${l.id})">🗑️</button></td></tr>`).join('');
-}
-function delLead(id){
-  let arr=JSON.parse(localStorage.getItem('purvis_leads')||'[]');
-  arr=arr.filter(l=>l.id!==id);
-  localStorage.setItem('purvis_leads',JSON.stringify(arr));
-  loadLeads();
-}
-
-// ---- PLUMBING ----
-const DFU=[{max:1,d:'1½"',b:'1¼"'},{max:3,d:'1½"',b:'1½"'},{max:6,d:'2"',b:'1½"'},{max:12,d:'2"',b:'2"'},{max:20,d:'3"',b:'2"'},{max:160,d:'3"',b:'3"'},{max:360,d:'4"',b:'3"'},{max:620,d:'5"',b:'4"'},{max:9999,d:'6"',b:'4"'}];
-function calcDFU(){
-  const vals={dfut:4,dful:1,dfub:2,dfuk:2,dfuf:2,dfud:2,dfuw:3};
-  let total=0;
-  for(const[id,v]of Object.entries(vals)) total+=(parseInt(document.getElementById(id)?.value)||0)*v;
-  document.getElementById('tdfu').textContent=total;
-  const row=DFU.find(r=>total<=r.max)||DFU[DFU.length-1];
-  document.getElementById('dpipe').textContent=row.d;
-  document.getElementById('bpipe').textContent=row.b;
-  document.getElementById('dfunote').textContent=total===0?'Add fixtures above.':`IPC Table 710.1: ${total} DFU → min ${row.d} building drain`;
-}
-function pk(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askPlumbing();}}
-async function askPlumbing(){
-  const input=document.getElementById('pinput').value.trim();
-  if(!input) return;
-  document.getElementById('pinput').value='';
-  addMsg('plog','user',input);
-  const think=addMsg('plog','ai','Thinking...',true);
-  try{
-    const d=await apiFetch('/api/chat',{message:`[PLUMBING IPC EXPERT MODE] ${input}`,userId:'kelvin'});
-    think.remove();
-    addMsg('plog','ai',d.reply);
-  }catch(e){think.remove();addMsg('plog','sys','Error: '+e.message);}
-}
-
-// ---- SUB-AGENTS ----
-async function createAgent(){
-  const name=document.getElementById('aname').value.trim();
-  const purpose=document.getElementById('apurpose').value.trim();
-  const caps=document.getElementById('acaps').value.trim();
-  if(!name||!purpose) return;
-  const out=document.getElementById('agentout');
-  out.textContent='Creating agent...';
-  try{
-    const d=await apiFetch('/api/create-agent',{agentName:name,purpose,capabilities:caps});
-    out.textContent=d.agent;
-    const arr=JSON.parse(localStorage.getItem('purvis_agents')||'[]');
-    arr.unshift({id:Date.now(),name,purpose,spec:d.agent,date:new Date().toLocaleDateString()});
-    localStorage.setItem('purvis_agents',JSON.stringify(arr));
-    loadAgents();
-  }catch(e){out.textContent='Error: '+e.message;}
-}
-function loadAgents(){
-  const arr=JSON.parse(localStorage.getItem('purvis_agents')||'[]');
-  const el=document.getElementById('agentlist');
-  if(!arr.length){el.innerHTML='<div class="empty">No agents created yet</div>';return;}
-  el.innerHTML=arr.map(a=>`<div class="autoitem" style="margin-bottom:6px"><div><div class="n">${a.name}</div><div class="m">${a.purpose} — ${a.date}</div></div><button class="btn sec sm" onclick="delAgent(${a.id})">🗑️</button></div>`).join('');
-}
-function delAgent(id){
-  let arr=JSON.parse(localStorage.getItem('purvis_agents')||'[]');
-  arr=arr.filter(a=>a.id!==id);
-  localStorage.setItem('purvis_agents',JSON.stringify(arr));
-  loadAgents();
-}
-
-// ---- MEMORY ----
-function saveMem(){
-  const key=document.getElementById('mkey').value.trim();
-  const val=document.getElementById('mval').value.trim();
-  if(!key||!val) return;
-  const mem=JSON.parse(localStorage.getItem('purvis_mem')||'{}');
-  mem[key]={value:val,category:document.getElementById('mcat').value,updated:new Date().toLocaleDateString()};
-  localStorage.setItem('purvis_mem',JSON.stringify(mem));
-  document.getElementById('mkey').value='';
-  document.getElementById('mval').value='';
-  loadMem();
-}
-function loadMem(){
-  const mem=JSON.parse(localStorage.getItem('purvis_mem')||'{}');
-  const el=document.getElementById('memlist');
-  const entries=Object.entries(mem);
-  if(!entries.length){el.innerHTML='<div class="empty">No memory stored yet</div>';return;}
-  el.innerHTML=entries.map(([k,v])=>`<div class="memitem"><div><div class="k">${k}</div><div class="v">${v.value}</div><div class="c">${v.category} · ${v.updated}</div></div><button class="btn sec sm" onclick="delMem('${k}')">🗑️</button></div>`).join('');
-}
-function delMem(key){
-  const mem=JSON.parse(localStorage.getItem('purvis_mem')||'{}');
-  delete mem[key];
-  localStorage.setItem('purvis_mem',JSON.stringify(mem));
-  loadMem();
-}
-
-// ---- TASKS LOG ----
-function saveTask(input){
-  const arr=JSON.parse(localStorage.getItem('purvis_tasks')||'[]');
-  arr.unshift({input:input.substring(0,70),time:new Date().toLocaleTimeString()});
-  localStorage.setItem('purvis_tasks',JSON.stringify(arr.slice(0,20)));
-  loadRecentTasks();
-}
-function loadRecentTasks(){
-  const arr=JSON.parse(localStorage.getItem('purvis_tasks')||'[]');
-  const el=document.getElementById('rtasks');
-  if(!arr.length){el.innerHTML='<div class="empty">No tasks yet</div>';return;}
-  el.innerHTML=arr.slice(0,5).map(t=>`<div class="rtask"><span>${t.input}</span><span>${t.time}</span></div>`).join('');
-}
-
-// ---- MISSION ----
-function loadMission(){const v=localStorage.getItem('purvis_mission')||'0';document.getElementById('mbal').textContent='$'+parseFloat(v).toFixed(2);}
-function openMission(){document.getElementById('mmodal').classList.remove('hidden');document.getElementById('mbalinput').value=localStorage.getItem('purvis_mission')||'';}
-function closeMission(){document.getElementById('mmodal').classList.add('hidden');}
-function updateMission(){const v=document.getElementById('mbalinput').value;localStorage.setItem('purvis_mission',v);loadMission();closeMission();}
-
-// ---- VOICE ----
-function toggleVoice(){
-  if(!('webkitSpeechRecognition'in window)&&!('SpeechRecognition'in window)){alert('Voice not supported. Use Chrome.');return;}
-  if(recognizing){recog.stop();return;}
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  recog=new SR();recog.lang='en-US';recog.continuous=false;recog.interimResults=false;
-  recog.onresult=e=>{
-    document.getElementById('cmdinput').value=e.results[0][0].transcript;
-    recognizing=false;document.getElementById('vbtn').classList.remove('rec');
-    runCmd();
-  };
-  recog.onerror=()=>{recognizing=false;document.getElementById('vbtn').classList.remove('rec');};
-  recog.onend=()=>{recognizing=false;document.getElementById('vbtn').classList.remove('rec');};
-  recog.start();recognizing=true;document.getElementById('vbtn').classList.add('rec');
-}
-
-// ---- SEED MEMORY ----
-window.addEventListener('load',()=>{
-  const mem=JSON.parse(localStorage.getItem('purvis_mem')||'{}');
-  if(!mem['LLC Name']){
-    Object.assign(mem,{
-      'LLC Name':{value:'SunBiz LLC',category:'business',updated:new Date().toLocaleDateString()},
-      'Case Number':{value:'2024-DR-012028-O',category:'legal',updated:new Date().toLocaleDateString()},
-      'Mission':{value:'$100 → $1M',category:'personal',updated:new Date().toLocaleDateString()},
-      'Content Tracks':{value:'Scripture Daily, Political, Plumbing, Motivation, Legal Awareness',category:'content',updated:new Date().toLocaleDateString()},
-      'Location':{value:'Orlando, Florida',category:'personal',updated:new Date().toLocaleDateString()}
-    });
-    localStorage.setItem('purvis_mem',JSON.stringify(mem));
+    const data = await apiCall('/api/chat', { message: prompt, userId: 'kelvin' });
+    const text = data.response || data.message || data.content || 'Unable to generate motion.';
+    currentLegal = text;
+    const out = document.getElementById('legal-output');
+    out.textContent = text;
+    out.classList.add('visible');
+    document.getElementById('legal-actions').style.display = 'flex';
+    saveToMemory('Legal', text);
+  } catch {
+    showToast('Could not connect to legal API');
   }
+  btnText.textContent = '⚖️ Generate Motion';
+  btn.disabled = false;
+}
+
+function printLegal() {
+  if (!currentLegal) return;
+  const w = window.open('', '_blank');
+  w.document.write('<html><head><title>Legal Motion</title><style>body{font-family:Times New Roman,serif;font-size:12pt;line-height:1.8;margin:1in;color:#000}pre{white-space:pre-wrap;font-family:inherit}</style></head><body><pre>' + currentLegal.replace(/</g, '&lt;') + '</pre></body></html>');
+  w.document.close();
+  w.print();
+}
+
+function saveLegal() {
+  if (!currentLegal) return;
+  const blob = new Blob([currentLegal], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'motion-' + Date.now() + '.txt'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Motion saved!');
+}
+
+function copyLegal() {
+  if (!currentLegal) return;
+  copyToClipboard(currentLegal);
+  showToast('Copied to clipboard!');
+}
+
+// ── IMAGE GEN ─────────────────────────────────────────────────────────
+async function generateImage() {
+  const btnText = document.getElementById('img-btn-text');
+  const btn = document.getElementById('img-btn');
+  btnText.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+
+  try {
+    const data = await apiCall('/api/image', {
+      prompt: document.getElementById('img-prompt').value,
+      size: document.getElementById('img-size').value
+    });
+    const url = data.url || data.imageUrl || data.image;
+    if (url) {
+      document.getElementById('img-result').src = url;
+      document.getElementById('img-output').style.display = 'block';
+    } else {
+      showToast('No image returned');
+    }
+  } catch {
+    showToast('Image API unavailable');
+  }
+  btnText.textContent = '🖼️ Generate Image';
+  btn.disabled = false;
+}
+
+function downloadImg() {
+  const src = document.getElementById('img-result').src;
+  if (!src) return;
+  const a = document.createElement('a');
+  a.href = src; a.download = 'purvis-image-' + Date.now() + '.png'; a.click();
+}
+
+// ── MUSIC ─────────────────────────────────────────────────────────────
+async function generateMusic() {
+  const btnText = document.getElementById('music-btn-text');
+  const btn = document.getElementById('music-btn');
+  btnText.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+
+  try {
+    const data = await apiCall('/api/music', {
+      prompt: document.getElementById('music-prompt').value,
+      genre: document.getElementById('music-genre').value,
+      mood: document.getElementById('music-mood').value
+    });
+    const url = data.url || data.audioUrl || data.audio;
+    if (url) {
+      document.getElementById('music-result').src = url;
+      document.getElementById('music-output').style.display = 'block';
+    } else {
+      showToast('No audio returned');
+    }
+  } catch {
+    showToast('Music API unavailable');
+  }
+  btnText.textContent = '🎵 Generate Music';
+  btn.disabled = false;
+}
+
+// ── RESEARCH ──────────────────────────────────────────────────────────
+async function doResearch() {
+  const btnText = document.getElementById('research-btn-text');
+  const btn = document.getElementById('research-btn');
+  btnText.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+
+  try {
+    const data = await apiCall('/api/research', {
+      topic: document.getElementById('research-topic').value,
+      userId: 'kelvin'
+    });
+    const result = data.result || data.research || data.response || data.content || JSON.stringify(data).substring(0,800);
+    document.getElementById('research-result').textContent = result;
+    document.getElementById('research-output').style.display = 'block';
+    document.getElementById('research-output').classList.add('visible');
+  } catch {
+    showToast('Research API unavailable');
+  }
+  btnText.textContent = '🔍 Research';
+  btn.disabled = false;
+}
+
+// ── LEADS ─────────────────────────────────────────────────────────────
+async function getLeads() {
+  const btnText = document.getElementById('leads-btn-text');
+  const btn = document.getElementById('leads-btn');
+  btnText.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+
+  try {
+    const market = document.getElementById('leads-market').value;
+    const data = await apiCall('/api/chat', {
+      message: 'Generate 5 qualified plumbing leads for: ' + market + '. Include name, phone, address, and need.',
+      userId: 'kelvin'
+    });
+    const text = data.response || data.message || data.content || '';
+    const container = document.getElementById('leads-output');
+    container.innerHTML = `<div class="content-output visible" style="margin-top:10px"><div class="output-section"><div class="output-text">${text.replace(/\n/g,'<br>')}</div></div></div>`;
+    saveToMemory('Leads', text);
+  } catch {
+    showToast('Leads API unavailable');
+  }
+  btnText.textContent = '📋 Generate Leads';
+  btn.disabled = false;
+}
+
+// ── SOCIAL ────────────────────────────────────────────────────────────
+async function genSocial() {
+  const btnText = document.getElementById('social-btn-text');
+  const btn = document.getElementById('social-btn');
+  btnText.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+
+  const platform = document.getElementById('social-platform').value;
+  const prompt = document.getElementById('social-prompt').value;
+  try {
+    const data = await apiCall('/api/chat', {
+      message: `Write a ${platform} post about: ${prompt}. Make it engaging, include emojis and hashtags.`,
+      userId: 'kelvin'
+    });
+    const text = data.response || data.message || '';
+    document.getElementById('social-result').textContent = text;
+    document.getElementById('social-output').style.display = 'block';
+    document.getElementById('social-output').classList.add('visible');
+  } catch {
+    showToast('Social API unavailable');
+  }
+  btnText.textContent = '📲 Generate Post';
+  btn.disabled = false;
+}
+
+// ── EMAIL ─────────────────────────────────────────────────────────────
+async function genEmail() {
+  const btnText = document.getElementById('email-btn-text');
+  const btn = document.getElementById('email-btn');
+  btnText.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+
+  try {
+    const data = await apiCall('/api/chat', {
+      message: 'Write a professional email for: ' + document.getElementById('email-prompt').value,
+      userId: 'kelvin'
+    });
+    const text = data.response || data.message || '';
+    document.getElementById('email-result').textContent = text;
+    document.getElementById('email-output').style.display = 'block';
+    document.getElementById('email-output').classList.add('visible');
+  } catch {
+    showToast('Email API unavailable');
+  }
+  btnText.textContent = '📧 Generate Email';
+  btn.disabled = false;
+}
+
+// ── SUB-AGENTS ────────────────────────────────────────────────────────
+async function spawnAgent() {
+  const btnText = document.getElementById('agents-btn-text');
+  const btn = document.getElementById('agents-btn');
+  btnText.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+
+  try {
+    const data = await apiCall('/api/agents/spawn', {
+      agentType: document.getElementById('agent-type').value,
+      task: document.getElementById('agent-task').value
+    });
+    const text = data.result || data.response || data.message || JSON.stringify(data).substring(0,600);
+    document.getElementById('agent-output').innerHTML =
+      `<div class="content-output visible" style="margin-top:10px"><div class="output-section"><div class="output-tag">Agent Result</div><div class="output-text">${text.replace(/\n/g,'<br>')}</div></div></div>`;
+  } catch {
+    showToast('Agents API unavailable');
+  }
+  btnText.textContent = '🤖 Spawn Agent';
+  btn.disabled = false;
+}
+
+// ── WORKFLOWS ─────────────────────────────────────────────────────────
+async function buildWorkflow() {
+  const btnText = document.getElementById('workflow-btn-text');
+  const btn = document.getElementById('workflow-btn');
+  btnText.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+
+  try {
+    const data = await apiCall('/api/workflow/build', {
+      goal: document.getElementById('workflow-goal').value
+    });
+    const text = data.workflow || data.result || data.response || data.message || JSON.stringify(data).substring(0,600);
+    document.getElementById('workflow-output').innerHTML =
+      `<div class="content-output visible" style="margin-top:10px"><div class="output-section"><div class="output-tag">Workflow</div><div class="output-text">${text.replace(/\n/g,'<br>')}</div></div></div>`;
+  } catch {
+    showToast('Workflow API unavailable');
+  }
+  btnText.textContent = '⚙️ Build Workflow';
+  btn.disabled = false;
+}
+
+// ── SLEEP MODE ────────────────────────────────────────────────────────
+function activateSleep() {
+  showToast('Sleep Mode activated. PURVIS is working…');
+  closePanel('sleep-panel');
+}
+
+// ── HEALTH CHECK ──────────────────────────────────────────────────────
+async function checkHealth() {
+  try {
+    const data = await apiGet('/api/health');
+    showToast('✅ PURVIS systems online');
+  } catch {
+    showToast('⚠️ Server not responding');
+  }
+  closeMenu();
+}
+
+// ── COPY HELPERS ─────────────────────────────────────────────────────
+function copyText(elId) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  copyToClipboard(el.textContent);
+  showToast('Copied!');
+}
+function copyToClipboard(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text);
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+}
+
+// ── VOICE CHAT (full-screen orb) ──────────────────────────────────────
+let voiceRecognition = null;
+let voiceActive = false;
+let isVoiceListening = false;
+let continuousVoice = true;
+let voiceSpeaking = false;
+
+function openVoice() {
+  document.getElementById('voice-modal').classList.add('open');
+  voiceActive = true;
+  setOrbState('idle');
+}
+
+function closeVoice() {
+  document.getElementById('voice-modal').classList.remove('open');
+  voiceActive = false;
+  stopVoiceListening();
+  window.speechSynthesis && window.speechSynthesis.cancel();
+}
+
+function setOrbState(state) {
+  const orb = document.getElementById('main-orb');
+  orb.classList.remove('listening', 'thinking', 'speaking');
+  const status = document.getElementById('voice-status');
+  if (state === 'listening') {
+    orb.classList.add('listening');
+    status.textContent = 'Listening…';
+    document.getElementById('voice-manual-btn').classList.add('active');
+    document.getElementById('voice-manual-btn').textContent = '🔴 Listening…';
+  } else if (state === 'thinking') {
+    orb.classList.add('thinking');
+    status.textContent = 'Thinking…';
+    document.getElementById('voice-manual-btn').classList.remove('active');
+    document.getElementById('voice-manual-btn').textContent = '🎤 Hold to Speak';
+  } else if (state === 'speaking') {
+    orb.classList.add('speaking');
+    status.textContent = 'Speaking…';
+    document.getElementById('voice-manual-btn').classList.remove('active');
+    document.getElementById('voice-manual-btn').textContent = '🎤 Hold to Speak';
+  } else {
+    status.textContent = 'Tap to speak';
+    document.getElementById('voice-manual-btn').classList.remove('active');
+    document.getElementById('voice-manual-btn').textContent = '🎤 Tap to Speak';
+  }
+}
+
+function toggleVoiceListening() {
+  if (isVoiceListening) {
+    stopVoiceListening();
+  } else {
+    startVoiceListening();
+  }
+}
+
+function startVoiceListening() {
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) {
+    showToast('Speech recognition not supported on this browser');
+    return;
+  }
+  if (voiceRecognition) {
+    try { voiceRecognition.stop(); } catch(e){}
+    voiceRecognition = null;
+  }
+  voiceRecognition = new SpeechRec();
+  voiceRecognition.continuous = false;
+  voiceRecognition.interimResults = true;
+  voiceRecognition.lang = 'en-US';
+
+  voiceRecognition.onstart = () => {
+    isVoiceListening = true;
+    setOrbState('listening');
+  };
+
+  voiceRecognition.onresult = (e) => {
+    let transcript = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      transcript += e.results[i][0].transcript;
+    }
+    document.getElementById('voice-transcript').textContent = transcript;
+    if (e.results[e.results.length - 1].isFinal) {
+      isVoiceListening = false;
+      processVoiceInput(transcript);
+    }
+  };
+
+  voiceRecognition.onerror = (e) => {
+    isVoiceListening = false;
+    setOrbState('idle');
+    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      document.getElementById('voice-transcript').textContent = 'Mic error: ' + e.error;
+    }
+  };
+
+  voiceRecognition.onend = () => {
+    isVoiceListening = false;
+    if (!voiceSpeaking && voiceActive) {
+      setOrbState('idle');
+    }
+  };
+
+  voiceRecognition.start();
+}
+
+function stopVoiceListening() {
+  isVoiceListening = false;
+  if (voiceRecognition) {
+    try { voiceRecognition.stop(); } catch(e){}
+    voiceRecognition = null;
+  }
+  setOrbState('idle');
+}
+
+async function processVoiceInput(text) {
+  if (!text.trim()) return;
+  document.getElementById('voice-transcript').textContent = 'You: ' + text;
+  setOrbState('thinking');
+
+  // Also add to command chat
+  appendMsg('cmd-messages', 'user', text);
+  showTyping('cmd-messages');
+
+  try {
+    const data = await apiCall('/api/chat', { message: text, userId: 'kelvin' });
+    const reply = data.response || data.message || data.content || 'Got it.';
+    removeTyping('cmd-messages');
+    appendMsg('cmd-messages', 'purvis', reply);
+    document.getElementById('voice-transcript').textContent = reply;
+    setOrbState('speaking');
+    voiceSpeaking = true;
+    speakTextFull(reply, () => {
+      voiceSpeaking = false;
+      if (continuousVoice && voiceActive) {
+        setTimeout(() => { if (voiceActive) startVoiceListening(); }, 600);
+      } else {
+        setOrbState('idle');
+      }
+    });
+  } catch {
+    removeTyping('cmd-messages');
+    const errMsg = 'I\'m having trouble connecting. Check the server.';
+    document.getElementById('voice-transcript').textContent = errMsg;
+    setOrbState('speaking');
+    voiceSpeaking = true;
+    speakTextFull(errMsg, () => { voiceSpeaking = false; setOrbState('idle'); });
+  }
+}
+
+// ── TTS ───────────────────────────────────────────────────────────────
+function speakText(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const words = text.split(' ').slice(0, 60).join(' ');
+  const utt = new SpeechSynthesisUtterance(words);
+  utt.rate = 1.05; utt.pitch = 0.95; utt.volume = 0.9;
+  window.speechSynthesis.speak(utt);
+}
+
+function speakTextFull(text, onEnd) {
+  if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.rate = 1.05; utt.pitch = 0.95; utt.volume = 0.9;
+  utt.onend = onEnd || null;
+  utt.onerror = onEnd || null;
+  window.speechSynthesis.speak(utt);
+}
+
+// ── INLINE MIC (chat inputs) ──────────────────────────────────────────
+function toggleMicChat(chatId) {
+  if (isChatMicOn[chatId]) {
+    stopChatMic(chatId);
+  } else {
+    startChatMic(chatId);
+  }
+}
+
+function startChatMic(chatId) {
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) { showToast('Speech not supported'); return; }
+  if (chatRecognitions[chatId]) {
+    try { chatRecognitions[chatId].stop(); } catch(e) {}
+  }
+  const rec = new SpeechRec();
+  rec.continuous = false; rec.interimResults = true; rec.lang = 'en-US';
+  chatRecognitions[chatId] = rec;
+  isChatMicOn[chatId] = true;
+  const micBtn = document.getElementById(chatId + '-mic');
+  if (micBtn) micBtn.classList.add('listening');
+
+  rec.onresult = (e) => {
+    let t = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
+    const inputEl = document.getElementById(chatId + '-input');
+    if (inputEl) inputEl.value = t;
+    if (e.results[e.results.length - 1].isFinal) {
+      stopChatMic(chatId);
+      sendChat(chatId);
+    }
+  };
+  rec.onerror = () => stopChatMic(chatId);
+  rec.onend = () => stopChatMic(chatId);
+  rec.start();
+}
+
+function stopChatMic(chatId) {
+  isChatMicOn[chatId] = false;
+  const micBtn = document.getElementById(chatId + '-mic');
+  if (micBtn) micBtn.classList.remove('listening');
+  if (chatRecognitions[chatId]) {
+    try { chatRecognitions[chatId].stop(); } catch(e) {}
+    chatRecognitions[chatId] = null;
+  }
+}
+
+// ── BACK BUTTON (mobile) ──────────────────────────────────────────────
+window.addEventListener('popstate', () => {
+  if (activePanel) { closePanel(activePanel); return; }
+  if (document.getElementById('voice-modal').classList.contains('open')) { closeVoice(); return; }
+  if (document.getElementById('menu-drawer').classList.contains('open')) { closeMenu(); return; }
 });
+
+// Push a state so we can catch back button
+history.pushState({ purvis: true }, '');
+
+// ── AUTO-GROW TEXTAREAS ───────────────────────────────────────────────
+document.querySelectorAll('.chat-input').forEach(ta => {
+  ta.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  });
+});
+
+// ── INITIAL BRIEFING PLACEHOLDER ──────────────────────────────────────
+// Called at bootApp
 </script>
 </body>
 </html>
-
-<script>
-// PURVIS SOCIAL EXTENSION — injected after main load
-document.addEventListener('DOMContentLoaded', function() {
-
-  // Add new nav items
-  const nav = document.querySelector('nav ul');
-  const newItems = [
-    { t:'youtube', ic:'📺', lb:'YouTube' },
-    { t:'social',  ic:'📲', lb:'Social Media' },
-    { t:'email',   ic:'📧', lb:'Email / Gmail' },
-    { t:'canva',   ic:'🖼️', lb:'Canva / CapCut' },
-  ];
-  newItems.forEach(item => {
-    const li = document.createElement('li');
-    li.setAttribute('data-t', item.t);
-    li.onclick = () => go(item.t);
-    li.innerHTML = `<span class="ic">${item.ic}</span><span class="lb">${item.lb}</span>`;
-    nav.appendChild(li);
-  });
-
-  // Add tab labels
-  const labels = {youtube:'📺 YouTube Engine', social:'📲 Social Media', email:'📧 Email / Gmail', canva:'🖼️ Canva / CapCut'};
-  Object.assign(window.tabLabels || {}, labels);
-  // patch tabLabels global
-  const orig = window.tabLabels;
-  window.tabLabels = Object.assign(orig||{}, labels);
-
-  // Inject tab sections into main
-  const main = document.querySelector('.main');
-  const tabs = `
-  <!-- YOUTUBE -->
-  <div id="t-youtube" class="tab">
-    <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
-      <div class="ch"><h2>📺 YouTube Engine</h2><span class="badge">FREE API</span></div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <textarea id="ytscript" rows="4" placeholder="Paste your video script here..." style="flex:1;min-width:200px"></textarea>
-        <div style="display:flex;flex-direction:column;gap:8px;min-width:160px">
-          <select id="ytniche">
-            <option value="Scripture / Bible">Scripture / Bible</option>
-            <option value="Political Commentary">Political Commentary</option>
-            <option value="Plumbing Tips">Plumbing Tips</option>
-            <option value="Motivation">Motivation</option>
-            <option value="Legal Awareness">Legal Awareness</option>
-          </select>
-          <button class="btn" onclick="ytOptimize()">OPTIMIZE FOR YOUTUBE</button>
-          <button class="btn sec" onclick="ytTrending()">GET TRENDING NOW</button>
-        </div>
-      </div>
-      <div id="ytout" class="output" style="flex:1;min-height:200px">Paste a script and click OPTIMIZE to get titles, descriptions, tags, and thumbnail concepts.</div>
-    </div>
-  </div>
-
-  <!-- SOCIAL MEDIA -->
-  <div id="t-social" class="tab">
-    <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
-      <div class="ch"><h2>📲 Social Media Repurposer</h2><span class="badge">ALL PLATFORMS</span></div>
-      <textarea id="socialcontent" rows="4" placeholder="Paste any content — script, article, idea — to repurpose across all platforms..."></textarea>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn" onclick="repurposeSocial()">REPURPOSE FOR ALL PLATFORMS</button>
-        <button class="btn sec" onclick="repurposeSpecific('twitter')">Twitter/X</button>
-        <button class="btn sec" onclick="repurposeSpecific('instagram')">Instagram</button>
-        <button class="btn sec" onclick="repurposeSpecific('tiktok')">TikTok</button>
-        <button class="btn sec" onclick="repurposeSpecific('facebook')">Facebook</button>
-      </div>
-      <div id="socialout" class="output" style="flex:1;min-height:200px">Paste content and click REPURPOSE to get platform-specific posts, hashtags, and posting times.</div>
-    </div>
-  </div>
-
-  <!-- EMAIL -->
-  <div id="t-email" class="tab">
-    <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
-      <div class="ch"><h2>📧 Email / Gmail Drafts</h2><span class="badge">AI POWERED — FREE</span></div>
-      <div class="fgrid">
-        <input type="text" id="emailto" placeholder="To (name or email)">
-        <input type="text" id="emailsubject" placeholder="Subject">
-        <select id="emailtone">
-          <option value="professional">Professional</option>
-          <option value="friendly">Friendly</option>
-          <option value="assertive">Assertive</option>
-          <option value="follow-up">Follow-Up</option>
-          <option value="legal">Legal / Formal</option>
-        </select>
-        <button class="btn" onclick="draftEmail()">DRAFT EMAIL</button>
-      </div>
-      <textarea id="emailcontext" rows="3" placeholder="What is this email about? e.g. Follow up with plumbing lead John about bathroom estimate from last week"></textarea>
-      <div id="emailout" class="output" style="flex:1;min-height:200px">Fill in the fields above and click DRAFT EMAIL.</div>
-      <div style="display:flex;gap:10px">
-        <button class="btn sec" onclick="openGmail()">📬 Open Gmail</button>
-        <button class="btn sec" onclick="copyEmail()">📋 Copy Draft</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- CANVA / CAPCUT -->
-  <div id="t-canva" class="tab">
-    <div class="card" style="flex:1;display:flex;flex-direction:column;gap:12px">
-      <div class="ch"><h2>🖼️ Canva + CapCut Engine</h2><span class="badge">FREE TOOLS</span></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1">
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Canva Design Brief</div>
-          <select id="canvatype">
-            <option value="youtube_thumbnail">YouTube Thumbnail</option>
-            <option value="instagram_post">Instagram Post</option>
-            <option value="instagram_story">Instagram Story</option>
-            <option value="tiktok">TikTok Video Cover</option>
-            <option value="facebook_post">Facebook Post</option>
-            <option value="logo">Logo</option>
-          </select>
-          <input type="text" id="canvatopic" placeholder="Topic (e.g. David and Goliath)">
-          <button class="btn" onclick="genCanva()">GENERATE BRIEF</button>
-          <button class="btn sec" onclick="openCanva()">🎨 OPEN CANVA</button>
-          <div id="canvaout" class="output" style="flex:1;min-height:140px;font-size:12px">Design brief will appear here.</div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">CapCut Script</div>
-          <textarea id="capcutcontent" rows="4" placeholder="Paste your video script for CapCut editing instructions..."></textarea>
-          <select id="capcutdur">
-            <option value="30">30 seconds</option>
-            <option value="60">60 seconds (Shorts)</option>
-            <option value="90">90 seconds</option>
-            <option value="180">3 minutes</option>
-          </select>
-          <button class="btn" onclick="genCapcut()">GENERATE CAPCUT SCRIPT</button>
-          <button class="btn sec" onclick="openCapcut()">✂️ OPEN CAPCUT</button>
-          <div id="capcutout" class="output" style="flex:1;min-height:140px;font-size:12px">CapCut editing script will appear here.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  `;
-  main.insertAdjacentHTML('beforeend', tabs);
-
-  // ---- YOUTUBE FUNCTIONS ----
-  window.ytOptimize = async function() {
-    const script = document.getElementById('ytscript').value.trim();
-    const niche = document.getElementById('ytniche').value;
-    if(!script) return;
-    document.getElementById('ytout').textContent = 'Optimizing for YouTube...';
-    try {
-      const d = await apiFetch('/api/youtube/optimize', {script, niche});
-      document.getElementById('ytout').textContent = d.result;
-    } catch(e) { document.getElementById('ytout').textContent = 'Error: ' + e.message; }
-  };
-  window.ytTrending = async function() {
-    document.getElementById('ytout').textContent = 'Fetching trending YouTube videos...';
-    try {
-      const d = await apiFetch('/api/youtube/trending', {category:'news'});
-      if(d.result) { document.getElementById('ytout').textContent = d.result; return; }
-      const txt = d.videos.map((v,i) => `${i+1}. ${v.title}\n   Channel: ${v.channel} | Views: ${parseInt(v.views).toLocaleString()}\n   ${v.url}`).join('\n\n');
-      document.getElementById('ytout').textContent = txt;
-    } catch(e) { document.getElementById('ytout').textContent = 'Error: ' + e.message; }
-  };
-
-  // ---- SOCIAL FUNCTIONS ----
-  window.repurposeSocial = async function() {
-    const content = document.getElementById('socialcontent').value.trim();
-    if(!content) return;
-    document.getElementById('socialout').textContent = 'Repurposing for all platforms...';
-    try {
-      const d = await apiFetch('/api/social/repurpose', {content, platforms:['Twitter/X','Instagram','TikTok','Facebook','LinkedIn','YouTube Community']});
-      document.getElementById('socialout').textContent = d.result;
-    } catch(e) { document.getElementById('socialout').textContent = 'Error: ' + e.message; }
-  };
-  window.repurposeSpecific = async function(platform) {
-    const content = document.getElementById('socialcontent').value.trim();
-    if(!content) return;
-    document.getElementById('socialout').textContent = `Optimizing for ${platform}...`;
-    try {
-      const d = await apiFetch('/api/social/repurpose', {content, platforms:[platform]});
-      document.getElementById('socialout').textContent = d.result;
-    } catch(e) { document.getElementById('socialout').textContent = 'Error: ' + e.message; }
-  };
-
-  // ---- EMAIL FUNCTIONS ----
-  window.draftEmail = async function() {
-    const to = document.getElementById('emailto').value;
-    const subject = document.getElementById('emailsubject').value;
-    const context = document.getElementById('emailcontext').value.trim();
-    const tone = document.getElementById('emailtone').value;
-    if(!context) return;
-    document.getElementById('emailout').textContent = 'Drafting email...';
-    try {
-      const d = await apiFetch('/api/email/draft', {to, subject, context, tone});
-      document.getElementById('emailout').textContent = d.draft;
-    } catch(e) { document.getElementById('emailout').textContent = 'Error: ' + e.message; }
-  };
-  window.openGmail = function() { window.open('https://mail.google.com/mail/u/0/#compose','_blank'); };
-  window.copyEmail = function() {
-    const txt = document.getElementById('emailout').textContent;
-    navigator.clipboard.writeText(txt).then(()=>alert('Email copied to clipboard!'));
-  };
-
-  // ---- CANVA FUNCTIONS ----
-  window.genCanva = async function() {
-    const contentType = document.getElementById('canvatype').value;
-    const topic = document.getElementById('canvatopic').value.trim();
-    if(!topic) return;
-    document.getElementById('canvaout').textContent = 'Generating design brief...';
-    try {
-      const d = await apiFetch('/api/canva/brief', {contentType, topic, style:'bold dark purple modern'});
-      document.getElementById('canvaout').textContent = d.brief;
-    } catch(e) { document.getElementById('canvaout').textContent = 'Error: ' + e.message; }
-  };
-  window.openCanva = function() { window.open('https://www.canva.com','_blank'); };
-
-  // ---- CAPCUT FUNCTIONS ----
-  window.genCapcut = async function() {
-    const content = document.getElementById('capcutcontent').value.trim();
-    const duration = document.getElementById('capcutdur').value;
-    if(!content) return;
-    document.getElementById('capcutout').textContent = 'Generating CapCut script...';
-    try {
-      const d = await apiFetch('/api/capcut/script', {content, duration});
-      document.getElementById('capcutout').textContent = d.script;
-    } catch(e) { document.getElementById('capcutout').textContent = 'Error: ' + e.message; }
-  };
-  window.openCapcut = function() { window.open('https://www.capcut.com','_blank'); };
-
-  // ---- RUN FIRST TASK ON FIRST LOAD ----
-  if(!localStorage.getItem('purvis_first_task_done')) {
-    setTimeout(async () => {
-      try {
-        const d = await apiFetch('/api/first-task', {});
-        localStorage.setItem('purvis_first_task_done', '1');
-        localStorage.setItem('purvis_first_task_report', d.report);
-        addMsg('cmdlog','ai','🚀 PURVIS FIRST TASK COMPLETE:\n\n' + d.report);
-      } catch(e) {}
-    }, 3000);
-  }
-});
-</script>
