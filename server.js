@@ -1084,9 +1084,7 @@ app.get('/api/overnight/status', async (req, res) => {
 });
 
 // ── Catch-all ─────────────────────────────────────────────────────────────────
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// catch-all moved to end
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
@@ -1439,6 +1437,11 @@ Question: ${question}` }
   } catch(e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// Serve SPA for all non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
