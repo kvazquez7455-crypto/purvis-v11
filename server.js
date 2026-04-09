@@ -1348,11 +1348,18 @@ app.get('/api/memory-health', async (req, res) => {
     const counts = await supabase.rpc('get_table_counts').then ? 
       null : null; // fallback below
     
-    const tables = ['purvis_messages','purvis_improvements','purvis_life_thread','purvis_code_map','purvis_memory'];
     const results = {};
-    for (const t of tables) {
-      const { count } = await supabase.from(t).select('*', { count: 'exact', head: true });
-      results[t] = count || 0;
+    const tableList = ['purvis_messages','purvis_improvements','purvis_life_thread','purvis_code_map','purvis_memory'];
+    for (const t of tableList) {
+      try {
+        const { data } = await supabase.from(t).select('id').limit(1000);
+        results[t] = data ? data.length : 0;
+        // For memory which may have more, do a rough count
+        if (t === 'purvis_memory') {
+          const { data: all } = await supabase.from(t).select('id');
+          results[t] = all ? all.length : 0;
+        }
+      } catch(e) { results[t] = 0; }
     }
 
     res.json({
