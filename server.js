@@ -1810,24 +1810,8 @@ app.get('/api/resource-policy', (req, res) => {
   });
 });
 
-// Serve SPA for all non-API routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// catch-all at end
 
-app.listen(PORT, () => {
-  console.log(`[PURVIS 11] Online → http://localhost:${PORT}`);
-
-  // Run overnight runner 30s after startup
-  setTimeout(() => {
-    overnightRunner();
-  }, 30000);
-
-  // Run every hour
-  setInterval(() => {
-    overnightRunner();
-  }, 60 * 60 * 1000);
-});
 
 // ============================================================
 // PURVIS TEST RUNNER + SELF-LEARNING ENGINE
@@ -2088,4 +2072,12 @@ app.get('/api/learn/health', async (req, res) => {
     totalLearningLogs: (logs.data||[]).length,
     triggerUrl: 'POST /api/learn/daily'
   });
+});
+
+// Serve SPA for all non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+app.listen(PORT, () => {
+  console.log(`[PURVIS 11] Online → http://localhost:${PORT}`);
 });
