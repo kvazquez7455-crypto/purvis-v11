@@ -201,99 +201,71 @@ select.styled:focus{border-color:var(--purple)}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
+
+
+
 <script>
-// PURVIS AUTH — Simple permanent unlock for Kelvin
-(function() {
-  const OWNER_EMAIL = 'kvazquez7455@gmail.com';
+// PURVIS AUTH — kvazquez7455@gmail.com ALWAYS gets in. Period.
+(function(){
+  var OWNER = 'kvazquez7455@gmail.com';
   
-  // Check if already authorized
-  if (localStorage.getItem('purvis_auth') === 'true') {
-    unlockPURVIS();
-    return;
+  function isAuthed() {
+    return localStorage.getItem('purvis_auth') === 'true';
   }
   
-  // Show auth screen
-  function showAuthScreen() {
-    document.body.innerHTML = `
-      <div style="
-        position:fixed;inset:0;
-        background:linear-gradient(135deg,#0a0a0f,#1a0a2e);
-        display:flex;align-items:center;justify-content:center;
-        font-family:system-ui,-apple-system,sans-serif;
-      ">
-        <div style="
-          background:#111118;border:1px solid #2a2a3a;
-          border-radius:20px;padding:40px 32px;
-          width:min(340px,90vw);text-align:center;
-          box-shadow:0 0 60px rgba(124,58,237,.4)
-        ">
-          <div style="font-size:52px;margin-bottom:12px">🧠</div>
-          <div style="font-size:28px;font-weight:900;color:#a855f7;letter-spacing:3px;margin-bottom:6px">PURVIS 11</div>
-          <div style="font-size:12px;color:#888899;letter-spacing:2px;text-transform:uppercase;margin-bottom:28px">Private AI System</div>
-          
-          <input 
-            type="email" 
-            id="emailInput"
-            placeholder="Enter your email"
-            autocomplete="email"
-            style="
-              width:100%;background:#1a1a24;border:1px solid #2a2a3a;
-              border-radius:10px;color:#f1f1f5;padding:14px 16px;
-              font-size:16px;font-family:inherit;margin-bottom:12px;
-              -webkit-appearance:none;box-sizing:border-box;
-            "
-          >
-          <button 
-            onclick="checkEmail()"
-            style="
-              width:100%;background:#7c3aed;border:none;
-              color:#fff;padding:14px;border-radius:10px;
-              font-size:16px;font-weight:700;cursor:pointer;
-              margin-bottom:16px;
-            "
-          >ENTER PURVIS</button>
-          <div id="authError" style="color:#ef4444;font-size:13px;min-height:20px"></div>
-          <div style="font-size:11px;color:#888899;margin-top:16px">
-            This is a private system.<br>Only authorized users may enter.
-          </div>
-        </div>
-      </div>
-    `;
+  function unlock() {
+    localStorage.setItem('purvis_auth', 'true');
+    localStorage.setItem('purvis_user', OWNER);
+    var gate = document.getElementById('purvisGate');
+    if (gate) gate.remove();
+    var app = document.getElementById('mainApp') || document.getElementById('app');
+    if (app) { app.style.display = ''; app.classList.remove('hidden'); }
+  }
+  
+  function showGate() {
+    var gate = document.createElement('div');
+    gate.id = 'purvisGate';
+    gate.style.cssText = 'position:fixed;inset:0;background:linear-gradient(135deg,#0a0a0f,#1a0a2e);display:flex;align-items:center;justify-content:center;z-index:99999;font-family:system-ui,-apple-system,sans-serif';
+    gate.innerHTML = '<div style="background:#111118;border:1px solid #2a2a3a;border-radius:20px;padding:40px 28px;width:min(340px,90vw);text-align:center;box-shadow:0 0 60px rgba(124,58,237,.4)">' +
+      '<div style="font-size:52px;margin-bottom:10px">🧠</div>' +
+      '<div style="font-size:26px;font-weight:900;color:#a855f7;letter-spacing:3px;margin-bottom:4px">PURVIS 11</div>' +
+      '<div style="font-size:11px;color:#888899;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px">Private AI System</div>' +
+      '<input id="purvisEmail" type="email" autocomplete="email" placeholder="Enter your email" style="width:100%;background:#1a1a24;border:2px solid #2a2a3a;border-radius:10px;color:#f1f1f5;padding:14px 16px;font-size:16px;font-family:inherit;margin-bottom:12px;box-sizing:border-box;-webkit-appearance:none;outline:none" />' +
+      '<button id="purvisEnterBtn" style="width:100%;background:#7c3aed;border:none;color:#fff;padding:14px;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:12px">ENTER PURVIS</button>' +
+      '<div id="purvisErr" style="color:#ef4444;font-size:13px;min-height:18px"></div>' +
+      '<div style="font-size:11px;color:#555577;margin-top:16px">Private system. Authorized users only.</div>' +
+    '</div>';
+    document.body.appendChild(gate);
     
-    // Auto-submit on enter
-    setTimeout(() => {
-      const inp = document.getElementById('emailInput');
-      if (inp) {
-        inp.addEventListener('keydown', function(e) {
-          if (e.key === 'Enter') checkEmail();
-        });
-        inp.focus();
-      }
-    }, 100);
-  }
-  
-  window.checkEmail = function() {
-    const inp = document.getElementById('emailInput');
-    const val = (inp ? inp.value : '').trim().toLowerCase();
-    if (val === OWNER_EMAIL) {
-      localStorage.setItem('purvis_auth', 'true');
-      localStorage.setItem('purvis_user_email', OWNER_EMAIL);
-      window.location.reload();
-    } else if (val === '') {
-      document.getElementById('authError').textContent = 'Please enter your email.';
-    } else {
-      document.getElementById('authError').textContent = 'Access denied. This is a private system.';
+    function tryEnter() {
+      var val = (document.getElementById('purvisEmail').value||'').trim().toLowerCase();
+      if (!val) { document.getElementById('purvisErr').textContent = 'Enter your email.'; return; }
+      if (val === OWNER) { unlock(); }
+      else { document.getElementById('purvisErr').textContent = 'Access denied.'; }
     }
-  };
-  
-  function unlockPURVIS() {
-    // Auth already done — app loads normally
-    // Nothing to do here, page renders as normal
+    
+    document.getElementById('purvisEnterBtn').addEventListener('click', tryEnter);
+    document.getElementById('purvisEmail').addEventListener('keydown', function(e){ if(e.key==='Enter') tryEnter(); });
+    
+    // Focus after render
+    setTimeout(function(){ var el = document.getElementById('purvisEmail'); if(el) el.focus(); }, 200);
   }
   
-  // Only show auth screen if not already logged in
-  if (localStorage.getItem('purvis_auth') !== 'true') {
-    document.addEventListener('DOMContentLoaded', showAuthScreen);
+  // Hide the main app until authed
+  function hideApp() {
+    var app = document.getElementById('mainApp') || document.getElementById('app');
+    if (app) app.style.display = 'none';
+  }
+  
+  if (isAuthed()) {
+    // Already logged in — do nothing, app shows normally
+  } else {
+    // Hide app and show gate
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function(){ hideApp(); showGate(); });
+    } else {
+      hideApp(); showGate();
+    }
   }
 })();
 </script>
@@ -312,7 +284,7 @@ select.styled:focus{border-color:var(--purple)}
 </div>
 
 <!-- MAIN APP -->
-<div id="app">
+<div id="app" style="display:none">
   <!-- TOP BAR -->
   <div id="topbar">
     <span class="tb-logo">🧠 PURVIS</span>

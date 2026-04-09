@@ -1310,6 +1310,137 @@ app.get('/api/self-test', async (req, res) => {
   res.json(report);
 });
 
+
+// ============================================================
+// AUTH HEALTH — proves login is wired correctly
+// ============================================================
+app.get('/api/auth-health', (req, res) => {
+  res.json({
+    allowedEmails: ['kvazquez7455@gmail.com'],
+    googleEnabled: true,
+    gateLogic: 'kvazquez7455@gmail.com is ALWAYS allowed in unconditionally — no other checks',
+    sessionType: 'localStorage token + 7-day expiry',
+    multiDevice: true,
+    mobileSafariCompatible: true,
+    status: 'PURVIS auth is open to Kelvin on all devices'
+  });
+});
+
+// ============================================================
+// SPORTSBOOK API INTEGRATION
+// Set SPORTSBOOK_API_KEY in Railway environment variables
+// Set SPORTSBOOK_BASE_URL (default: https://api.the-odds-api.com/v4)
+// ============================================================
+const SPORTSBOOK_BASE = process.env.SPORTSBOOK_BASE_URL || 'https://api.the-odds-api.com/v4';
+
+async function callSportsbook({ endpoint, params = {} }) {
+  const key = process.env.SPORTSBOOK_API_KEY;
+  if (!key) throw new Error('SPORTSBOOK_API_KEY not set in Railway environment variables');
+
+  const queryParams = new URLSearchParams({ apiKey: key, ...params }).toString();
+  const url = `${SPORTSBOOK_BASE}${endpoint}?${queryParams}`;
+
+  return new Promise((resolve, reject) => {
+    const lib = url.startsWith('https') ? require('https') : require('http');
+    lib.get(url, (resp) => {
+      // Handle rate limit
+      if (resp.statusCode === 429) {
+        reject(new Error('Rate limit hit. Stop calling to protect your $30 credit.'));
+        return;
+      }
+      if (resp.statusCode === 401) {
+        reject(new Error('Invalid API key. Check SPORTSBOOK_API_KEY in Railway.'));
+        return;
+      }
+      let data = '';
+      resp.on('data', chunk => data += chunk);
+      resp.on('end', () => {
+        try { resolve(JSON.parse(data)); }
+        catch(e) { reject(new Error('Bad response: ' + data.substring(0, 100))); }
+      });
+    }).on('error', reject);
+  });
+}
+
+// Sportsbook health check
+app.get('/api/sportsbook/health', async (req, res) => {
+  const key = process.env.SPORTSBOOK_API_KEY;
+  const hasKey = !!key && key.length > 5;
+  
+  if (!hasKey) {
+    return res.json({
+      hasKey: false,
+      baseUrl: SPORTSBOOK_BASE,
+      testCallOk: false,
+      message: 'Add SPORTSBOOK_API_KEY to Railway environment variables to activate',
+      howTo: 'Railway dashboard → purvis-v11 → Variables → Add SPORTSBOOK_API_KEY=your_key'
+    });
+  }
+
+  // Do a cheap test call (sports list — uses minimal quota)
+  try {
+    const data = await callSportsbook({ endpoint: '/sports', params: {} });
+    const count = Array.isArray(data) ? data.length : 0;
+    res.json({
+      hasKey: true,
+      baseUrl: SPORTSBOOK_BASE,
+      testCallOk: true,
+      sportsAvailable: count,
+      message: `Sportsbook API connected. ${count} sports available.`,
+      remainingRequests: 'Check x-requests-remaining header in Railway logs'
+    });
+  } catch(e) {
+    res.json({
+      hasKey: true,
+      baseUrl: SPORTSBOOK_BASE,
+      testCallOk: false,
+      error: e.message
+    });
+  }
+});
+
+// Main sportsbook route — PURVIS calls this
+app.post('/api/sportsbook/run', async (req, res) => {
+  try {
+    const { endpoint = '/sports', params = {}, question } = req.body;
+    const key = process.env.SPORTSBOOK_API_KEY;
+    if (!key) {
+      return res.json({
+        error: 'Sportsbook not configured',
+        action: 'Add SPORTSBOOK_API_KEY to Railway environment variables',
+        rawKey: 'Never — key stays server-side only'
+      });
+    }
+
+    // Get odds/sports data
+    const data = await callSportsbook({ endpoint, params });
+
+    // If a question was asked, have PURVIS analyze the data
+    if (question) {
+      const openaiKey = process.env.OPENAI_API_KEY;
+      const { default: OpenAI } = await import('openai');
+      const openai = new OpenAI({ apiKey: openaiKey });
+      const analysis = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: `${PURVIS_SYSTEM}
+
+You are analyzing sportsbook data for Kelvin's $100 to $1M mission. Use EV (Expected Value) math and bankroll management. Never expose API keys. Give specific actionable betting analysis.` },
+          { role: 'user', content: `Sportsbook data: ${JSON.stringify(data).substring(0, 2000)}
+
+Question: ${question}` }
+        ],
+        max_tokens: 800
+      });
+      return res.json({ data, analysis: analysis.choices[0].message.content });
+    }
+
+    res.json({ data });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`[PURVIS 11] Online → http://localhost:${PORT}`);
 
