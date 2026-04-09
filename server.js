@@ -1744,8 +1744,6 @@ Question: ${question}` }
 // Learn once. Reuse forever. Never pay for the same thing twice.
 // ============================================================
 
-const crypto = require('crypto');
-
 // Hash a prompt to use as cache key
 function hashPrompt(prompt) {
   const clean = prompt.toLowerCase().trim().replace(/\s+/g, ' ').substring(0, 500);
@@ -1997,6 +1995,232 @@ app.get('/api/resource-policy', (req, res) => {
 
 // catch-all at end
 
+
+// ============================================================
+// PURVIS WEB BROWSING + NEWS + LEARNING CAPABILITIES
+// Free: DuckDuckGo, Wikipedia, RSS feeds, YouTube, Gov sites
+// ============================================================
+
+const https_mod = require('https');
+const http_mod = require('http');
+
+function httpGet(url) {
+  return new Promise((resolve, reject) => {
+    const lib = url.startsWith('https') ? https_mod : http_mod;
+    lib.get(url, { headers: { 'User-Agent': 'PURVIS/11 (Educational AI Agent)' } }, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => resolve({ status: res.statusCode, body: data }));
+    }).on('error', reject);
+  });
+}
+
+// WEB SEARCH (DuckDuckGo Instant Answer - free, no key)
+async function webSearch(query) {
+  try {
+    const url = 'https://api.duckduckgo.com/?q=' + encodeURIComponent(query) + '&format=json&no_html=1&skip_disambig=1';
+    const r = await httpGet(url);
+    const d = JSON.parse(r.body);
+    const results = [];
+    if (d.AbstractText) results.push({ source: d.AbstractSource, text: d.AbstractText, url: d.AbstractURL });
+    if (d.RelatedTopics) {
+      d.RelatedTopics.slice(0, 5).forEach(t => {
+        if (t.Text) results.push({ text: t.Text, url: t.FirstURL || '' });
+      });
+    }
+    if (d.Answer) results.push({ source: 'Direct Answer', text: d.Answer });
+    return results;
+  } catch(e) { return [{ text: 'Search unavailable: ' + e.message }]; }
+}
+
+// NEWS (free RSS feeds)
+async function getNews(topic = 'technology') {
+  const feeds = {
+    general: 'https://feeds.bbci.co.uk/news/rss.xml',
+    politics: 'https://feeds.bbci.co.uk/news/politics/rss.xml',
+    us: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
+    legal: 'https://feeds.feedburner.com/courthousenews',
+    florida: 'https://www.sun-sentinel.com/arcio/rss/',
+  };
+  const url = feeds[topic] || feeds.general;
+  try {
+    const r = await httpGet(url);
+    const titles = [...r.body.matchAll(/<title[^>]*><!\[CDATA\[([^\]]+)\]\]><\/title>|<title[^>]*>([^<]+)<\/title>/g)]
+      .map(m => (m[1] || m[2]).trim())
+      .filter(t => t && !t.includes('BBC') && !t.includes('NYT'))
+      .slice(0, 8);
+    return titles;
+  } catch(e) { return ['News unavailable: ' + e.message]; }
+}
+
+// WIKIPEDIA LOOKUP (free)
+async function wikiLookup(query) {
+  try {
+    const url = 'https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(query);
+    const r = await httpGet(url);
+    const d = JSON.parse(r.body);
+    return { title: d.title, summary: d.extract?.substring(0, 600), url: d.content_urls?.desktop?.page };
+  } catch(e) { return { error: e.message }; }
+}
+
+// YOUTUBE TRENDING (free via RSS)
+async function getYouTubeTrending(category = 'news') {
+  try {
+    const url = 'https://www.youtube.com/feeds/videos.xml?chart=mostpopular&hl=en&gl=US';
+    const r = await httpGet(url);
+    const titles = [...r.body.matchAll(/<title[^>]*>([^<]+)<\/title>/g)]
+      .map(m => m[1].trim())
+      .filter(t => t !== 'YouTube')
+      .slice(0, 8);
+    return titles;
+  } catch(e) { return []; }
+}
+
+// GOV SITES - free public court/government content
+async function getGovContent(type = 'scotus') {
+  const sources = {
+    scotus: 'https://www.supremecourt.gov/rss/slipopinions.aspx',
+    congress: 'https://www.congress.gov/rss/most-viewed-bills.xml',
+    florida_courts: 'https://www.floridasupremecourt.org/Decisions/Recent-Decisions',
+  };
+  try {
+    const r = await httpGet(sources[type] || sources.scotus);
+    const titles = [...r.body.matchAll(/<title[^>]*>([^<]+)<\/title>/g)]
+      .map(m => m[1].trim()).slice(0, 5);
+    return { source: type, titles };
+  } catch(e) { return { source: type, error: e.message }; }
+}
+
+// ---- BROWSE ENDPOINT ----
+app.post('/api/browse', async (req, res) => {
+  try {
+    const { query, type = 'search' } = req.body;
+    
+    let rawData;
+    if (type === 'news') rawData = await getNews(query || 'general');
+    else if (type === 'wiki') rawData = await wikiLookup(query);
+    else if (type === 'youtube') rawData = await getYouTubeTrending(query);
+    else if (type === 'gov') rawData = await getGovContent(query || 'scotus');
+    else rawData = await webSearch(query);
+
+    // Have PURVIS analyze the results
+    const context = JSON.stringify(rawData).substring(0, 2000);
+    const cacheResult = await cachedAI(
+      `Analyze this web data and give Kelvin actionable insights: ${context}\n\nOriginal query: ${query}`,
+      PURVIS_SYSTEM + '\n\nYou have just browsed the web. Summarize the key findings and tell Kelvin exactly what matters and what action to take.',
+      'browse',
+      800
+    );
+
+    // Cache the browsed data as a learning entry
+    await supabase.from('purvis_cache').upsert({
+      cache_key: hashPrompt('browse_' + type + '_' + (query||'')),
+      prompt_hash: hashPrompt(query || ''),
+      prompt_preview: `${type}: ${query}`,
+      response: cacheResult.response,
+      category: 'browse',
+      tokens_saved: 500,
+      times_used: 0
+    }, { onConflict: 'cache_key' });
+
+    res.json({ query, type, rawData, analysis: cacheResult.response, fromCache: cacheResult.fromCache });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---- LEARN TO BUILD APPS (one big learning call) ----
+// Makes one large OpenAI call, logs everything, never repeats
+app.post('/api/learn/build-apps', async (req, res) => {
+  const cacheKey = 'purvis_learn_build_apps_v1';
+  
+  // Check if already learned
+  const { data: existing } = await supabase.from('purvis_cache').select('response').eq('cache_key', cacheKey).single();
+  if (existing) {
+    return res.json({ learned: true, fromCache: true, knowledge: existing.response });
+  }
+
+  res.json({ status: 'PURVIS is making one large learning call to learn app building. This uses credits once, then is free forever.' });
+
+  // ONE large call - learns everything about building apps like Base44
+  try {
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: PURVIS_SYSTEM },
+        { role: 'user', content: `You are PURVIS. Learn and document everything needed to build apps like Base44 programmatically. Cover:
+
+1. ARCHITECTURE: How to build a full-stack web app with Node.js + Express + Supabase + vanilla JS (no frameworks needed)
+2. SERVERLESS FUNCTIONS: How to write Deno/Node serverless functions that execute real tasks (send email, call APIs, process data)
+3. DATABASE PATTERNS: Supabase table design for: users, tasks, automation_triggers, content, leads, memories
+4. AUTOMATION TRIGGERS: How to build event-based triggers (new lead → send email, daily → generate content, webhook → process payment)
+5. EMAIL SENDING: How to send emails free via Gmail SMTP / Nodemailer without paying
+6. CONTENT PIPELINE: How to auto-generate, store, and schedule content using OpenAI
+7. MONETIZATION HOOKS: How to connect content to leads to money (CTAs, affiliate links, service offers)
+8. DEPLOYMENT: Railway + GitHub auto-deploy pattern (already in use)
+9. SELF-IMPROVEMENT: How an AI system can improve its own prompts and templates over time without retraining
+10. BASE44 PATTERNS: What made Base44 work (real execution, real email, real DB writes, event triggers, cron jobs)
+
+Write this as a structured knowledge base that PURVIS can reference to build any app feature without calling OpenAI again. Be comprehensive. This is a one-time learning investment.` }
+      ],
+      max_tokens: 3000
+    });
+
+    const knowledge = result.choices[0].message.content;
+
+    // Save permanently to cache — free forever after this
+    await supabase.from('purvis_cache').upsert({
+      cache_key: cacheKey,
+      prompt_hash: cacheKey,
+      prompt_preview: 'PURVIS learns to build apps like Base44',
+      response: knowledge,
+      category: 'app_building',
+      tokens_saved: result.usage?.total_tokens || 3000,
+      times_used: 0
+    }, { onConflict: 'cache_key' });
+
+    // Save to life thread
+    await supabase.from('purvis_life_thread').insert({
+      user_id: 'kelvin',
+      event_type: 'milestone',
+      title: 'PURVIS Learned App Building',
+      content: 'PURVIS made one large learning call and now knows how to build full-stack apps, automation triggers, email systems, and content pipelines. This knowledge is cached forever — no more API calls needed for app building guidance.',
+      importance: 5
+    });
+
+    // Save capabilities to memory
+    await supabase.from('purvis_memory').insert({
+      category: 'capabilities',
+      key: 'app_building_knowledge_loaded',
+      value: 'TRUE — PURVIS has full app building knowledge cached. Can guide: Node+Express+Supabase apps, serverless functions, email automation, content pipelines, monetization hooks, Railway deployment.'
+    });
+
+    console.log('[PURVIS LEARNED] App building knowledge cached permanently');
+  } catch(e) {
+    console.log('[PURVIS LEARN] Error:', e.message);
+  }
+});
+
+// ---- WHAT CAN PURVIS DO (capabilities log) ----
+app.get('/api/capabilities', async (req, res) => {
+  const { data: mem } = await supabase.from('purvis_memory').select('key, value').eq('category', 'capabilities');
+  const { data: cache } = await supabase.from('purvis_cache').select('category, times_used').order('times_used', { ascending: false }).limit(20);
+  const { data: templates } = await supabase.from('purvis_templates').select('name, category, times_used');
+
+  const categories = {};
+  (cache || []).forEach(c => { categories[c.category] = (categories[c.category] || 0) + c.times_used; });
+
+  res.json({
+    status: 'PURVIS CAPABILITIES LOG',
+    coreEngines: ['Chat + Planner', 'Content Farm', 'Legal Engine', 'Image Gen (DALL-E 3)', 'Voice (ElevenLabs)', 'Music', 'Deep Research', 'Web Browse', 'YouTube', 'Social Media', 'Email Draft', 'Canva/CapCut', 'Leads CRM', 'Plumbing IPC', 'Sub-Agents', 'Workflows', 'Sleep Mode', 'Brain & Tests', 'Self-Learning'],
+    browsingCapabilities: ['DuckDuckGo web search (free)', 'BBC/NYT news RSS (free)', 'Wikipedia lookup (free)', 'YouTube trending RSS (free)', 'SCOTUS opinions RSS (free)', 'Florida courts (free)', 'Congress bills RSS (free)'],
+    cacheStats: { categories, totalCachedResponses: (cache || []).length },
+    templates: (templates || []).map(t => ({ name: t.name, category: t.category })),
+    learnedCapabilities: (mem || []).map(m => m.value),
+    offlineMode: 'Active — runs without OpenAI using cached responses and templates',
+    goldenRule: 'Learn once. Cache forever. Never pay for the same thing twice.'
+  });
+});
 
 // ============================================================
 // PURVIS TEST RUNNER + SELF-LEARNING ENGINE
