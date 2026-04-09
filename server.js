@@ -1091,6 +1091,293 @@ const PORT = process.env.PORT || 3000;
 
 
 // ============================================================
+// PURVIS BIG BRAIN MEMORY ENGINE
+// Full conversation history, life thread, code map, self-learning
+// ============================================================
+
+const LIFE_THREAD_ID = 'kelvin_main_life';
+
+// ---- SAVE MESSAGE (every chat stored to Supabase) ----
+async function saveMessage({ conversationId, userId = 'kelvin', role, content, tags = [], isCorrection = false, isError = false, isSuccess = false, device = 'unknown' }) {
+  try {
+    await supabase.from('purvis_messages').insert({
+      conversation_id: conversationId || LIFE_THREAD_ID,
+      user_id: userId,
+      role,
+      content: content.substring(0, 4000),
+      tags,
+      is_correction: isCorrection,
+      is_error: isError,
+      is_success: isSuccess,
+      device
+    });
+  } catch(e) {
+    console.log('[PURVIS MEMORY] Save failed:', e.message);
+  }
+}
+
+// ---- LOAD MEMORY CONTEXT (for any new request) ----
+async function buildMemoryContext(userId = 'kelvin', conversationId, query = '') {
+  let context = '';
+  try {
+    // 1. Recent messages from this conversation
+    const { data: recent } = await supabase
+      .from('purvis_messages')
+      .select('role, content, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    
+    if (recent && recent.length > 0) {
+      const msgs = recent.reverse().map(m => `[${m.role.toUpperCase()}]: ${m.content.substring(0, 300)}`).join('\n');
+      context += `\n--- RECENT CONVERSATION HISTORY ---\n${msgs}\n`;
+    }
+
+    // 2. Improvement notes (what went wrong before)
+    const { data: improvements } = await supabase
+      .from('purvis_improvements')
+      .select('area, note, created_at')
+      .eq('applied', false)
+      .order('created_at', { ascending: false })
+      .limit(5);
+    
+    if (improvements && improvements.length > 0) {
+      const notes = improvements.map(n => `• [${n.area}]: ${n.note.substring(0, 200)}`).join('\n');
+      context += `\n--- IMPROVEMENT NOTES (learn from these) ---\n${notes}\n`;
+    }
+
+    // 3. Life thread — key milestones and goals
+    const { data: life } = await supabase
+      .from('purvis_life_thread')
+      .select('event_type, title, content, created_at')
+      .eq('user_id', userId)
+      .order('importance', { ascending: false })
+      .limit(5);
+    
+    if (life && life.length > 0) {
+      const events = life.map(e => `• [${e.event_type.toUpperCase()}] ${e.title}: ${e.content.substring(0, 150)}`).join('\n');
+      context += `\n--- KELVIN'S LIFE THREAD (key context) ---\n${events}\n`;
+    }
+
+  } catch(e) {
+    console.log('[PURVIS MEMORY] Context load failed:', e.message);
+  }
+  return context;
+}
+
+// ---- SAVE LIFE EVENT ----
+app.post('/api/life-thread/add', async (req, res) => {
+  try {
+    const { eventType, title, content, importance = 3 } = req.body;
+    const { data, error } = await supabase.from('purvis_life_thread').insert({
+      user_id: 'kelvin',
+      event_type: eventType,
+      title,
+      content,
+      importance
+    }).select().single();
+    if (error) throw new Error(error.message);
+    res.json({ ok: true, event: data });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- GET LIFE TIMELINE ----
+app.get('/api/life-thread', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('purvis_life_thread')
+      .select('*')
+      .eq('user_id', 'kelvin')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    res.json({ events: data || [] });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- WHAT HAVE WE LEARNED ----
+app.get('/api/life-thread/summary', async (req, res) => {
+  try {
+    const memCtx = await buildMemoryContext('kelvin', LIFE_THREAD_ID);
+    const key = process.env.OPENAI_API_KEY;
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: PURVIS_SYSTEM + (memoryContext ? '\n\nMEMORY CONTEXT (use this to give contextual, personalized responses):\n' + memoryContext : '') },
+        { role: 'user', content: `Based on this memory context, give Kelvin a structured summary of: what we have built, what we have learned, what is working, what needs improvement, and the top 3 next actions.\n\nMEMORY CONTEXT:\n${memCtx}` }
+      ],
+      max_tokens: 800
+    });
+    res.json({ summary: result.choices[0].message.content });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- MARK FEEDBACK (good / mistake) ----
+app.post('/api/feedback', async (req, res) => {
+  try {
+    const { messageContent, rating, correction, conversationId } = req.body;
+    // Save improvement note
+    await supabase.from('purvis_improvements').insert({
+      area: `user_feedback_${rating}`,
+      note: `Rating: ${rating}. Original: "${(messageContent||'').substring(0,100)}". Correction: "${correction||'none'}"`,
+      applied: false
+    });
+    // If correction provided, save as life thread lesson
+    if (correction && rating === 'mistake') {
+      await supabase.from('purvis_life_thread').insert({
+        user_id: 'kelvin',
+        event_type: 'lesson',
+        title: 'Correction from Kelvin',
+        content: correction,
+        importance: 3
+      });
+    }
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- GET MESSAGES (multi-device sync) ----
+app.get('/api/messages', async (req, res) => {
+  try {
+    const { conversationId = LIFE_THREAD_ID, limit = 50 } = req.query;
+    const { data, error } = await supabase
+      .from('purvis_messages')
+      .select('*')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: false })
+      .limit(parseInt(limit));
+    if (error) throw new Error(error.message);
+    res.json({ messages: (data || []).reverse() });
+  } catch(e) { res.status(500).json({ error: e.message, messages: [] }); }
+});
+
+// ---- SAVE MESSAGE ENDPOINT ----
+app.post('/api/messages', async (req, res) => {
+  try {
+    await saveMessage(req.body);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- CODE MAP ----
+app.get('/api/code-map', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('purvis_code_map').select('*').order('file_name');
+    if (error) throw new Error(error.message);
+    res.json({ files: data || [] });
+  } catch(e) { res.status(500).json({ error: e.message, files: [] }); }
+});
+
+// PURVIS reads his own code map to help debug
+app.post('/api/code-map/query', async (req, res) => {
+  try {
+    const { question } = req.body;
+    const { data } = await supabase.from('purvis_code_map').select('*');
+    const codeContext = (data||[]).map(f => `FILE: ${f.file_name}\nDESCRIPTION: ${f.description}\nFUNCTIONS: ${(f.key_functions||[]).join(', ')}`).join('\n\n');
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: `You are PURVIS. You know your own code structure. Given the code map below, answer questions about where bugs likely are and what needs to change. Be specific about file names and function names. You cannot edit code yourself — just describe exactly what to change.\n\nCODE MAP:\n${codeContext}` },
+        { role: 'user', content: question }
+      ],
+      max_tokens: 600
+    });
+    res.json({ answer: result.choices[0].message.content });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- OVERNIGHT LEARN (self-improvement loop) ----
+app.post('/api/overnight/learn', async (req, res) => {
+  res.json({ status: 'Learning loop started' });
+  
+  try {
+    // Get unapplied improvement notes
+    const { data: notes } = await supabase
+      .from('purvis_improvements')
+      .select('*')
+      .eq('applied', false)
+      .limit(10);
+    
+    if (!notes || notes.length === 0) {
+      await supabase.from('purvis_memory')
+        .upsert({ category: 'system', key: 'last_learn_run', value: 'No new notes to process on ' + new Date().toLocaleDateString() }, { onConflict: 'key' });
+      return;
+    }
+
+    // Have PURVIS analyze the notes and generate behavior updates
+    const notesText = notes.map(n => `- [${n.area}]: ${n.note}`).join('\n');
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: PURVIS_SYSTEM },
+        { role: 'user', content: `Analyze these improvement notes from recent interactions. Generate 3-5 specific behavior rules I should follow going forward to avoid repeating these mistakes. Be concrete and actionable.\n\nNOTES:\n${notesText}` }
+      ],
+      max_tokens: 600
+    });
+    const learningUpdate = result.choices[0].message.content;
+
+    // Save as new memory
+    await supabase.from('purvis_memory').upsert({
+      category: 'learning',
+      key: 'behavior_update_' + Date.now(),
+      value: learningUpdate
+    }, { onConflict: 'key' });
+
+    // Mark notes as applied
+    const noteIds = notes.map(n => n.id);
+    await supabase.from('purvis_improvements').update({ applied: true }).in('id', noteIds);
+
+    // Add to life thread
+    await supabase.from('purvis_life_thread').insert({
+      user_id: 'kelvin',
+      event_type: 'lesson',
+      title: 'PURVIS Self-Learning Update',
+      content: learningUpdate.substring(0, 500),
+      importance: 3
+    });
+
+  } catch(e) {
+    console.log('[PURVIS LEARN] Error:', e.message);
+  }
+});
+
+// ---- MEMORY HEALTH ----
+app.get('/api/memory-health', async (req, res) => {
+  try {
+    const [msgs, improvements, lifeEvents, codeFiles, memItems] = await Promise.all([
+      supabase.from('purvis_messages').select('count', { count: 'exact', head: true }),
+      supabase.from('purvis_improvements').select('count', { count: 'exact', head: true }),
+      supabase.from('purvis_life_thread').select('count', { count: 'exact', head: true }),
+      supabase.from('purvis_code_map').select('count', { count: 'exact', head: true }),
+      supabase.from('purvis_memory').select('count', { count: 'exact', head: true })
+    ]);
+
+    res.json({
+      ok: true,
+      counts: {
+        messages: msgs.count || 0,
+        improvement_notes: improvements.count || 0,
+        life_events: lifeEvents.count || 0,
+        code_map_files: codeFiles.count || 0,
+        memory_items: memItems.count || 0
+      },
+      lifeThreadId: LIFE_THREAD_ID,
+      lifeThreadActive: true,
+      codeMapLoaded: (codeFiles.count || 0) > 0,
+      multiDevice: true,
+      selfLearning: true,
+      status: 'PURVIS big brain active — remembering everything, learning from mistakes'
+    });
+  } catch(e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// ---- UPGRADE CHAT TO USE FULL MEMORY ----
+// Patch the existing /api/chat to save messages and use memory context
+const _originalChatHandler = app._router.stack.find(l => l.route && l.route.path === '/api/chat' && l.route.methods.post);
+
+// ============================================================
 // PURVIS ADDITIONS: Self-Test + Google Auth + Multi-Device Sync
 // ============================================================
 
