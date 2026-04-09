@@ -596,6 +596,8 @@
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 99px; }
+
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -1548,7 +1550,135 @@ async function generateLegal() {
 function printLegal() {
   if (!currentLegal) return;
   const w = window.open('', '_blank');
-  w.document.write('<html><head><title>Legal Motion</title><style>body{font-family:Times New Roman,serif;font-size:12pt;line-height:1.8;margin:1in;color:#000}pre{white-space:pre-wrap;font-family:inherit}</style></head><body><pre>' + currentLegal.replace(/</g, '&lt;') + '</pre></body></html>');
+  w.document.write('<html><head><title>Legal Motion</title><style>body{font-family:Times New Roman,serif;font-size:12pt;line-height:1.8;margin:1in;color:#000}pre{white-space:pre-wrap;font-family:inherit}</style></head><body><pre>' + currentLegal.replace(/</g, '&lt;') + '</pre>
+<script>
+// PURVIS PLANNER MODE ENGINE
+let currentPlannerSession = null;
+let plannerPollInterval = null;
+
+async function startPlanner() {
+  const goal = document.getElementById('plannerGoal').value.trim();
+  if (!goal) return;
+  const btn = document.getElementById('plannerStartBtn');
+  btn.textContent = '⚡ Building plan...';
+  btn.disabled = true;
+
+  try {
+    const d = await apiFetch('/api/planner/start', { goal, userId: 'kelvin' });
+    currentPlannerSession = d.sessionId;
+    document.getElementById('plannerPlanOut').textContent = d.plan;
+    document.getElementById('planner-step2').classList.remove('hidden');
+    document.getElementById('planner-step2').scrollIntoView({ behavior: 'smooth' });
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+  btn.textContent = '⚡ BUILD MY PLAN';
+  btn.disabled = false;
+}
+
+function plannerQuick(goal) {
+  document.getElementById('plannerGoal').value = goal;
+  go('planner');
+  setTimeout(startPlanner, 100);
+}
+
+async function revisePlan() {
+  const edit = document.getElementById('plannerEdit').value.trim();
+  if (!edit || !currentPlannerSession) return;
+  document.getElementById('plannerPlanOut').textContent = 'Revising plan...';
+  try {
+    const d = await apiFetch('/api/planner/approve', { sessionId: currentPlannerSession, approved: false, edit });
+    document.getElementById('plannerPlanOut').textContent = d.plan;
+    document.getElementById('plannerEditWrap').classList.add('hidden');
+    document.getElementById('plannerEdit').value = '';
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function approvePlan() {
+  if (!currentPlannerSession) return;
+
+  document.getElementById('planner-step2').classList.add('hidden');
+  document.getElementById('planner-step3').classList.remove('hidden');
+  document.getElementById('planner-step3').scrollIntoView({ behavior: 'smooth' });
+
+  const log = document.getElementById('plannerExecLog');
+  const status = document.getElementById('plannerExecStatus');
+
+  // Show live execution log
+  const steps = ['→ read_memory: loading Kelvin context...', '→ call_model: executing plan steps...', '→ write_memory: saving results...', '→ write_memory: saving improvement notes...', '→ report_to_kelvin: preparing final report...'];
+  let i = 0;
+  const logInterval = setInterval(() => {
+    if (i < steps.length) { log.textContent += steps[i] + '
+'; i++; }
+    else clearInterval(logInterval);
+  }, 2000);
+
+  try {
+    await apiFetch('/api/planner/approve', { sessionId: currentPlannerSession, approved: true });
+
+    // Poll for completion
+    plannerPollInterval = setInterval(async () => {
+      try {
+        const statusRes = await fetch(`/api/planner/status/${currentPlannerSession}`).then(r => r.json());
+        status.textContent = `Status: ${statusRes.status}...`;
+
+        if (statusRes.status === 'complete') {
+          clearInterval(plannerPollInterval);
+          clearInterval(logInterval);
+          document.getElementById('planner-step3').classList.add('hidden');
+          document.getElementById('planner-step4').classList.remove('hidden');
+          document.getElementById('plannerResult').textContent = statusRes.result;
+          document.getElementById('planner-step4').scrollIntoView({ behavior: 'smooth' });
+          loadImprovementNotes();
+        } else if (statusRes.status === 'error') {
+          clearInterval(plannerPollInterval);
+          clearInterval(logInterval);
+          status.textContent = 'Error: ' + statusRes.error;
+        }
+      } catch(e) {}
+    }, 3000);
+
+  } catch(e) {
+    clearInterval(logInterval);
+    status.textContent = 'Error: ' + e.message;
+  }
+}
+
+function resetPlanner() {
+  currentPlannerSession = null;
+  if (plannerPollInterval) clearInterval(plannerPollInterval);
+  document.getElementById('plannerGoal').value = '';
+  document.getElementById('plannerPlanOut').textContent = '';
+  document.getElementById('plannerExecLog').textContent = '';
+  ['planner-step2','planner-step3','planner-step4'].forEach(id => document.getElementById(id).classList.add('hidden'));
+}
+
+function copyPlanResult() {
+  const txt = document.getElementById('plannerResult').textContent;
+  navigator.clipboard.writeText(txt).then(() => alert('Results copied!'));
+}
+
+async function loadImprovementNotes() {
+  try {
+    const d = await fetch('/api/purvis/improvements').then(r => r.json());
+    document.getElementById('improvementNotes').textContent = d.notes;
+  } catch(e) {}
+}
+
+// Load improvements when planner tab opens
+const __origGo = window.go;
+window.go = function(t) {
+  __origGo(t);
+  if (t === 'planner') loadImprovementNotes();
+};
+const __origMgo = window.mgo;
+window.mgo = function(t) {
+  __origMgo(t);
+  if (t === 'planner') loadImprovementNotes();
+};
+</script>
+
+</body></html>');
   w.document.close();
   w.print();
 }

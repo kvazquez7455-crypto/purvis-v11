@@ -1140,3 +1140,157 @@ Be direct. Be his right-hand man.` }
     res.status(500).json({ error: err.message });
   }
 });
+
+// ============================================================
+// PURVIS PLANNER MODE — Full operator execution engine
+// call_model | call_api | read_memory | write_memory | schedule_task | report_to_kelvin
+// ============================================================
+
+const plannerSessions = {}; // active planning sessions
+
+app.post('/api/planner/start', async (req, res) => {
+  try {
+    const { goal, userId = 'kelvin' } = req.body;
+    const key = getNextKey('openai');
+    const openai = new OpenAI({ apiKey: key });
+
+    // Step 1: Rewrite goal clearly (typo fix + clarify)
+    const rewrite = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: `${PURVIS_SYSTEM}\nYou are in PLANNER MODE. Your job is to take Kelvin's goal (possibly messy, typed fast) and:\n1. Rewrite it clearly and precisely\n2. Build a step-by-step execution plan\n3. List what internal commands you will use per step\n4. Ask for approval before executing\n\nInternal commands available:\n- call_model(prompt) — call GPT-4o for AI tasks\n- call_api(endpoint, data) — call external APIs\n- read_memory(key) — read from PURVIS memory\n- write_memory(key, value) — save to PURVIS memory\n- schedule_task(task, time) — schedule for overnight runner\n- report_to_kelvin(message) — send result back\n\nFormat response EXACTLY as:\nCLEAR GOAL: [rewritten goal]\n\nPLAN:\nStep 1: [action] → [command]\nStep 2: [action] → [command]\n...\n\nESTIMATED TIME: [time]\nEXPECTED OUTPUT: [what Kelvin gets]\n\nApprove this plan? (Say YES to execute or tell me what to change)` },
+        { role: 'user', content: `My goal: ${goal}` }
+      ],
+      max_tokens: 1000
+    });
+
+    const planText = rewrite.choices[0].message.content;
+    const sessionId = `plan_${Date.now()}`;
+    plannerSessions[sessionId] = { goal, planText, status: 'awaiting_approval', userId };
+
+    res.json({ sessionId, plan: planText, status: 'awaiting_approval' });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/planner/approve', async (req, res) => {
+  try {
+    const { sessionId, approved, edit = '' } = req.body;
+    const session = plannerSessions[sessionId];
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    if (!approved) {
+      // Re-plan with edit
+      const key = getNextKey('openai');
+      const openai = new OpenAI({ apiKey: key });
+      const replan = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: PURVIS_SYSTEM },
+          { role: 'user', content: `Original goal: ${session.goal}\nOriginal plan:\n${session.planText}\n\nKelvin's edit request: ${edit}\n\nRevise the plan accordingly. Use same format.` }
+        ],
+        max_tokens: 1000
+      });
+      const newPlan = replan.choices[0].message.content;
+      plannerSessions[sessionId].planText = newPlan;
+      return res.json({ sessionId, plan: newPlan, status: 'awaiting_approval' });
+    }
+
+    // APPROVED — Execute the plan
+    session.status = 'executing';
+    res.json({ sessionId, status: 'executing', message: 'Plan approved. PURVIS is executing now...' });
+
+    // Execute async
+    executePlan(sessionId, session).catch(console.error);
+
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+async function executePlan(sessionId, session) {
+  const key = getNextKey('openai');
+  if (!key) return;
+  const openai = new OpenAI({ apiKey: key });
+  const results = [];
+
+  try {
+    // Execute the full plan
+    const execution = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: `${PURVIS_SYSTEM}
+
+EXECUTION MODE — The plan has been approved. Execute every step completely.
+For each step, show:
+→ EXECUTING: [step name]
+→ COMMAND: [internal command used]
+→ RESULT: [what was produced]
+
+After all steps:
+→ FINAL REPORT: [complete summary of everything done]
+→ DELIVERABLES: [list of everything produced]
+→ IMPROVEMENT NOTES: [what to do faster/better next time]
+→ NEXT ACTION FOR KELVIN: [one clear next step]` },
+        { role: 'user', content: `Execute this approved plan:\n\n${session.planText}\n\nOriginal goal: ${session.goal}` }
+      ],
+      max_tokens: 2000
+    });
+
+    const executionResult = execution.choices[0].message.content;
+
+    // Save to memory
+    const mem = readKV('memory');
+    mem[`plan_${sessionId}_result`] = {
+      value: executionResult.substring(0, 1000),
+      category: 'planner',
+      updated: new Date().toISOString()
+    };
+    // Extract and save improvement notes
+    const improveMatch = executionResult.match(/IMPROVEMENT NOTES:([\s\S]*?)(?:NEXT ACTION|$)/i);
+    if (improveMatch) {
+      const existing = mem['purvis_improvement_notes']?.value || '';
+      mem['purvis_improvement_notes'] = {
+        value: (existing + '\n' + new Date().toLocaleDateString() + ': ' + improveMatch[1].trim()).substring(0, 2000),
+        category: 'system',
+        updated: new Date().toISOString()
+      };
+    }
+    writeKV('memory', mem);
+
+    // Save completed job
+    const jobs = getCompletedJobs();
+    jobs.unshift({
+      id: sessionId,
+      instruction: session.goal,
+      result: executionResult,
+      type: 'planner',
+      completedAt: new Date().toISOString()
+    });
+    writeStore('completed_jobs', jobs.slice(0, 100));
+
+    plannerSessions[sessionId].status = 'complete';
+    plannerSessions[sessionId].result = executionResult;
+
+  } catch(e) {
+    plannerSessions[sessionId].status = 'error';
+    plannerSessions[sessionId].error = e.message;
+  }
+}
+
+app.get('/api/planner/status/:sessionId', (req, res) => {
+  const session = plannerSessions[req.params.sessionId];
+  if (!session) return res.status(404).json({ error: 'Not found' });
+  res.json({
+    status: session.status,
+    result: session.result || null,
+    error: session.error || null
+  });
+});
+
+// Improvement notes — what PURVIS learned
+app.get('/api/purvis/improvements', (req, res) => {
+  const mem = readKV('memory');
+  res.json({ notes: mem['purvis_improvement_notes']?.value || 'No improvement notes yet.' });
+});
