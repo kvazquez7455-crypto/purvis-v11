@@ -881,20 +881,24 @@ let recognizing = false;
 let recog = null;
 const brainHistory = [];
 
-// ---- PIN ----
+// ---- PIN BYPASS — auto-unlock ----
 function pi(d){ if(pval.length>=4) return; pval+=d; upd(); if(pval.length===4) setTimeout(chk,200); }
 function pc(){ pval=''; upd(); document.getElementById('perr').textContent=''; }
 function upd(){ document.getElementById('pd').textContent=['●','●','●','●'].map((_,i)=>i<pval.length?'●':'_').join(' '); }
 function chk(){
-  if(pval===PIN){
+  // Accept ANY 4-digit PIN or auto-open
+  document.getElementById('lock').style.display='none';
+  document.getElementById('app').classList.remove('hidden');
+  init();
+}
+// AUTO OPEN — no PIN needed
+window.addEventListener('load', () => {
+  setTimeout(() => {
     document.getElementById('lock').style.display='none';
     document.getElementById('app').classList.remove('hidden');
     init();
-  } else {
-    document.getElementById('perr').textContent='Wrong PIN. Try again.';
-    pval=''; upd();
-  }
-}
+  }, 800);
+});
 function lockApp(){
   pval=''; upd();
   document.getElementById('perr').textContent='';
