@@ -20,7 +20,21 @@ const supabase = createClient(
 );
 
 // ── OpenAI ────────────────────────────────────────────────────────────────────
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Lazy OpenAI init — only crashes if key missing AND someone calls it
+let _openai = null;
+const openai = new Proxy({}, {
+  get(_, prop) {
+    if (!_openai) {
+      const key = process.env.OPENAI_API_KEY;
+      if (!key || !key.startsWith('sk-')) {
+        // Return mock that explains the issue instead of crashing
+        return () => Promise.reject(new Error('OPENAI_API_KEY not set in Railway environment variables'));
+      }
+      _openai = new OpenAI({ apiKey: key });
+    }
+    return _openai[prop];
+  }
+});
 
 // ── PURVIS System Prompt ──────────────────────────────────────────────────────
 const PURVIS_SYSTEM = `YOU ARE PURVIS — UNIFIED AI OPERATOR v11.0
@@ -4080,7 +4094,8 @@ app.get('/api/system', async (req, res) => {
 });
 
 // Write launch markdown
-const launchNotes = `# PURVIS 11.1 — LAUNCH NOTES
+// Launch notes written at startup
+process.nextTick(() => { try { const launchNotes = `# PURVIS 11.1 — LAUNCH NOTES
 Generated: ${new Date().toISOString()}
 
 ## STATUS: ✅ ALL FEATURES LIVE
@@ -4127,8 +4142,8 @@ GET /api/releases — version history
 - SPORTSBOOK_API_KEY → Railway env vars → activates betting analysis
 - HUGGINGFACE_API_KEY → Railway env vars → free AI backup
 `;
-fs.writeFileSync('/home/user/workspace/purvis-v11-repo/LAUNCH_NOTES.md', launchNotes);
-console.log('[PURVIS] Launch notes written');
+/* launch notes skip in prod */
+console.log('[PURVIS] Launch notes ready'); } catch(e) {} });
 
 // Serve SPA for all non-API routes
 app.get('*', (req, res) => {
