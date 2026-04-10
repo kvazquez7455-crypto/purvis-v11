@@ -1464,7 +1464,7 @@ app.post('/api/auth/google', async (req, res) => {
       .upsert({ category: 'auth', key: 'google_user', value: JSON.stringify({ email, name: payload.name, picture: payload.picture, lastLogin: new Date().toISOString() }) }, { onConflict: 'key' });
 
     // Generate session token
-    const crypto = require('crypto');
+    // const crypto already required
     const token = crypto.randomBytes(32).toString('hex');
     const expires = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -3555,7 +3555,7 @@ app.post('/api/app-builder/build', async (req, res) => {
         }).eq('id', appId);
 
         // Save frontend file
-        const fs = require('fs');
+        // fs already required above
         const path = require('path');
         const dir = path.join(__dirname, 'public', 'apps');
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
