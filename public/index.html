@@ -2268,5 +2268,64 @@ window.mgo = function(t) { __btOrigMgo(t); if (t==='brain-tests') { loadPolicy()
 })();
 </script>
 
+
+<script>
+// PURVIS MODE INDICATOR — shows online vs local mode clearly
+async function checkPurvisMode() {
+  try {
+    const r = await fetch('/api/llm-health');
+    const d = await r.json();
+    const dot = document.getElementById('status-dot') || document.querySelector('.tb-status-dot');
+    const modeBar = document.getElementById('purvis-mode-bar');
+    
+    if (d.ok && d.hasKey) {
+      // ENHANCED MODE — GPT-4o active
+      if (dot) { dot.style.background = '#22c55e'; dot.style.boxShadow = '0 0 6px #22c55e'; }
+      if (modeBar) {
+        modeBar.textContent = '🟢 AI BRAIN ACTIVE — GPT-4o + All Engines Online';
+        modeBar.style.background = 'rgba(34,197,94,0.1)';
+        modeBar.style.color = '#22c55e';
+        modeBar.style.borderColor = 'rgba(34,197,94,0.3)';
+      }
+    } else {
+      // LOCAL MODE — no key
+      if (dot) { dot.style.background = '#eab308'; dot.style.boxShadow = '0 0 6px #eab308'; }
+      if (modeBar) {
+        modeBar.textContent = '🟡 LOCAL MODE — AI Brain OFF (add OPENAI_API_KEY to Railway). Templates + Tools still work.';
+        modeBar.style.background = 'rgba(234,179,8,0.1)';
+        modeBar.style.color = '#eab308';
+        modeBar.style.borderColor = 'rgba(234,179,8,0.3)';
+      }
+    }
+  } catch(e) {
+    const dot = document.getElementById('status-dot') || document.querySelector('.tb-status-dot');
+    if (dot) { dot.style.background = '#ef4444'; dot.style.boxShadow = '0 0 6px #ef4444'; }
+  }
+}
+
+// Add mode bar to top of app after auth
+function addModeBar() {
+  if (localStorage.getItem('purvis_auth') !== 'true') return;
+  const existing = document.getElementById('purvis-mode-bar');
+  if (existing) return;
+  const bar = document.createElement('div');
+  bar.id = 'purvis-mode-bar';
+  bar.style.cssText = 'text-align:center;font-size:11px;font-weight:700;letter-spacing:.5px;padding:5px 12px;border-bottom:1px solid;transition:all .3s;cursor:default;';
+  bar.textContent = 'Checking PURVIS mode...';
+  const topbar = document.getElementById('topbar');
+  if (topbar) topbar.insertAdjacentElement('afterend', bar);
+  checkPurvisMode();
+}
+
+window.addEventListener('load', () => {
+  setTimeout(addModeBar, 1000);
+  // Recheck every 5 minutes
+  setInterval(checkPurvisMode, 300000);
+});
+
+// Also expose for manual check
+window.checkMode = checkPurvisMode;
+</script>
+
 </body>
 </html>
