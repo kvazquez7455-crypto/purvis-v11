@@ -4145,6 +4145,101 @@ GET /api/releases — version history
 /* launch notes skip in prod */
 console.log('[PURVIS] Launch notes ready'); } catch(e) {} });
 
+// ============================================================
+// PURVIS SECURITY: Private-only access + breach alerts
+// Only kvazquez7455@gmail.com can enter. All others logged.
+// ============================================================
+
+const OWNER_EMAIL = 'kvazquez7455@gmail.com';
+const ALLOWED_IPS = []; // empty = allow all IPs for Kelvin (mobile changes IP)
+
+// Log every access attempt to Supabase
+async function logAccess(req, status, email = '') {
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'unknown';
+    const ua = req.headers['user-agent'] || 'unknown';
+    const path = req.path || '/';
+    const timestamp = new Date().toISOString();
+
+    await supabase.from('purvis_access_log').insert({
+      ip, user_agent: ua.substring(0,200), path,
+      status, email: email.substring(0,100),
+      timestamp
+    });
+
+    // Alert Kelvin on denied access attempts (breach alert)
+    if (status === 'DENIED') {
+      await supabase.from('purvis_memory').upsert({
+        category: 'security',
+        key: 'last_breach_attempt',
+        value: `ALERT: Unauthorized access attempt at ${timestamp}. IP: ${ip}. Email tried: ${email || 'none'}. Path: ${path}`,
+        updated_at: timestamp
+      }, { onConflict: 'key' });
+      console.log(`[PURVIS SECURITY] ⚠️ DENIED ACCESS: ${email} from ${ip} at ${timestamp}`);
+    }
+  } catch(e) { /* never let logging crash the server */ }
+}
+
+// Verify Kelvin's session token (sent from frontend after email login)
+app.post('/api/auth/verify', async (req, res) => {
+  const { email, token } = req.body;
+  const isOwner = email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+  await logAccess(req, isOwner ? 'VERIFIED' : 'DENIED', email || '');
+  if (!isOwner) {
+    return res.status(403).json({
+      error: 'Access denied. This is a private system.',
+      message: 'Unauthorized access has been logged and reported to the owner.'
+    });
+  }
+  res.json({ ok: true, authorized: true, owner: OWNER_EMAIL });
+});
+
+// Security dashboard for Kelvin
+app.get('/api/security/log', async (req, res) => {
+  try {
+    const { data: logs } = await supabase
+      .from('purvis_access_log')
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .limit(50);
+
+    const { data: breachAlert } = await supabase
+      .from('purvis_memory')
+      .select('value, updated_at')
+      .eq('key', 'last_breach_attempt')
+      .single();
+
+    const denied = (logs || []).filter(l => l.status === 'DENIED');
+
+    res.json({
+      totalAttempts: (logs || []).length,
+      deniedAttempts: denied.length,
+      lastBreachAlert: breachAlert?.value || 'None',
+      recentLog: (logs || []).slice(0, 10),
+      deniedDetails: denied.slice(0, 5),
+      status: denied.length > 0 ? '⚠️ UNAUTHORIZED ATTEMPTS DETECTED' : '✅ NO BREACH ATTEMPTS',
+      owner: OWNER_EMAIL
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/security/status', async (req, res) => {
+  const { data: breach } = await supabase
+    .from('purvis_memory')
+    .select('value, updated_at')
+    .eq('key', 'last_breach_attempt')
+    .single();
+
+  res.json({
+    secure: true,
+    owner: OWNER_EMAIL,
+    accessPolicy: 'Private — kvazquez7455@gmail.com only',
+    lastBreachAttempt: breach?.value || 'None detected',
+    lastChecked: new Date().toISOString(),
+    instructions: 'GET /api/security/log to see full access history'
+  });
+});
+
 // Serve SPA for all non-API routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

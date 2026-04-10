@@ -240,8 +240,18 @@ select.styled:focus{border-color:var(--purple)}
     function tryEnter() {
       var val = (document.getElementById('purvisEmail').value||'').trim().toLowerCase();
       if (!val) { document.getElementById('purvisErr').textContent = 'Enter your email.'; return; }
-      if (val === OWNER) { unlock(); }
-      else { document.getElementById('purvisErr').textContent = 'Access denied.'; }
+      if (val === OWNER) {
+        // Log successful access
+        fetch('/api/auth/verify', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:val,token:'frontend'})}).catch(()=>{});
+        unlock();
+      } else {
+        // LOG THE BREACH ATTEMPT — alert Kelvin
+        fetch('/api/auth/verify', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:val,token:'attempt'})}).catch(()=>{});
+        document.getElementById('purvisErr').textContent = '⛔ Access denied. This attempt has been logged.';
+        // Show red flash
+        gate.style.boxShadow = '0 0 60px rgba(239,68,68,0.8)';
+        setTimeout(()=>{ gate.style.boxShadow = '0 0 60px rgba(124,58,237,.4)'; }, 2000);
+      }
     }
     
     document.getElementById('purvisEnterBtn').addEventListener('click', tryEnter);
