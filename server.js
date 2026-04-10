@@ -3452,13 +3452,6 @@ setTimeout(purvisCoordinator, 60000);
 
 console.log('[PURVIS] Autonomous agent system loaded — coordinator runs every hour');
 
-// Serve SPA for all non-API routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-app.listen(PORT, () => {
-  console.log(`[PURVIS 11] Online → http://localhost:${PORT}`);
-});
 // ============================================================
 // PURVIS FINAL MASTER: App Builder + Budget + Stubs
 // ============================================================
@@ -3712,4 +3705,11 @@ app.get('/api/status', async (req, res) => {
       chat: 'POST /api/chat {message:"anything",userId:"kelvin"}'
     }
   });
+});
+// Serve SPA for all non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+app.listen(PORT, () => {
+  console.log(`[PURVIS 11] Online → http://localhost:${PORT}`);
 });
