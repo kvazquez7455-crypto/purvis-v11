@@ -2087,5 +2087,186 @@ const __btOrigMgo = window.mgo;
 window.mgo = function(t) { __btOrigMgo(t); if (t==='brain-tests') { loadPolicy(); loadTestHistory(); loadLearnHealth(); } };
 </script>
 
+
+<script>
+// ============================================================
+// PURVIS FLOATING CHAT BUBBLE — always visible, every page
+// ============================================================
+(function() {
+  // Only add if authed
+  if (localStorage.getItem('purvis_auth') !== 'true') return;
+
+  const style = document.createElement('style');
+  style.textContent = `
+    #purvis-bubble {
+      position: fixed;
+      bottom: 80px;
+      right: 16px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      box-shadow: 0 4px 24px rgba(124,58,237,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      cursor: pointer;
+      z-index: 300;
+      transition: transform 0.2s;
+      border: 2px solid rgba(168,85,247,0.5);
+    }
+    #purvis-bubble:hover { transform: scale(1.1); }
+    #purvis-bubble .bubble-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 18px;
+      height: 18px;
+      background: #22c55e;
+      border-radius: 50%;
+      border: 2px solid #0a0a0f;
+      font-size: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      font-weight: 900;
+    }
+    #purvis-chat-popup {
+      position: fixed;
+      bottom: 148px;
+      right: 16px;
+      width: min(360px, calc(100vw - 32px));
+      height: 480px;
+      background: #111118;
+      border: 1px solid #2a2a3a;
+      border-radius: 16px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.8), 0 0 40px rgba(124,58,237,0.2);
+      z-index: 299;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #purvis-chat-popup.open { display: flex; }
+    .bubble-header {
+      padding: 14px 16px;
+      background: linear-gradient(135deg, rgba(124,58,237,0.3), rgba(168,85,247,0.1));
+      border-bottom: 1px solid #2a2a3a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .bubble-header .title { flex: 1; font-size: 14px; font-weight: 700; color: #a855f7; }
+    .bubble-header .close-btn { background: none; border: none; color: #888899; font-size: 18px; cursor: pointer; padding: 0 4px; }
+    .bubble-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .bubble-msg { max-width: 85%; padding: 9px 13px; border-radius: 12px; font-size: 13px; line-height: 1.5; word-break: break-word; }
+    .bubble-msg.user { background: rgba(124,58,237,0.3); border: 1px solid rgba(124,58,237,0.4); align-self: flex-end; color: #f1f1f5; }
+    .bubble-msg.ai { background: #1a1a24; border: 1px solid #2a2a3a; align-self: flex-start; color: #f1f1f5; }
+    .bubble-msg.thinking { color: #888899; font-style: italic; animation: pulse 1s infinite; }
+    .bubble-input-row { padding: 10px; border-top: 1px solid #2a2a3a; display: flex; gap: 8px; }
+    .bubble-input { flex: 1; background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 8px; color: #f1f1f5; padding: 8px 12px; font-size: 13px; font-family: inherit; resize: none; max-height: 80px; }
+    .bubble-input:focus { outline: none; border-color: #7c3aed; }
+    .bubble-send { background: #7c3aed; border: none; color: #fff; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 16px; flex-shrink: 0; }
+    .bubble-send:hover { background: #a855f7; }
+    .bubble-commands { padding: 6px 10px; display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid #2a2a3a; }
+    .bubble-cmd { background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.3); color: #a855f7; padding: 4px 9px; border-radius: 16px; font-size: 11px; cursor: pointer; white-space: nowrap; }
+    .bubble-cmd:hover { background: rgba(124,58,237,0.3); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  `;
+  document.head.appendChild(style);
+
+  // Create bubble
+  const bubble = document.createElement('div');
+  bubble.id = 'purvis-bubble';
+  bubble.innerHTML = '🧠<div class="bubble-badge">AI</div>';
+  bubble.title = 'Chat with PURVIS';
+
+  // Create popup
+  const popup = document.createElement('div');
+  popup.id = 'purvis-chat-popup';
+  popup.innerHTML = `
+    <div class="bubble-header">
+      <span>🧠</span>
+      <span class="title">PURVIS Agent</span>
+      <button class="close-btn" onclick="closeBubble()">✕</button>
+    </div>
+    <div class="bubble-commands">
+      <span class="bubble-cmd" onclick="bubbleCmd('Build me an app that does')">🏗️ Build app</span>
+      <span class="bubble-cmd" onclick="bubbleCmd('Automate this every day:')">⚡ Automate</span>
+      <span class="bubble-cmd" onclick="bubbleCmd('What should I do today?')">📋 Today</span>
+      <span class="bubble-cmd" onclick="bubbleCmd('Generate Scripture Daily content')">📖 Scripture</span>
+      <span class="bubble-cmd" onclick="bubbleCmd('Draft legal motion for case 2024-DR-012028-O')">⚖️ Legal</span>
+    </div>
+    <div class="bubble-messages" id="bubble-msgs">
+      <div class="bubble-msg ai">PURVIS ready. What do you need?</div>
+    </div>
+    <div class="bubble-input-row">
+      <textarea class="bubble-input" id="bubble-input" rows="1" placeholder="Tell PURVIS anything..." onkeydown="bubbleKey(event)" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+      <button class="bubble-send" onclick="sendBubble()">➤</button>
+    </div>
+  `;
+
+  document.body.appendChild(bubble);
+  document.body.appendChild(popup);
+
+  bubble.addEventListener('click', toggleBubble);
+
+  window.toggleBubble = function() {
+    popup.classList.toggle('open');
+    if (popup.classList.contains('open')) {
+      setTimeout(() => document.getElementById('bubble-input')?.focus(), 100);
+    }
+  };
+  window.closeBubble = function() { popup.classList.remove('open'); };
+  window.bubbleKey = function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBubble(); } };
+  window.bubbleCmd = function(cmd) { document.getElementById('bubble-input').value = cmd; document.getElementById('bubble-input').focus(); };
+
+  window.sendBubble = async function() {
+    const input = document.getElementById('bubble-input');
+    const msgs = document.getElementById('bubble-msgs');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    input.style.height = 'auto';
+
+    // User msg
+    const um = document.createElement('div');
+    um.className = 'bubble-msg user';
+    um.textContent = text;
+    msgs.appendChild(um);
+
+    // Thinking
+    const tm = document.createElement('div');
+    tm.className = 'bubble-msg ai thinking';
+    tm.textContent = 'Thinking...';
+    msgs.appendChild(tm);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    try {
+      const r = await fetch('/api/purvis/personal', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ message: text, userId: 'kelvin' })
+      });
+      const d = await r.json();
+      tm.classList.remove('thinking');
+      tm.textContent = d.reply || d.error || 'No response';
+    } catch(e) {
+      tm.classList.remove('thinking');
+      tm.textContent = 'Error: ' + e.message;
+    }
+    msgs.scrollTop = msgs.scrollHeight;
+  };
+})();
+</script>
+
 </body>
 </html>

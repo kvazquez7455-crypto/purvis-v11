@@ -4240,6 +4240,116 @@ app.get('/api/security/status', async (req, res) => {
   });
 });
 
+// ============================================================
+// PURVIS TWILIO SMS/WHATSAPP ALERTS
+// Add TWILIO_SID, TWILIO_TOKEN, TWILIO_FROM, KELVIN_PHONE to Railway
+// KELVIN_PHONE format: +14075551234
+// WhatsApp format: whatsapp:+14075551234
+// ============================================================
+
+async function sendSMS(message, channel = 'sms') {
+  const sid = process.env.TWILIO_SID;
+  const token = process.env.TWILIO_TOKEN;
+  const from = process.env.TWILIO_FROM;
+  const to = process.env.KELVIN_PHONE;
+
+  if (!sid || !token || !from || !to) {
+    console.log('[PURVIS SMS] Twilio not configured. Add TWILIO_SID, TWILIO_TOKEN, TWILIO_FROM, KELVIN_PHONE to Railway.');
+    return { sent: false, reason: 'Twilio keys not set in Railway' };
+  }
+
+  const body = channel === 'whatsapp'
+    ? `whatsapp:${to.replace('whatsapp:','')}`
+    : to;
+  const fromNum = channel === 'whatsapp'
+    ? `whatsapp:${from.replace('whatsapp:','')}`
+    : from;
+
+  const auth = Buffer.from(`${sid}:${token}`).toString('base64');
+  const payload = new URLSearchParams({ To: body, From: fromNum, Body: `🧠 PURVIS: ${message}` });
+
+  return new Promise((resolve) => {
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`;
+    const lib = require('https');
+    const req = lib.request(url, {
+      method: 'POST',
+      headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': payload.toString().length }
+    }, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        const ok = res.statusCode >= 200 && res.statusCode < 300;
+        resolve({ sent: ok, status: res.statusCode });
+      });
+    });
+    req.on('error', e => resolve({ sent: false, error: e.message }));
+    req.write(payload.toString());
+    req.end();
+  });
+}
+
+// Send notification endpoint
+app.post('/api/notify', async (req, res) => {
+  const { title, message, channel = 'sms', type = 'info' } = req.body;
+  if (!message) return res.status(400).json({ error: 'message required' });
+
+  // Save to Supabase first
+  const { data: notif } = await supabase.from('purvis_notifications').insert({
+    type, title: title || 'PURVIS Alert', message, channel
+  }).select().single();
+
+  // Send via Twilio
+  const result = await sendSMS(message, channel);
+
+  // Mark as sent if successful
+  if (result.sent && notif?.id) {
+    await supabase.from('purvis_notifications').update({ sent: true, sent_at: new Date().toISOString() }).eq('id', notif.id);
+  }
+
+  res.json({
+    ok: result.sent,
+    notificationId: notif?.id,
+    delivery: result,
+    setupNeeded: !result.sent ? 'Add TWILIO_SID, TWILIO_TOKEN, TWILIO_FROM, KELVIN_PHONE to Railway env vars' : null
+  });
+});
+
+// Check pending notifications (overnight runner uses this)
+app.get('/api/notifications', async (req, res) => {
+  const { data } = await supabase.from('purvis_notifications').select('*').order('created_at', { ascending: false }).limit(20);
+  res.json({ notifications: data || [] });
+});
+
+// Twilio/SMS health
+app.get('/api/notify/health', async (req, res) => {
+  const hasSid = !!process.env.TWILIO_SID;
+  const hasToken = !!process.env.TWILIO_TOKEN;
+  const hasFrom = !!process.env.TWILIO_FROM;
+  const hasPhone = !!process.env.KELVIN_PHONE;
+  const ready = hasSid && hasToken && hasFrom && hasPhone;
+
+  res.json({
+    ok: ready,
+    twilioConfigured: ready,
+    missingVars: [
+      !hasSid && 'TWILIO_SID',
+      !hasToken && 'TWILIO_TOKEN',
+      !hasFrom && 'TWILIO_FROM',
+      !hasPhone && 'KELVIN_PHONE'
+    ].filter(Boolean),
+    setupSteps: [
+      '1. Sign up free at twilio.com (free $15 trial credit)',
+      '2. Get your Account SID and Auth Token from twilio.com/console',
+      '3. Get a free Twilio phone number (can do SMS + WhatsApp)',
+      '4. Add to Railway: TWILIO_SID, TWILIO_TOKEN, TWILIO_FROM, KELVIN_PHONE',
+      '5. For WhatsApp: enable Twilio Sandbox at twilio.com/console/sms/whatsapp/sandbox',
+      '6. Test: POST /api/notify {"message":"PURVIS test alert","channel":"sms"}'
+    ],
+    channels: ['sms', 'whatsapp'],
+    whenTriggered: ['Security breach attempts', 'Daily morning briefing', 'New lead added', 'Legal deadline approaching', 'Overnight job errors']
+  });
+});
+
 // Serve SPA for all non-API routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
