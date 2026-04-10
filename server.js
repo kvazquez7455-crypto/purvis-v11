@@ -3713,3 +3713,256 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`[PURVIS 11] Online → http://localhost:${PORT}`);
 });
+
+// ============================================================
+// PURVIS EXPANSION: OCR + Video + Avatar + Voice + Legal + Life
+// ============================================================
+
+// ---- OCR: READ TEXT FROM IMAGES (free via GPT-4o vision) ----
+app.post('/api/ocr', async (req, res) => {
+  try {
+    const { imageUrl, purpose = 'general' } = req.body;
+    if (!imageUrl) return res.status(400).json({ error: 'imageUrl required' });
+    const budget = await checkBudget('openai_gpt4o', 0.01);
+    if (!budget.allowed) return res.status(402).json({ error: budget.message });
+
+    // Use GPT-4o vision to extract text
+    const result = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: `Extract ALL text from this image exactly as written. Then provide a clean summary. Purpose: ${purpose}.\n\nOutput format:\nEXTRACTED TEXT:\n[exact text]\n\nSUMMARY:\n[clean summary]` },
+          { type: 'image_url', image_url: { url: imageUrl } }
+        ]
+      }],
+      max_tokens: 1000
+    });
+    const extracted = result.choices[0].message.content;
+    // Save to Supabase
+    const { data } = await supabase.from('purvis_images').insert({ url: imageUrl, image_type: 'ocr_source', extracted_text: extracted, summary: extracted.split('SUMMARY:')[1]?.trim() || '', tags: [purpose], ai_generated: false }).select().single();
+    res.json({ extracted, imageId: data?.id, note: 'Text extracted via GPT-4o vision. Saved to purvis_images.' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- VIDEO ANALYSIS ----
+app.post('/api/video/analyze', async (req, res) => {
+  try {
+    const { videoUrl, title, purpose = 'content' } = req.body;
+    if (!videoUrl) return res.status(400).json({ error: 'videoUrl required' });
+
+    // Safety check
+    const safetyCheck = await cachedAI(
+      `Is this video URL likely to be user-owned, licensed, or publicly allowed content? URL: ${videoUrl}. Purpose: ${purpose}. Respond with SAFE or UNSAFE and brief reason.`,
+      'You enforce content safety. Be brief.', 'safety', 100
+    );
+    if (safetyCheck.response.includes('UNSAFE')) return res.status(400).json({ error: 'Content safety check failed: ' + safetyCheck.response });
+
+    // Register video
+    const { data: video } = await supabase.from('purvis_videos').insert({ title: title || 'Untitled Video', url: videoUrl, purpose, safety_note: 'User-provided URL. Analyzed for ' + purpose + ' use.' }).select().single();
+
+    // Analyze based on purpose
+    const analysisPrompt = purpose === 'legal'
+      ? `Analyze this video/content for legal purposes. URL: ${videoUrl}\nTitle: ${title}\n\nIdentify:\n1. KEY LEGAL ISSUES (cite statutes if applicable)\n2. PARTIES MENTIONED\n3. TIMELINE of events\n4. EVIDENCE points\n5. ARGUMENTS to make\n6. NEXT LEGAL STEPS\n\n⚠️ DISCLAIMER: This is not legal advice. Consult a licensed attorney.`
+      : `Analyze this video for content creation. URL: ${videoUrl}\nTitle: ${title}\n\nGenerate:\n1. SUMMARY (2-3 sentences)\n2. KEY MOMENTS with timestamps if available\n3. 5 SHORT CLIP IDEAS with timestamp suggestions\n4. VIRAL TITLE OPTIONS (5 options)\n5. DESCRIPTION for YouTube\n6. HASHTAGS (20)\n7. HOOKS for each clip idea`;
+
+    const analysis = await cachedAI(analysisPrompt, PURVIS_SYSTEM, 'video_analysis', 1500);
+
+    // Save analysis
+    await supabase.from('purvis_videos').update({ summary: analysis.response }).eq('id', video.id);
+
+    res.json({ videoId: video.id, analysis: analysis.response, fromCache: analysis.fromCache, disclaimer: purpose === 'legal' ? 'Not legal advice. Consult a licensed attorney.' : null });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- LOGO GENERATOR (free SVG + Pollinations fallback) ----
+app.post('/api/logo/generate', async (req, res) => {
+  try {
+    const { brandName, colors = ['#7c3aed', '#22c55e', '#0a0a0f'], style = 'modern minimal', vibe } = req.body;
+
+    // Generate design spec + SVG via GPT-4o
+    const spec = await cachedAI(
+      `Generate a complete logo design for: "${brandName}"\nColors: ${colors.join(', ')}\nStyle: ${style}\nVibe: ${vibe || 'professional and modern'}\n\n1. DESIGN BRIEF: describe the concept\n2. SVG CODE: generate a clean simple SVG logo (use colors provided, text-based or simple geometric shapes)\n3. FREE TOOL PROMPT: write a prompt to paste into canva.com/create/logos or looka.com\n4. CANVA LINK: https://www.canva.com/create/logos/`,
+      PURVIS_SYSTEM, 'logo_design', 1000
+    );
+
+    // Extract SVG if present
+    const svgMatch = spec.response.match(/<svg[\s\S]*?<\/svg>/i);
+    const svgCode = svgMatch ? svgMatch[0] : null;
+
+    // Also generate image via Pollinations (free)
+    const imagePrompt = `${style} logo for ${brandName}, colors ${colors.join(' and ')}, ${vibe || 'professional'}, vector style, clean, minimal, white background`;
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=512&height=512&nologo=true`;
+
+    // Save to DB
+    const { data } = await supabase.from('purvis_logo_designs').insert({ brand_name: brandName, style, colors, design_spec: spec.response, svg_code: svgCode, image_url: imageUrl, prompt_for_free_tool: `Logo for ${brandName}: ${style} style, ${colors.join(', ')} colors, ${vibe || 'professional'}, clean and minimal` }).select().single();
+
+    res.json({ designSpec: spec.response, svgCode, imageUrl, canvaLink: 'https://www.canva.com/create/logos/', lookaLink: 'https://looka.com', logoId: data?.id, note: 'Kelvin reviews and approves before using' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- AVATAR SYSTEM (stylized only, no biometric clones) ----
+app.post('/api/avatar/create', async (req, res) => {
+  try {
+    const { style = 'neon cyberpunk', vibe, colors } = req.body;
+    const SAFETY_RULE = 'SAFETY: This creates a STYLIZED AI character avatar only. NOT a photorealistic clone. NOT a deepfake. For brand/content use only.';
+
+    const spec = await cachedAI(
+      `${SAFETY_RULE}\n\nCreate a stylized brand avatar design for Kelvin Vazquez:\nStyle: ${style}\nVibe: ${vibe || 'powerful, entrepreneurial, faith-driven'}\nColors: ${colors || '#7c3aed purple, #22c55e green'}\n\n1. AVATAR CONCEPT: describe the stylized character\n2. VISUAL ELEMENTS: specific design elements\n3. CANVA PROMPT: text to paste into Canva Avatar maker\n4. POLLINATIONS PROMPT: image generation prompt for free use\n5. USAGE: thumbnail, logo, social profile`,
+      PURVIS_SYSTEM, 'avatar_design', 800
+    );
+
+    // Generate via Pollinations (free)
+    const imagePrompt = `${style} stylized cartoon avatar character, ${vibe || 'powerful entrepreneur'}, ${colors || 'purple and green'}, illustrated not photorealistic, brand mascot style, clean background`;
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=512&height=512&nologo=true&seed=${Date.now()}`;
+
+    const { data } = await supabase.from('purvis_brand_avatars').insert({ style, description: spec.response.substring(0, 200), design_spec: spec.response, image_url: imageUrl, active: false, safety_notes: 'Stylized character only. Not biometric. Not for deceptive use. AI-generated label required.' }).select().single();
+
+    res.json({ avatarId: data?.id, designSpec: spec.response, imageUrl, canvaLink: 'https://www.canva.com/create/', safety: SAFETY_RULE, activate: `PATCH /api/avatar/${data?.id}/activate to set as active avatar` });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.patch('/api/avatar/:id/activate', async (req, res) => {
+  await supabase.from('purvis_brand_avatars').update({ active: false }).neq('id', req.params.id);
+  await supabase.from('purvis_brand_avatars').update({ active: true }).eq('id', req.params.id);
+  res.json({ ok: true, message: 'Avatar activated. Use GET /api/avatar/active to get current avatar.' });
+});
+
+app.get('/api/avatar/active', async (req, res) => {
+  const { data } = await supabase.from('purvis_brand_avatars').select('*').eq('active', true).single();
+  res.json(data || { message: 'No active avatar. Create one via POST /api/avatar/create' });
+});
+
+app.get('/api/avatars', async (req, res) => {
+  const { data } = await supabase.from('purvis_brand_avatars').select('*').order('created_at', { ascending: false });
+  res.json({ avatars: data || [] });
+});
+
+// ---- VOICE SYSTEM (web speech free + ElevenLabs paid) ----
+app.get('/api/voice/profile', async (req, res) => {
+  const { data } = await supabase.from('purvis_voice_profile').select('*').eq('active', true).single();
+  res.json(data || { name: 'PURVIS Default', api_provider: 'web_speech', broke_mode: false });
+});
+
+app.patch('/api/voice/profile', async (req, res) => {
+  const { broke_mode, api_provider, style, elevenlabs_voice_id } = req.body;
+  const updates = { updated_at: new Date().toISOString() };
+  if (broke_mode !== undefined) updates.broke_mode = broke_mode;
+  if (api_provider) updates.api_provider = api_provider;
+  if (style) updates.style = style;
+  if (elevenlabs_voice_id) updates.elevenlabs_voice_id = elevenlabs_voice_id;
+  await supabase.from('purvis_voice_profile').update(updates).eq('active', true);
+  res.json({ ok: true, updates, message: broke_mode ? 'Broke mode ON - using free voice' : 'Voice profile updated' });
+});
+
+app.get('/api/voice/logs', async (req, res) => {
+  const { data } = await supabase.from('purvis_voice_logs').select('*').order('created_at', { ascending: false }).limit(20);
+  res.json({ logs: data || [] });
+});
+
+// ---- LEGAL DASHBOARD ----
+app.get('/api/legal/dashboard', async (req, res) => {
+  const [cases, improvements, memory] = await Promise.allSettled([
+    supabase.from('purvis_legal_cases').select('*').order('created_at', { ascending: false }),
+    supabase.from('purvis_improvements').select('area,note,created_at').ilike('area', '%legal%').limit(5),
+    supabase.from('purvis_memory').select('key,value').eq('category', 'legal').limit(10)
+  ]);
+  res.json({
+    disclaimer: 'PURVIS is NOT a lawyer. This is NOT legal advice. Always consult a licensed attorney in Florida or Kansas.',
+    cases: cases.value?.data || [],
+    legalNotes: improvements.value?.data || [],
+    legalMemory: memory.value?.data || [],
+    officialResources: {
+      florida: { orangeCountyCourt: 'https://myeclerk.myorangeclerk.com/', floridaEfiling: 'https://myflcourtaccess.com/', floridaStatutes: 'http://www.leg.state.fl.us/statutes/', floridaSupremeCourt: 'https://www.floridasupremecourt.org/', floridaLegalAid: 'https://floridalegal.org/', floridaBarReferral: 'https://www.floridabar.org/public/lawyer-referral/' },
+      kansas: { kansasCourts: 'https://www.kscourts.org/', kansasStatutes: 'http://www.kslegislature.org/li/b2025_26/statute/', kansasLegalAid: 'https://www.klsinc.org/' },
+      federal: { courtListener: 'https://www.courtlistener.com/', pacer: 'https://pacer.gov/', scotus: 'https://www.supremecourt.gov/' }
+    }
+  });
+});
+
+app.post('/api/legal/cases', async (req, res) => {
+  try {
+    const { data } = await supabase.from('purvis_legal_cases').insert({ ...req.body, disclaimer: 'PURVIS is not a lawyer. Not legal advice.' }).select().single();
+    res.json({ case: data, message: 'Case registered in PURVIS Legal Dashboard' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/legal/research', async (req, res) => {
+  try {
+    const { question, state = 'Florida', caseNumber } = req.body;
+    const DISCLAIMER = 'PURVIS IS NOT A LAWYER. THIS IS NOT LEGAL ADVICE. Consult a licensed attorney in ' + state + ' before taking any legal action.';
+
+    // Search CourtListener for relevant cases
+    let courtData = '';
+    if (process.env.COURTLISTENER_KEY) {
+      try {
+        const r = await httpGet(`https://www.courtlistener.com/api/rest/v3/search/?q=${encodeURIComponent(question + ' ' + state)}&type=o&format=json&stat_Precedential=on`);
+        const d = JSON.parse(r.body);
+        courtData = (d.results || []).slice(0, 3).map(c => `${c.caseName} (${c.court}, ${c.dateFiled})`).join('\n');
+      } catch(e) {}
+    }
+
+    const result = await cachedAI(
+      `LEGAL RESEARCH REQUEST (${state}):\nQuestion: ${question}\nCase: ${caseNumber || 'N/A'}\n\nRelated cases found:\n${courtData || 'Search unavailable'}\n\nProvide:\n1. PLAIN ENGLISH SUMMARY: what the law generally says\n2. RELEVANT STATUTES: cite applicable laws\n3. OPTIONS PEOPLE TYPICALLY CONSIDER: what are the usual paths\n4. QUESTIONS TO ASK YOUR LAWYER: specific questions for a licensed attorney\n5. NEXT STEPS CHECKLIST: what to do this week\n6. OFFICIAL RESOURCES: relevant court/government URLs\n\n${DISCLAIMER}`,
+      PURVIS_SYSTEM + '\nAlways include disclaimer. Never give legal advice. Provide research only.',
+      'legal_research', 1200
+    );
+
+    res.json({ research: result.response, disclaimer: DISCLAIMER, courtCasesFound: courtData, officialPortal: state === 'Florida' ? 'https://myeclerk.myorangeclerk.com/' : 'https://www.kscourts.org/' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- LIFE HELPER: daily suggestions ----
+app.post('/api/life/suggestions', async (req, res) => {
+  try {
+    const { context } = req.body;
+    const [cases, leads, content, tasks] = await Promise.allSettled([
+      supabase.from('purvis_legal_cases').select('case_number,status,next_deadline,action_items').eq('status','active'),
+      supabase.from('purvis_leads').select('name,status,created_at').eq('status','new').limit(5),
+      supabase.from('purvis_content').select('track,status,created_at').eq('status','draft').limit(3),
+      supabase.from('purvis_agent_controls').select('job_name,last_run').eq('enabled',true)
+    ]);
+
+    const situationData = { legalCases: cases.value?.data || [], newLeads: leads.value?.data || [], draftContent: content.value?.data || [], context: context || '' };
+
+    const result = await cachedAI(
+      `PURVIS LIFE HELPER — generate today's action plan for Kelvin.\n\nSituation:\n${JSON.stringify(situationData).substring(0, 800)}\n\nGenerate:\n1. TODAY'S TOP 3 ACTIONS (specific, doable today)\n2. THIS WEEK'S 3 BIGGER MOVES\n3. ONE MONEY MOVE (action that directly generates income today)\n4. LEGAL UPDATE (one thing to do on case 2024-DR-012028-O)\n5. PATTERN ALERT (any recurring issues PURVIS notices)\n6. MOTIVATION (one sentence, real talk)\n\nBe his right-hand man. Be specific. Be direct.`,
+      PURVIS_SYSTEM, 'life_suggestions', 800
+    );
+
+    const { data } = await supabase.from('purvis_daily_suggestions').insert({ suggestions: [result.response], priority_action: result.response.split('\n')[0] || '', reasoning: 'Based on active cases, leads, and content status' }).select().single();
+
+    res.json({ suggestions: result.response, id: data?.id, date: new Date().toLocaleDateString() });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/life/suggestions/today', async (req, res) => {
+  const today = new Date().toISOString().split('T')[0];
+  const { data } = await supabase.from('purvis_daily_suggestions').select('*').eq('suggestion_date', today).order('created_at', { ascending: false }).limit(1);
+  if (data && data.length) return res.json(data[0]);
+  // Generate if not yet created today
+  res.json({ message: 'No suggestions yet today. POST /api/life/suggestions to generate.' });
+});
+
+// ---- TRAFFIC/LEGAL QUICK HELP ----
+app.post('/api/legal/traffic', async (req, res) => {
+  try {
+    const { description, state = 'Florida', county } = req.body;
+    const DISCLAIMER = '⚠️ PURVIS IS NOT A LAWYER. NOT LEGAL ADVICE. Consult a licensed attorney in ' + state + ' before taking action.';
+
+    const result = await cachedAI(
+      `TRAFFIC/LEGAL ISSUE HELPER (${state}${county ? ', ' + county : ''}):\n\nSituation: ${description}\n\n${DISCLAIMER}\n\nProvide:\n1. PLAIN ENGLISH: what this generally means\n2. TYPICAL OPTIONS people consider\n3. DEADLINES to be aware of (general guidance)\n4. QUESTIONS TO ASK A LAWYER about this specific situation\n5. DOCUMENTS TO GATHER before consulting attorney\n6. OFFICIAL LINKS:\n   - Court portal for ${county || state}\n   - How to request a hearing\n   - How to find legal aid if you can't afford an attorney\n7. DRAFT REQUEST: a short letter requesting more time or explaining your situation (template only, you review and sign)\n\n${DISCLAIMER}`,
+      PURVIS_SYSTEM + '\nAlways include disclaimer prominently. Research only. No legal advice.',
+      'traffic_legal', 1000
+    );
+
+    res.json({
+      help: result.response,
+      disclaimer: DISCLAIMER,
+      officialLinks: state === 'Florida' ? { orangeCounty: 'https://myeclerk.myorangeclerk.com/', dmv: 'https://www.flhsmv.gov/', legalAid: 'https://floridalegal.org/' } : { kansasCourts: 'https://www.kscourts.org/', legalAid: 'https://www.klsinc.org/' },
+      nextStep: 'Review the information above. Consult a licensed attorney before filing anything or appearing in court.'
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+console.log('[PURVIS] Expansion modules loaded: OCR, Video, Logo, Avatar, Voice, Legal, Life Helper');
