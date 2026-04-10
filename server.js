@@ -3085,3 +3085,376 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`[PURVIS 11] Online → http://localhost:${PORT}`);
 });
+// ============================================================
+// PURVIS AUTONOMOUS SUB-AGENT SYSTEM
+// Always-on, background, self-improving agents
+// Runs 24/7 on Railway without Kelvin needing to do anything
+// ============================================================
+
+// ---- SUB-AGENT DEFINITIONS ----
+const SUB_AGENTS = {
+
+  // Research Agent: searches web + reads memory for new knowledge
+  research: async (topic, context = '') => {
+    const [webResults, wikiData, newsData] = await Promise.allSettled([
+      webSearch(topic),
+      wikiLookup(topic),
+      getNews('general')
+    ]);
+    return {
+      web: webResults.value?.slice(0, 3) || [],
+      wiki: wikiData.value?.summary || '',
+      news: newsData.value?.slice(0, 3) || [],
+      topic
+    };
+  },
+
+  // Content Agent: generates content drafts
+  content: async (track, topic, researchContext = '') => {
+    const result = await cachedAI(
+      `Generate a complete ${track} content piece${topic ? ' about: ' + topic : ''}. ${researchContext ? 'Use this research: ' + researchContext.substring(0, 500) : ''}\n\nFormat: TOPIC / HOOK / SCRIPT (60 sec) / HASHTAGS / REUSE PLAN`,
+      PURVIS_SYSTEM, 'auto_content', 800
+    );
+    return result;
+  },
+
+  // Memory Agent: reads and writes to Supabase
+  memory: {
+    read: async (category, limit = 10) => {
+      const { data } = await supabase.from('purvis_memory').select('key, value').eq('category', category).limit(limit);
+      return data || [];
+    },
+    write: async (category, key, value) => {
+      await supabase.from('purvis_memory').upsert({ category, key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    },
+    getImprovements: async () => {
+      const { data } = await supabase.from('purvis_improvements').select('*').eq('applied', false).limit(10);
+      return data || [];
+    }
+  },
+
+  // Analysis Agent: synthesizes data into actionable insights
+  analyze: async (data, question) => {
+    return cachedAI(
+      `Analyze this data and answer: ${question}\n\nData: ${JSON.stringify(data).substring(0, 1500)}`,
+      PURVIS_SYSTEM, 'auto_analysis', 600
+    );
+  },
+
+  // Health Agent: checks all systems
+  health: async () => {
+    const checks = {};
+    const apiKey = process.env.OPENAI_API_KEY;
+    checks.openai = apiKey?.startsWith('sk-') ? 'ok' : 'missing';
+    checks.youtube = !!process.env.YOUTUBE_API_KEY ? 'ok' : 'missing';
+    checks.govdata = !!process.env.GOVDATA_API_KEY ? 'ok' : 'missing';
+    checks.courtlistener = !!process.env.COURTLISTENER_KEY ? 'ok' : 'missing';
+    checks.supabase = supabase ? 'ok' : 'error';
+    try { await httpGet('https://api.duckduckgo.com/?q=test&format=json'); checks.webSearch = 'ok'; } catch(e) { checks.webSearch = 'fail'; }
+    try { await httpGet('https://api.open-meteo.com/v1/forecast?latitude=28.5&longitude=-81.4&current_weather=true'); checks.weather = 'ok'; } catch(e) { checks.weather = 'fail'; }
+    return checks;
+  }
+};
+
+// ---- LOG AGENT RUN ----
+async function logAgentRun(jobName, agentsUsed, status, actionsTaken, resultsWritten, apiCalls, startTime, error = null) {
+  try {
+    await supabase.from('purvis_agent_runs').insert({
+      job_name: jobName,
+      agents_used: agentsUsed,
+      status,
+      actions_taken: actionsTaken,
+      results_written: resultsWritten,
+      api_calls_made: apiCalls,
+      duration_ms: Date.now() - startTime,
+      error,
+      completed_at: new Date().toISOString()
+    });
+    // Update control last_run
+    await supabase.from('purvis_agent_controls').update({ last_run: new Date().toISOString(), run_count: supabase.raw('run_count + 1') }).eq('job_name', jobName);
+  } catch(e) { console.log('[AGENT LOG ERROR]', e.message); }
+}
+
+// ---- COORDINATOR: checks if job should run ----
+async function shouldRun(jobName) {
+  const { data } = await supabase.from('purvis_agent_controls').select('*').eq('job_name', jobName).single();
+  if (!data || !data.enabled) return false;
+  if (!data.last_run) return true;
+  const hoursSinceLast = (Date.now() - new Date(data.last_run).getTime()) / 3600000;
+  return hoursSinceLast >= (data.frequency_hours || 24);
+}
+
+// ============================================================
+// JOB 1: PURVIS DAILY LEARNING AGENT
+// Mines memory + web + improvements → writes new insights
+// ============================================================
+async function purvisDailyLearning() {
+  if (!await shouldRun('purvis_daily_learning')) return;
+  const start = Date.now();
+  const actions = [], results = [];
+  let apiCalls = 0;
+  console.log('[PURVIS AGENT] Starting daily learning...');
+
+  try {
+    // Step 1: Research Agent reads current memory
+    const improvements = await SUB_AGENTS.memory.getImprovements();
+    const recentMemory = await SUB_AGENTS.memory.read('learning', 5);
+    actions.push('read_memory: loaded ' + improvements.length + ' improvements');
+
+    // Step 2: Research Agent searches web for relevant updates
+    const tracks = ['Scripture YouTube Shorts 2025', 'Florida plumbing code updates', 'constitutional rights news'];
+    const webInsights = [];
+    for (const topic of tracks) {
+      const research = await SUB_AGENTS.research(topic);
+      if (research.wiki || research.web.length) webInsights.push({ topic, data: research });
+    }
+    actions.push('web_research: searched ' + tracks.length + ' topics');
+
+    // Step 3: Analysis Agent synthesizes everything
+    const synthesisData = { improvements: improvements.slice(0,5), webInsights: webInsights.slice(0,3) };
+    const analysis = await SUB_AGENTS.analyze(synthesisData, 'What new knowledge should PURVIS learn today? What patterns are emerging? What should change?');
+    apiCalls++;
+    actions.push('analyzed: synthesized improvements + web research');
+
+    // Step 4: Memory Agent writes new insights
+    const insightKey = 'auto_insight_' + new Date().toISOString().split('T')[0];
+    await SUB_AGENTS.memory.write('auto_learning', insightKey, analysis.response);
+    results.push('purvis_memory: ' + insightKey);
+    actions.push('wrote: new daily insight to purvis_memory');
+
+    // Step 5: Mark improvements as applied
+    const improvedIds = improvements.map(i => i.id);
+    if (improvedIds.length) {
+      await supabase.from('purvis_improvements').update({ applied: true }).in('id', improvedIds);
+      actions.push('applied: ' + improvedIds.length + ' improvement notes');
+    }
+
+    // Step 6: Save learning log
+    await supabase.from('purvis_learning_log').insert({
+      summary: analysis.response.substring(0, 500),
+      what_worked: 'Daily learning cycle completed',
+      what_sucked: improvements.length > 5 ? 'Too many unapplied improvements' : 'None',
+      what_to_change: analysis.response.substring(0, 200),
+      api_calls_used: apiCalls
+    });
+    results.push('purvis_learning_log: daily entry written');
+
+    await logAgentRun('purvis_daily_learning', ['research','memory','analysis'], 'complete', actions, results, apiCalls, start);
+    console.log('[PURVIS AGENT] Daily learning complete. API calls:', apiCalls);
+
+  } catch(e) {
+    await logAgentRun('purvis_daily_learning', ['research','memory','analysis'], 'error', actions, results, apiCalls, start, e.message);
+    console.log('[PURVIS AGENT] Daily learning error:', e.message);
+  }
+}
+
+// ============================================================
+// JOB 2: PURVIS DAILY CONTENT AGENT
+// Generates fresh content drafts for all tracks daily
+// ============================================================
+async function purvisDailyContent() {
+  if (!await shouldRun('purvis_daily_content')) return;
+  const start = Date.now();
+  const actions = [], results = [];
+  let apiCalls = 0;
+  console.log('[PURVIS AGENT] Starting daily content generation...');
+
+  try {
+    const tracks = [
+      { track: 'Scripture Daily', topic: '' },
+      { track: 'Political Commentary', topic: '' },
+      { track: 'Plumbing Tips', topic: 'SunBiz LLC Orlando' }
+    ];
+
+    for (const { track, topic } of tracks) {
+      // Research Agent: get trending angle
+      const research = await SUB_AGENTS.research(track + ' viral content 2025');
+      const researchContext = research.web.map(r => r.text).join(' ').substring(0, 400);
+      actions.push('researched: ' + track);
+
+      // Content Agent: generate draft
+      const content = await SUB_AGENTS.content(track, topic, researchContext);
+      apiCalls++;
+
+      // Memory Agent: save draft
+      await supabase.from('purvis_content').insert({
+        track: track.toLowerCase().replace(/ /g,'_'),
+        topic: topic || track,
+        script: content.response,
+        status: 'draft',
+        is_monetized: false
+      });
+      results.push('purvis_content: ' + track + ' draft saved');
+      actions.push('generated + saved: ' + track + ' content draft');
+
+      // Rate limit protection
+      await new Promise(r => setTimeout(r, 1000));
+    }
+
+    await logAgentRun('purvis_daily_content', ['research','content','memory'], 'complete', actions, results, apiCalls, start);
+    console.log('[PURVIS AGENT] Daily content complete. Drafts:', results.length, 'API calls:', apiCalls);
+
+  } catch(e) {
+    await logAgentRun('purvis_daily_content', ['research','content','memory'], 'error', actions, results, apiCalls, start, e.message);
+    console.log('[PURVIS AGENT] Daily content error:', e.message);
+  }
+}
+
+// ============================================================
+// JOB 3: PURVIS DAILY HEALTH CHECK AGENT
+// Checks all APIs, logs issues, proposes fixes
+// ============================================================
+async function purvisDailyHealthCheck() {
+  if (!await shouldRun('purvis_daily_healthcheck')) return;
+  const start = Date.now();
+  const actions = [], results = [];
+  let apiCalls = 0;
+  console.log('[PURVIS AGENT] Starting daily health check...');
+
+  try {
+    // Health Agent: check all systems
+    const healthStatus = await SUB_AGENTS.health();
+    actions.push('health_check: all systems scanned');
+
+    const issues = Object.entries(healthStatus).filter(([,v]) => v !== 'ok').map(([k,v]) => k + ': ' + v);
+    const allOk = issues.length === 0;
+
+    // Analysis Agent: generate fix proposals if issues found
+    let proposals = 'All systems healthy. No action needed.';
+    if (issues.length > 0) {
+      const analysis = await SUB_AGENTS.analyze({ issues, healthStatus }, 'What should Kelvin fix or add to resolve these issues? Be specific and actionable.');
+      proposals = analysis.response;
+      apiCalls++;
+      actions.push('analyzed: ' + issues.length + ' issues found');
+    }
+
+    // Memory Agent: save health report
+    const reportKey = 'health_report_' + new Date().toISOString().split('T')[0];
+    await SUB_AGENTS.memory.write('auto_maintenance', reportKey, JSON.stringify({ status: healthStatus, issues, proposals: proposals.substring(0,400), checked_at: new Date().toISOString() }));
+    results.push('purvis_memory: ' + reportKey);
+
+    // If issues: write to roadmap
+    if (issues.length > 0) {
+      await supabase.from('purvis_improvements').insert({
+        area: 'health_check',
+        note: 'Issues found: ' + issues.join(', ') + '. Proposals: ' + proposals.substring(0, 300),
+        applied: false
+      });
+      results.push('purvis_improvements: health issues logged');
+      actions.push('logged: issues to roadmap for Kelvin review');
+    }
+
+    // Check roadmap items and surface top priority
+    const { data: roadmap } = await supabase.from('purvis_memory').select('key,value').eq('category','roadmap').limit(5);
+    if (roadmap && roadmap.length > 0) {
+      await SUB_AGENTS.memory.write('auto_maintenance', 'top_roadmap_' + new Date().toISOString().split('T')[0],
+        'Top roadmap item: ' + roadmap[0].key + ' — ' + roadmap[0].value.substring(0, 200)
+      );
+      actions.push('surfaced: top roadmap item for today');
+    }
+
+    await logAgentRun('purvis_daily_healthcheck', ['health','analysis','memory'], allOk ? 'complete' : 'complete_with_issues', actions, results, apiCalls, start);
+    console.log('[PURVIS AGENT] Health check complete. Issues:', issues.length, 'API calls:', apiCalls);
+
+  } catch(e) {
+    await logAgentRun('purvis_daily_healthcheck', ['health','analysis','memory'], 'error', actions, results, apiCalls, start, e.message);
+    console.log('[PURVIS AGENT] Health check error:', e.message);
+  }
+}
+
+// ============================================================
+// MAIN COORDINATOR: orchestrates all sub-agents
+// ============================================================
+async function purvisCoordinator() {
+  console.log('[PURVIS COORDINATOR] Running at', new Date().toISOString());
+  if (!process.env.OPENAI_API_KEY?.startsWith('sk-')) {
+    console.log('[PURVIS COORDINATOR] No OpenAI key — skipping AI-dependent jobs');
+    await purvisDailyHealthCheck(); // health check always runs
+    return;
+  }
+  // Run all jobs (each checks shouldRun internally)
+  await purvisDailyHealthCheck();
+  await purvisDailyLearning();
+  await purvisDailyContent();
+}
+
+// ---- AGENT API ENDPOINTS ----
+
+// Run specific agent manually
+app.post('/api/agents/run', async (req, res) => {
+  const { jobName } = req.body;
+  if (!jobName) return res.status(400).json({ error: 'jobName required' });
+  res.json({ status: 'Agent started: ' + jobName, message: 'Check /api/agents/logs in 30 seconds' });
+  const jobs = { purvis_daily_learning: purvisDailyLearning, purvis_daily_content: purvisDailyContent, purvis_daily_healthcheck: purvisDailyHealthCheck, coordinator: purvisCoordinator };
+  if (jobs[jobName]) jobs[jobName]().catch(console.error);
+  else res.status(400).json({ error: 'Unknown job: ' + jobName });
+});
+
+// Agent logs
+app.get('/api/agents/logs', async (req, res) => {
+  const { data } = await supabase.from('purvis_agent_runs').select('*').order('started_at', { ascending: false }).limit(20);
+  res.json({ runs: data || [] });
+});
+
+// Control panel: toggle jobs
+app.get('/api/agents/controls', async (req, res) => {
+  const { data } = await supabase.from('purvis_agent_controls').select('*').order('job_name');
+  res.json({ controls: data || [] });
+});
+
+app.patch('/api/agents/controls/:jobName', async (req, res) => {
+  const { jobName } = req.params;
+  const { enabled, frequency_hours, allowed_actions } = req.body;
+  const updates = { updated_at: new Date().toISOString() };
+  if (enabled !== undefined) updates.enabled = enabled;
+  if (frequency_hours) updates.frequency_hours = frequency_hours;
+  if (allowed_actions) updates.allowed_actions = allowed_actions;
+  await supabase.from('purvis_agent_controls').update(updates).eq('job_name', jobName);
+  res.json({ ok: true, jobName, updates });
+});
+
+// Agent registry
+app.get('/api/agents/registry', async (req, res) => {
+  const { data } = await supabase.from('purvis_agent_registry').select('*');
+  res.json({ agents: data || [] });
+});
+
+// Agent system health
+app.get('/api/agents/health', async (req, res) => {
+  const { data: controls } = await supabase.from('purvis_agent_controls').select('job_name,enabled,last_run,run_count,frequency_hours');
+  const { data: recentRuns } = await supabase.from('purvis_agent_runs').select('job_name,status,started_at').order('started_at', { ascending: false }).limit(5);
+  res.json({
+    ok: true,
+    coordinator: 'running every hour via Railway',
+    scheduledJobs: controls || [],
+    recentRuns: recentRuns || [],
+    nextCoordinatorRun: 'within the hour',
+    subAgents: ['research', 'content', 'memory', 'analysis', 'health'],
+    message: 'PURVIS is always on. Sub-agents run daily while you sleep.'
+  });
+});
+
+// Boot routine: load context on startup
+async function purvisBoot() {
+  console.log('[PURVIS BOOT] Loading brain context...');
+  try {
+    const { data: bootMemory } = await supabase.from('purvis_memory').select('category,key,value').in('category', ['system','kelvin','behavior','capabilities','owners_manual']).limit(20);
+    const { data: latestLearning } = await supabase.from('purvis_memory').select('key,value').eq('category','auto_learning').order('key', { ascending: false }).limit(3);
+    const { data: roadmap } = await supabase.from('purvis_memory').select('key,value').eq('category','roadmap').limit(5);
+    const memCount = (bootMemory?.length || 0) + (latestLearning?.length || 0);
+    await supabase.from('purvis_memory').upsert({ category: 'system', key: 'last_boot', value: 'Boot at ' + new Date().toISOString() + '. Loaded ' + memCount + ' memory entries. Roadmap items: ' + (roadmap?.length || 0), updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    console.log('[PURVIS BOOT] Brain loaded:', memCount, 'entries. Roadmap:', roadmap?.length || 0, 'items.');
+  } catch(e) { console.log('[PURVIS BOOT] Error:', e.message); }
+}
+
+// ---- SCHEDULE ALL AGENTS ----
+// Coordinator runs every hour, checks which jobs are due
+setInterval(purvisCoordinator, 60 * 60 * 1000);
+
+// Boot sequence runs 10 seconds after startup
+setTimeout(purvisBoot, 10000);
+
+// First coordinator run 60 seconds after startup
+setTimeout(purvisCoordinator, 60000);
+
+console.log('[PURVIS] Autonomous agent system loaded — coordinator runs every hour');
