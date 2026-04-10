@@ -3078,13 +3078,6 @@ app.get('/api/gov/health', async (req, res) => {
   });
 });
 
-// Serve SPA for all non-API routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-app.listen(PORT, () => {
-  console.log(`[PURVIS 11] Online → http://localhost:${PORT}`);
-});
 // ============================================================
 // PURVIS AUTONOMOUS SUB-AGENT SYSTEM
 // Always-on, background, self-improving agents
@@ -3458,3 +3451,11 @@ setTimeout(purvisBoot, 10000);
 setTimeout(purvisCoordinator, 60000);
 
 console.log('[PURVIS] Autonomous agent system loaded — coordinator runs every hour');
+
+// Serve SPA for all non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+app.listen(PORT, () => {
+  console.log(`[PURVIS 11] Online → http://localhost:${PORT}`);
+});
