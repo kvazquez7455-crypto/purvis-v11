@@ -3459,3 +3459,257 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`[PURVIS 11] Online → http://localhost:${PORT}`);
 });
+// ============================================================
+// PURVIS FINAL MASTER: App Builder + Budget + Stubs
+// ============================================================
+
+// ---- BUDGET GUARDRAIL ----
+const MONTHLY_BUDGET = 35.00;
+async function checkBudget(service, estimatedCost) {
+  const month = new Date().toISOString().substring(0, 7);
+  try {
+    const { data } = await supabase.from('purvis_budget').select('*').eq('month', month).eq('service', service).single();
+    if (!data) return { allowed: true, warning: false };
+    const newTotal = (data.estimated_cost_usd || 0) + estimatedCost;
+    if (newTotal > data.budget_limit_usd) {
+      return { allowed: false, message: `Budget limit reached for ${service}: $${data.budget_limit_usd}/month. Current: $${data.estimated_cost_usd.toFixed(4)}. Ask Kelvin before proceeding.` };
+    }
+    if (newTotal > data.alert_threshold) {
+      return { allowed: true, warning: true, message: `Warning: ${service} spend approaching limit. Current: $${data.estimated_cost_usd.toFixed(4)} of $${data.budget_limit_usd} budget.` };
+    }
+    return { allowed: true, warning: false };
+  } catch(e) { return { allowed: true, warning: false }; }
+}
+
+async function trackBudget(service, callCount, cost) {
+  const month = new Date().toISOString().substring(0, 7);
+  try {
+    await supabase.from('purvis_budget').upsert({
+      month, service,
+      call_count: callCount,
+      estimated_cost_usd: cost,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'month,service' });
+  } catch(e) {}
+}
+
+app.get('/api/budget', async (req, res) => {
+  const month = new Date().toISOString().substring(0, 7);
+  const { data } = await supabase.from('purvis_budget').select('*').eq('month', month);
+  const total = (data || []).reduce((s, r) => s + (r.estimated_cost_usd || 0), 0);
+  res.json({
+    month,
+    totalSpent: '$' + total.toFixed(4),
+    budget: '$' + MONTHLY_BUDGET,
+    remaining: '$' + (MONTHLY_BUDGET - total).toFixed(2),
+    percentUsed: ((total / MONTHLY_BUDGET) * 100).toFixed(1) + '%',
+    breakdown: data || [],
+    status: total > MONTHLY_BUDGET ? 'OVER_BUDGET' : total > MONTHLY_BUDGET * 0.8 ? 'WARNING' : 'OK'
+  });
+});
+
+// ---- APP BUILDER ----
+app.post('/api/app-builder/plan', async (req, res) => {
+  try {
+    const { spec, appName } = req.body;
+    const budget = await checkBudget('openai_gpt4o', 0.05);
+    if (!budget.allowed) return res.status(402).json({ error: budget.message });
+
+    const result = await cachedAI(
+      `APP BUILDER REQUEST: "${spec}"\n\nUsing template app_builder_v1, create a complete app plan:\n1. APP NAME: ${appName || 'auto-generate'}\n2. PURPOSE: what it does in one sentence\n3. FEATURES: list max 5 core features\n4. DATABASE SCHEMA: SQL CREATE TABLE statements\n5. API ROUTES: list all needed endpoints\n6. FRONTEND: describe the UI (single page, tabs, forms)\n7. AUTOMATIONS: any scheduled or event-based jobs\n8. TECH STACK: Railway + Supabase + Vanilla JS (unless specified)\n9. ESTIMATED BUILD TIME: realistic estimate\n10. KELVIN APPROVAL NEEDED: yes, always before deploy`,
+      PURVIS_SYSTEM, 'app_builder', 1500
+    );
+
+    // Register in apps table
+    const { data: app } = await supabase.from('purvis_apps').insert({
+      name: appName || 'app_' + Date.now(),
+      description: spec.substring(0, 200),
+      spec: result.response,
+      status: 'planning',
+      tech_stack: ['Node.js', 'Express', 'Supabase', 'Railway', 'Vanilla JS']
+    }).select().single();
+
+    res.json({ plan: result.response, appId: app?.id, fromCache: result.fromCache, nextStep: 'Review this plan, then call POST /api/app-builder/build with appId to start building' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/app-builder/build', async (req, res) => {
+  try {
+    const { appId, approved } = req.body;
+    if (!approved) return res.status(400).json({ error: 'Kelvin approval required. Set approved: true to proceed.' });
+
+    const { data: app } = await supabase.from('purvis_apps').select('*').eq('id', appId).single();
+    if (!app) return res.status(404).json({ error: 'App not found' });
+
+    res.json({ status: 'Building started', appId, message: 'PURVIS is generating code. Check /api/apps/' + appId + ' for progress.' });
+
+    // Async build
+    (async () => {
+      try {
+        // Generate schema SQL
+        const schema = await cachedAI(`Generate only the SQL CREATE TABLE statements for this app:\n\n${app.spec}`, PURVIS_SYSTEM, 'app_schema', 800);
+        // Generate routes
+        const routes = await cachedAI(`Generate Express.js route stubs (just the app.get/app.post functions, no full server) for:\n\n${app.spec}`, PURVIS_SYSTEM, 'app_routes', 1000);
+        // Generate frontend
+        const frontend = await cachedAI(`Generate a complete single-page HTML frontend (PURVIS dark theme: #0a0a0f bg, #7c3aed purple) for:\n\n${app.spec}\n\nInclude: CSS, JS fetch calls to /api/${app.name}/* endpoints.`, PURVIS_SYSTEM, 'app_frontend', 2000);
+
+        // Save everything
+        await supabase.from('purvis_apps').update({
+          schema_sql: schema.response,
+          api_routes: { code: routes.response },
+          status: 'built_awaiting_deploy',
+          updated_at: new Date().toISOString()
+        }).eq('id', appId);
+
+        // Save frontend file
+        const fs = require('fs');
+        const path = require('path');
+        const dir = path.join(__dirname, 'public', 'apps');
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(path.join(dir, app.name + '.html'), frontend.response);
+
+        console.log('[APP BUILDER] Built:', app.name);
+      } catch(e) {
+        await supabase.from('purvis_apps').update({ status: 'build_error', updated_at: new Date().toISOString() }).eq('id', appId);
+        console.log('[APP BUILDER ERROR]', e.message);
+      }
+    })();
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/apps', async (req, res) => {
+  const { data } = await supabase.from('purvis_apps').select('*').order('created_at', { ascending: false });
+  res.json({ apps: data || [] });
+});
+
+app.get('/api/apps/:id', async (req, res) => {
+  const { data } = await supabase.from('purvis_apps').select('*').eq('id', req.params.id).single();
+  if (!data) return res.status(404).json({ error: 'App not found' });
+  res.json(data);
+});
+
+// ---- AUTOMATION BUILDER ----
+app.post('/api/automation-builder', async (req, res) => {
+  try {
+    const { description, frequency, triggerEvent, appId } = req.body;
+    const result = await cachedAI(
+      `Using automation_builder_v1 template, design this automation:\n"${description}"\nFrequency: ${frequency || 'daily'}\nTrigger: ${triggerEvent || 'time-based'}\n\nOutput: trigger_type, trigger_value, exact action, what it produces, where results go`,
+      PURVIS_SYSTEM, 'automation_builder', 600
+    );
+
+    const { data: auto } = await supabase.from('purvis_automations').insert({
+      name: description.substring(0, 60),
+      description,
+      trigger_type: triggerEvent ? 'event' : 'time',
+      trigger_value: frequency || 'daily',
+      action: result.response.substring(0, 500),
+      app_id: appId || null,
+      enabled: true
+    }).select().single();
+
+    res.json({ automation: result.response, id: auto?.id, message: 'Automation registered. It will run on schedule via PURVIS coordinator.' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/automations', async (req, res) => {
+  const { data } = await supabase.from('purvis_automations').select('*').order('created_at', { ascending: false });
+  res.json({ automations: data || [] });
+});
+
+// ---- CAPCUT / CANVA WORKFLOW ----
+app.post('/api/capcut/generate', async (req, res) => {
+  try {
+    const { script, duration = 60, track } = req.body;
+    const result = await cachedAI(
+      `Generate a complete CapCut editing script for this ${duration}-second ${track || ''} video:\n\n${script}\n\nFormat:\n[0:00-0:05] TEXT: [overlay text] | TRANSITION: [type] | MUSIC: [mood]\n[0:05-0:15] ...\n\nInclude: all timestamps, exact text overlays, transitions, music mood, caption suggestions, thumbnail concept`,
+      PURVIS_SYSTEM, 'capcut', 800
+    );
+    await supabase.from('purvis_content').insert({ track: track || 'capcut', topic: script.substring(0, 50), script: result.response, status: 'capcut_ready', is_monetized: false });
+    res.json({ script: result.response, fromCache: result.fromCache, canvaLink: 'https://www.canva.com/create/youtube-thumbnails/', capcutLink: 'https://www.capcut.com' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/canva/generate', async (req, res) => {
+  try {
+    const { topic, platform = 'youtube_thumbnail', track } = req.body;
+    const canvaLinks = { youtube_thumbnail: 'https://www.canva.com/create/youtube-thumbnails/', instagram_post: 'https://www.canva.com/create/instagram-posts/', tiktok: 'https://www.canva.com/create/tiktok-videos/', logo: 'https://www.canva.com/create/logos/' };
+    const result = await cachedAI(
+      `Generate a complete Canva design brief for: "${topic}" (${platform})\n\nInclude:\n1. COLOR PALETTE: primary hex, secondary hex, background hex (use #7c3aed purple, #22c55e green, #0a0a0f dark as PURVIS brand)\n2. FONTS: heading font, body font\n3. LAYOUT: describe exact element placement\n4. HEADLINE OPTIONS: 3 options (bold, attention-grabbing)\n5. SUBTEXT: supporting text\n6. CTA: call to action text\n7. THUMBNAIL CONCEPT: describe the visual concept\n8. CANVA ELEMENTS: specific elements to search for`,
+      PURVIS_SYSTEM, 'canva_brief', 700
+    );
+    res.json({ brief: result.response, canvaUrl: canvaLinks[platform] || 'https://www.canva.com', fromCache: result.fromCache, note: 'Kelvin opens Canva, PURVIS designed it. You make the final edits and publish.' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- VOICE STUB (activates when ELEVENLABS_KEYS set) ----
+// TODO: Add ELEVENLABS_KEYS to Railway env vars to fully activate
+// Voice ID will be stored in purvis_memory category=voice key=kelvin_voice_id
+// (/api/voice route already exists above — this is the extended version)
+app.post('/api/voice/narrate', async (req, res) => {
+  const { text, voiceId } = req.body;
+  const elKey = (process.env.ELEVENLABS_KEYS || '').split(',')[0].trim();
+  const storedVoiceId = voiceId || 'TODO_SET_FROM_PURVIS_MEMORY';
+
+  if (!elKey) {
+    return res.json({
+      status: 'stub',
+      message: 'Add ELEVENLABS_KEYS to Railway to activate voice. Free tier: 10,000 chars/month.',
+      setupUrl: 'https://elevenlabs.io',
+      railwaySetup: 'Railway → purvis-v11 → Variables → ELEVENLABS_KEYS=your_key',
+      textReady: text?.substring(0, 100),
+      whenReady: 'This endpoint will return audio bytes once key is set. No code changes needed.'
+    });
+  }
+
+  // Budget check
+  const charCount = (text || '').length;
+  const estimatedCost = charCount * 0.0003;
+  const budget = await checkBudget('elevenlabs', estimatedCost);
+  if (!budget.allowed) return res.status(402).json({ error: budget.message });
+
+  try {
+    const vId = storedVoiceId !== 'TODO_SET_FROM_PURVIS_MEMORY' ? storedVoiceId : '21m00Tcm4TlvDq8ikWAM';
+    const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${vId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'xi-api-key': elKey },
+      body: JSON.stringify({ text: text.substring(0, 500), model_id: 'eleven_monolingual_v1', voice_settings: { stability: 0.5, similarity_boost: 0.75 } })
+    });
+    if (!r.ok) throw new Error(await r.text());
+    await trackBudget('elevenlabs', 1, estimatedCost);
+    const buffer = await r.arrayBuffer();
+    res.set('Content-Type', 'audio/mpeg');
+    res.send(Buffer.from(buffer));
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- MASTER STATUS (everything in one call) ----
+app.get('/api/status', async (req, res) => {
+  const month = new Date().toISOString().substring(0, 7);
+  const [budget, agents, apps, automations, recentContent] = await Promise.allSettled([
+    supabase.from('purvis_budget').select('service,estimated_cost_usd,budget_limit_usd').eq('month', month),
+    supabase.from('purvis_agent_controls').select('job_name,enabled,last_run,run_count'),
+    supabase.from('purvis_apps').select('name,status,frontend_url'),
+    supabase.from('purvis_automations').select('name,enabled,trigger_type,run_count'),
+    supabase.from('purvis_content').select('track,status,created_at').order('created_at',{ascending:false}).limit(3)
+  ]);
+  res.json({
+    purvis: 'ONLINE',
+    url: 'https://purvis-v11-production.up.railway.app',
+    login: 'kvazquez7455@gmail.com',
+    budget: budget.value?.data || [],
+    agents: agents.value?.data || [],
+    apps: apps.value?.data || [],
+    automations: automations.value?.data || [],
+    recentContent: recentContent.value?.data || [],
+    templates: ['app_builder_v1','automation_builder_v1','capcut_canva_v1','voice_workflow_v1','agent_builder_v1','api_wiring_v1','self_improve_v1'],
+    supabaseTables: ['purvis_memory','purvis_life_thread','purvis_messages','purvis_improvements','purvis_content','purvis_leads','purvis_tasks','purvis_cache','purvis_templates','purvis_tests','purvis_learning_log','purvis_resource_policy','purvis_agent_registry','purvis_agent_controls','purvis_agent_runs','purvis_apps','purvis_automations','purvis_budget','purvis_code_map'],
+    howToUse: {
+      buildApp: 'POST /api/app-builder/plan {spec:"describe your app",appName:"name"}',
+      automateTask: 'POST /api/automation-builder {description:"what to automate",frequency:"daily"}',
+      useVoice: 'POST /api/voice/narrate {text:"script"} — needs ELEVENLABS_KEYS in Railway',
+      capcutScript: 'POST /api/capcut/generate {script:"your script",duration:60}',
+      canvaDesign: 'POST /api/canva/generate {topic:"topic",platform:"youtube_thumbnail"}',
+      chat: 'POST /api/chat {message:"anything",userId:"kelvin"}'
+    }
+  });
+});

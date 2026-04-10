@@ -143,3 +143,57 @@ It runs 24/7 on Railway (free), stores everything in Supabase (free), uses your 
 
 *PURVIS 11 — Built April 2026 — Owned permanently by Kelvin Vazquez*
 *"One brain. One memory. One path. No duplicates. Build the empire."*
+
+---
+
+## How to Ask PURVIS to Build Things
+
+### "Build an app that does X"
+```
+POST /api/app-builder/plan
+{"spec": "describe your app in plain language", "appName": "my-app"}
+```
+Or just tell PURVIS in chat: **"Build me an app that tracks my plumbing jobs and sends invoices"**
+
+PURVIS will: plan → design schema → build routes → build frontend → ask your approval → deploy
+
+### "Automate Y every day/week"
+```
+POST /api/automation-builder
+{"description": "send me a daily lead report", "frequency": "daily"}
+```
+Or say: **"Automate a weekly content calendar every Sunday"**
+
+### "Use my voice to say Z"
+Add `ELEVENLABS_KEYS` to Railway → then say: **"Narrate this script in my voice"**
+
+### "Work on this CapCut/Canva project"
+- Paste your script → `POST /api/capcut/generate {script: "your script", duration: 60}`
+- Get design brief → `POST /api/canva/generate {topic: "topic", platform: "youtube_thumbnail"}`
+- Or say: **"Make me a CapCut script for this Bible story video"**
+
+### See what's running
+```
+GET /api/status         — everything at once
+GET /api/agents/health  — sub-agent status
+GET /api/budget         — API spend this month
+GET /api/apps           — all apps you've built
+GET /api/automations    — all scheduled tasks
+```
+
+### Control sub-agents
+```
+PATCH /api/agents/controls/purvis_daily_content
+{"enabled": false}      — turn off
+{"frequency_hours": 48} — run every 2 days instead
+```
+
+---
+
+## Budget ($35/month target)
+PURVIS tracks every API call. When approaching limit, it warns you before proceeding.
+Check spend: `GET /api/budget`
+
+---
+
+*Last updated: April 2026 | PURVIS 11 Final Master Launch*
