@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PURVIS SOVEREIGN CORE</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div class="brand">
+          <span class="brand-mark">P/S</span>
+          <span class="brand-name">PURVIS SOVEREIGN CORE</span>
+        </div>
+        <p class="pipeline">INPUT → ROUTER → ORCHESTRATOR → DECISION → TASK → TOOL → MEMORY → OUTPUT</p>
+      </header>
+
+      <section class="composer">
+        <textarea
+          id="input"
+          rows="4"
+          placeholder="Speak to Purvis. e.g. 'write a blog post about sovereign AI', or 'debug this javascript function'..."
+        ></textarea>
+        <div class="row">
+          <button id="send" type="button">RUN PIPELINE</button>
+          <span id="status" class="status">idle</span>
+        </div>
+      </section>
+
+      <section id="output" class="output" aria-live="polite"></section>
+
+      <footer class="foot">
+        <span>v1.0.0 · stub modules · in-memory log</span>
+      </footer>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
