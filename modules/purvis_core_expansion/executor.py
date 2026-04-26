@@ -25,6 +25,7 @@ from .types import (
 )
 from .code_runner import run_code
 from .connector_bridge import execute_connector
+from .module_router import route_task as _classify_task
 
 
 # ---------- Groq client (real AI) ----------
@@ -215,6 +216,7 @@ def default_handle(type_, input_):
         }
 
     try:
+        task_type = _classify_task(str(input_))
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
@@ -225,8 +227,8 @@ def default_handle(type_, input_):
 
         return {
             "handled": True,
-            "type": type_,
-            "summary": "ai generated",
+            "type": task_type,
+            "summary": "ai response",
             "result": response.choices[0].message.content
         }
 

@@ -903,6 +903,212 @@
       "created_at": "2026-04-26T03:13:58.954027+00:00",
       "error": null,
       "persisted": false
+    },
+    {
+      "id": "49f4d862-fcf8-4c44-bb22-956a77b04fc0",
+      "type": "calculation",
+      "input": "calculate 10 5 2",
+      "output": {
+        "handled": true,
+        "type": "calculation",
+        "summary": "calculation complete",
+        "result": "Total = 17"
+      },
+      "value": 30,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:32:05.621574+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "2f781772-ac97-4ed3-b0bc-9d41998e4dca",
+      "type": "content",
+      "input": "write a blog about money",
+      "output": {
+        "handled": true,
+        "type": "content",
+        "summary": "ai response",
+        "result": "**The Ultimate Guide to Managing Your Money**\n\nManaging your finances effectively is crucial in today's fast-paced world. With the rising cost of living, it's essential to have a solid understanding of how to earn, save, and invest your money. In this blog, we'll delve into the world of personal finance, providing you with valuable tips and insights to help you achieve financial stability and success.\n\n**Understanding Your Financial Goals**\n\nBefore you can start managing your money, it's essential to define your financial goals. What do you want to achieve? Do you want to save for a down payment on a house, pay off debt, or build a retirement fund? Having clear financial goals will help you create a roadmap for your money management journey.\n\n**Budgeting 101**\n\nCreating a budget is the foundation of effective money management. A budget helps you track your income and expenses, ensuring that you're not overspending and that you're allocating your resources wisely. Here are some budgeting tips to get you started:\n\n* **50/30/20 rule**: Allocate 50% of your income towards necessary expenses, 30% towards discretionary spending, and 20% towards saving and debt repayment.\n* **Track your expenses**: Keep a record of every transaction, no matter how small, to help you identify areas where you can cut back.\n* **Prioritize needs over wants**: Be honest with yourself about what you need versus what you want. Make sure to prioritize essential expenses, such as rent/mortgage, utilities, and food.\n\n**Saving and Investing**\n\nSaving and investing are crucial components of long-term financial success. Here are some tips to help you get started:\n\n* **Emergency fund**: Aim to save 3-6 months' worth of living expenses in an easily accessible savings account.\n* **Retirement savings**: Take advantage of tax-advantaged retirement accounts, such as 401(k) or IRA, to build a nest egg for your golden years.\n* **Investing**: Consider low-cost index funds or ETFs, which provide broad diversification and can help you grow your wealth over time.\n\n**Managing Debt**\n\nDebt can be a significant obstacle to achieving financial stability. Here are some tips to help you manage your debt:\n\n* **Prioritize high-interest debt**: Focus on paying off high-interest debt, such as credit card balances, as soon as possible.\n* **Consolidate debt**: Consider consolidating multiple debts into a single, lower-interest loan or credit card.\n* **Avoid new debt**: Be mindful of your spending habits and avoid taking on new debt, especially if you're still paying off existing balances.\n\n**Conclusion**\n\nManaging your money effectively is a lifelong journey. By setting clear financial goals, creating a budget, saving and investing, and managing debt, you'll be well on your way to achieving financial stability and success. Remember to stay disciplined, patient, and informed, and you'll be enjoying the financial freedom you deserve in no time.\n\n**Additional Resources**\n\n* **National Foundation for Credit Counseling**: A non-profit organization that provides financial education and credit counseling services.\n* **Investopedia**: A comprehensive online resource for investing and personal finance.\n* **Mint**: A popular personal finance app that helps you track your spending, create a budget, and set financial goals.\n\nBy following these tips and resources, you'll be well on your way to achieving financial success. Remember to stay informed, stay disciplined, and always keep your financial goals in mind."
+      },
+      "value": 50,
+      "duration_ms": 2200,
+      "created_at": "2026-04-26T03:32:07.948162+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "ada508b2-6dac-40cb-af4f-ce27269e7f55",
+      "type": "legal",
+      "input": "draft a contract clause about confidentiality",
+      "output": {
+        "handled": true,
+        "type": "legal",
+        "summary": "ai response",
+        "result": "**CONFIDENTIALITY CLAUSE**\n\nThe parties agree to maintain the confidentiality of all information and materials exchanged between them in connection with this Agreement (\"Confidential Information\"). Confidential Information shall include, but not be limited to:\n\n* All documents, data, and other materials provided by one party to the other;\n* All technical, financial, and business information;\n* All trade secrets, proprietary information, and know-how;\n* All information related to the parties' customers, employees, and business operations.\n\nThe receiving party shall:\n\n* Keep the Confidential Information confidential and not disclose it to any third party without the prior written consent of the disclosing party;\n* Use the Confidential Information only for the purposes of performing its obligations under this Agreement;\n* Take all reasonable measures to protect the Confidential Information from unauthorized access, disclosure, or use;\n* Return all Confidential Information to the disclosing party upon request, and destroy any copies made.\n\nThe obligations of confidentiality set forth in this Clause shall survive the termination or expiration of this Agreement for a period of [insert time period, e.g., 3 years] from the date of such termination or expiration.\n\nNotwithstanding the above, the receiving party shall not be liable for any disclosure of Confidential Information that:\n\n* Was already in the public domain at the time of disclosure;\n* Becomes publicly available through no fault of the receiving party;\n* Is required to be disclosed by law or by a court order, provided that the receiving party gives the disclosing party prior notice and an opportunity to object to such disclosure.\n\nBy signing below, the parties acknowledge that they have read, understand, and agree to be bound by the terms of this Confidentiality Clause.\n\n**IN WITNESS WHEREOF**, the parties have executed this Agreement as of the date first above written.\n\n---\n\nPlease note that this is a sample clause and should be reviewed and customized according to the specific needs and requirements of your contract. It's always recommended to consult with a lawyer or legal professional to ensure the clause is enforceable and compliant with applicable laws."
+      },
+      "value": 200,
+      "duration_ms": 1944,
+      "created_at": "2026-04-26T03:32:10.070465+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "57ed2214-a84a-4b5f-8b2a-cd32a821f293",
+      "type": "default",
+      "input": "hello there, tell me a fun fact",
+      "output": {
+        "handled": true,
+        "type": "general",
+        "summary": "ai response",
+        "result": "Hello. Here's a fun fact: Did you know that there is a species of jellyfish that is immortal? The Turritopsis dohrnii, also known as the \"immortal jellyfish,\" is a type of jellyfish that can transform its body into a younger state through a process called transdifferentiation. This means that it can essentially revert back to its polyp stage and grow back into an adult again, making it theoretically immortal. Isn't that cool?"
+      },
+      "value": 10,
+      "duration_ms": 235,
+      "created_at": "2026-04-26T03:32:10.456515+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "21fcf721-2c5b-4732-abf6-be09058d589b",
+      "type": "content",
+      "input": "Write a blog post about AI",
+      "output": {
+        "handled": true,
+        "type": "content",
+        "summary": "ai response",
+        "result": "**The Rise of Artificial Intelligence: Revolutionizing the Future**\n\nArtificial Intelligence (AI) has been a topic of fascination for decades, and in recent years, it has become an integral part of our lives. From virtual assistants like Siri and Alexa to self-driving cars and personalized product recommendations, AI is transforming the way we live, work, and interact with each other. In this blog post, we'll delve into the world of AI, exploring its history, current applications, and future possibilities.\n\n**A Brief History of AI**\n\nThe concept of AI dates back to the 1950s, when computer scientists like Alan Turing and Marvin Minsky began exploring the idea of creating machines that could think and learn like humans. The term \"Artificial Intelligence\" was coined in 1956, and since then, the field has undergone significant advancements. In the 1980s, AI research focused on expert systems, which were designed to mimic human decision-making abilities. However, it wasn't until the 21st century that AI started to gain mainstream attention, with the development of machine learning algorithms and the availability of large datasets.\n\n**Current Applications of AI**\n\nToday, AI is being used in a wide range of industries, including:\n\n1. **Healthcare**: AI-powered diagnostic tools can analyze medical images and diagnose diseases more accurately and quickly than human doctors.\n2. **Finance**: AI algorithms are used to detect fraudulent transactions, predict stock prices, and optimize investment portfolios.\n3. **Transportation**: Self-driving cars and trucks are being tested on roads, promising to revolutionize the way we travel.\n4. **Customer Service**: Chatbots and virtual assistants are being used to provide 24/7 customer support, answering queries and resolving issues.\n5. **Education**: AI-powered adaptive learning systems can personalize education for individual students, making learning more effective and engaging.\n\n**Future Possibilities of AI**\n\nAs AI continues to advance, we can expect to see significant breakthroughs in various areas, including:\n\n1. **Natural Language Processing**: AI will become more proficient in understanding and generating human language, enabling more effective communication between humans and machines.\n2. **Computer Vision**: AI-powered computer vision will enable machines to interpret and understand visual data, such as images and videos, with greater accuracy.\n3. **Robotics**: AI will be used to create more advanced robots that can perform complex tasks, such as assembly, manufacturing, and healthcare.\n4. **Predictive Maintenance**: AI will be used to predict equipment failures, reducing downtime and increasing overall efficiency in industries like manufacturing and logistics.\n5. **Space Exploration**: AI will play a crucial role in space exploration, enabling spacecraft to navigate, communicate, and make decisions autonomously.\n\n**Challenges and Concerns**\n\nWhile AI has the potential to revolutionize various aspects of our lives, there are also concerns about its impact on society. Some of the challenges and concerns include:\n\n1. **Job Displacement**: AI may displace certain jobs, particularly those that involve repetitive tasks or can be easily automated.\n2. **Bias and Discrimination**: AI algorithms can perpetuate biases and discrimination if they are trained on biased data or designed with a particular worldview.\n3. **Privacy and Security**: AI can raise significant privacy and security concerns, particularly if it is used to collect and analyze sensitive personal data.\n4. **Ethics and Accountability**: As AI becomes more autonomous, there are questions about who is accountable for its actions and decisions.\n\n**Conclusion**\n\nArtificial Intelligence has the potential to transform the world in countless ways, from revolutionizing industries to improving our daily lives. While there are challenges and concerns associated with AI, it is essential to address these issues proactively and ensure that AI is developed and used responsibly. As we continue to advance in the field of AI, it is crucial to prioritize transparency, accountability, and ethics, ensuring that AI benefits humanity as a whole."
+      },
+      "value": 50,
+      "duration_ms": 2123,
+      "created_at": "2026-04-26T03:32:12.762910+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "9fbf4147-3e03-4016-a999-5733a9c163ef",
+      "type": "legal",
+      "input": "draft NDA",
+      "output": {
+        "handled": true,
+        "type": "general",
+        "summary": "ai response",
+        "result": "**CONFIDENTIALITY AND NON-DISCLOSURE AGREEMENT**\n\nThis Confidentiality and Non-Disclosure Agreement (\"Agreement\") is made and entered into on [DATE] (\"Effective Date\") by and between [COMPANY NAME] (\"Disclosing Party\") and [RECIPIENT NAME] (\"Receiving Party\").\n\n**1. PURPOSE AND SCOPE**\n\nThe Disclosing Party is willing to disclose certain confidential and proprietary information to the Receiving Party for the purpose of [STATE PURPOSE, e.g., \"evaluating a potential business opportunity\" or \"discussing a potential partnership\"]. This Agreement is intended to protect the confidentiality of such information and to ensure that it is not disclosed to unauthorized parties.\n\n**2. DEFINITIONS**\n\nFor the purposes of this Agreement, the following definitions shall apply:\n\n* \"Confidential Information\" means all information, whether written or oral, that is disclosed by the Disclosing Party to the Receiving Party, including but not limited to:\n\t+ Business plans, strategies, and methods\n\t+ Technical data, including but not limited to software, hardware, and other technical materials\n\t+ Financial information, including but not limited to revenue, profits, and other financial data\n\t+ Customer lists and other customer information\n\t+ Trade secrets and other proprietary information\n* \"Receiving Party\" means the individual or entity receiving the Confidential Information, including but not limited to [RECIPIENT NAME] and its officers, directors, employees, agents, and affiliates.\n\n**3. OBLIGATIONS OF THE RECEIVING PARTY**\n\nThe Receiving Party agrees to:\n\n* Hold the Confidential Information in confidence and not disclose it to any third party without the prior written consent of the Disclosing Party\n* Use the Confidential Information solely for the purpose stated in Section 1 above\n* Not reproduce, modify, or create derivative works of the Confidential Information\n* Return all Confidential Information to the Disclosing Party upon request, including but not limited to documents, notes, and other materials\n* Notify the Disclosing Party immediately if the Receiving Party becomes aware of any unauthorized disclosure or use of the Confidential Information\n\n**4. EXCEPTIONS**\n\nThe Receiving Party's obligations under this Agreement shall not apply to any Confidential Information that:\n\n* Is or becomes generally available to the public through no fault of the Receiving Party\n* Is already in the possession of the Receiving Party at the time of disclosure\n* Is disclosed to the Receiving Party by a third party who has the right to disclose such information\n* Is required to be disclosed by law, provided that the Receiving Party gives the Disclosing Party prior notice and an opportunity to contest such disclosure\n\n**5. TERM AND TERMINATION**\n\nThis Agreement shall commence on the Effective Date and continue for a period of [LENGTH OF TIME, e.g., \"two years\"] from the date of disclosure of the Confidential Information. Upon termination of this Agreement, the Receiving Party shall return all Confidential Information to the Disclosing Party and destroy any copies thereof.\n\n**6. REMEDIES**\n\nThe Disclosing Party may seek equitable relief, including but not limited to injunctive relief, in the event of a breach or threatened breach of this Agreement by the Receiving Party.\n\n**7. GOVERNING LAW**\n\nThis Agreement shall be governed by and construed in accordance with the laws of [STATE/COUNTRY]. Any disputes arising out of or related to this Agreement shall be resolved through [DISPUTE RESOLUTION PROCESS, e.g., \"arbitration in accordance with the rules of the American Arbitration Association\"].\n\n**8. ENTIRE AGREEMENT**\n\nThis Agreement constitutes the entire understanding of the parties with respect to the subject matter hereof and supersedes all prior or contemporaneous agreements or understandings, whether written or oral.\n\nBy signing below, the parties acknowledge that they have read, understand, and agree to be bound by the terms and conditions of this Agreement.\n\n**DISCLOSING PARTY:**\n\n* Signature: ______________________________\n* Name: __________________________________\n* Title: __________________________________\n* Date: __________________________________\n\n**RECEIVING PARTY:**\n\n* Signature: ______________________________\n* Name: __________________________________\n* Title: __________________________________\n* Date: __________________________________"
+      },
+      "value": 200,
+      "duration_ms": 2463,
+      "created_at": "2026-04-26T03:32:15.227628+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "b107b9ea-2727-4d97-8c9a-6fd2c635a39f",
+      "type": "code",
+      "input": {
+        "language": "python",
+        "code": "result = 2 + 40"
+      },
+      "output": {
+        "ok": true,
+        "language": "python",
+        "output": 42,
+        "logs": [],
+        "error": null,
+        "duration_ms": 0
+      },
+      "value": 75,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:32:15.229177+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "bc210c1e-d8c2-4ee7-ab60-a710ff6dc970",
+      "type": "code",
+      "input": {
+        "language": "html",
+        "code": "<h1 onclick='x'>hi</h1><script>alert(1)</script>"
+      },
+      "output": {
+        "ok": true,
+        "language": "html",
+        "output": "<h1>hi</h1>",
+        "logs": [],
+        "error": null,
+        "duration_ms": 0
+      },
+      "value": 75,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:32:15.231770+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "dfd4afab-c0c9-489a-9268-540214f3a9af",
+      "type": "connector",
+      "input": {
+        "connector": "math",
+        "payload": {
+          "op": "mul",
+          "a": 6,
+          "b": 7
+        }
+      },
+      "output": {
+        "ok": true,
+        "type": "math",
+        "data": {
+          "result": 42.0
+        },
+        "error": null
+      },
+      "value": 25,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:32:15.234147+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "136c32e9-6f6f-42cf-a2a8-da40c58c07ce",
+      "type": "code",
+      "input": {
+        "language": "python",
+        "code": "import os\nresult = os.listdir('/')"
+      },
+      "output": null,
+      "value": 75,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:32:15.236835+00:00",
+      "error": "imports are not allowed in sandbox",
+      "persisted": false
+    },
+    {
+      "id": "65d79bc4-df7d-4d74-b97c-91528c6f95b7",
+      "type": "code",
+      "input": {
+        "language": "python",
+        "code": "result = ().__class__.__bases__"
+      },
+      "output": null,
+      "value": 75,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:32:15.238889+00:00",
+      "error": "access to dunder/private attribute '__bases__' is blocked",
+      "persisted": false
+    },
+    {
+      "id": "14eb9c37-f032-48d7-ac2e-b6be1046e332",
+      "type": "code",
+      "input": {
+        "language": "python",
+        "code": "while True:\n    pass",
+        "timeoutMs": 100
+      },
+      "output": null,
+      "value": 75,
+      "duration_ms": 110,
+      "created_at": "2026-04-26T03:32:15.351462+00:00",
+      "error": "execution timeout (>100ms)",
+      "persisted": false
     }
   ]
 }
