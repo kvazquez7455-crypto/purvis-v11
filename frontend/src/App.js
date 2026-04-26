@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import axios from "axios";
+import PurvisPanel from "./PurvisPanel";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -33,6 +34,7 @@ const Home = () => {
         </a>
         <p className="mt-5">Building something incredible ~!</p>
       </header>
+      <PurvisPanel />
     </div>
   );
 };

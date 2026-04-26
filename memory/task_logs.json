@@ -1,0 +1,320 @@
+{
+  "entries": [
+    {
+      "id": "151bae65-6a54-4f05-bc13-0034493d9d69",
+      "type": "content",
+      "input": "Write a blog about modular agents",
+      "output": {
+        "handled": true,
+        "type": "content",
+        "summary": "received text task (33 chars)",
+        "note": "Default handler \u2014 host can override with a richer router."
+      },
+      "value": 50,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T01:54:00.347972+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "4f1bdd0a-2217-461b-aa73-ff8739c84645",
+      "type": "content",
+      "input": "Write a blog post about AI",
+      "output": {
+        "handled": true,
+        "type": "content",
+        "summary": "received text task (26 chars)",
+        "note": "Default handler \u2014 host can override with a richer router."
+      },
+      "value": 50,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T01:54:00.503226+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "cbd20aaf-3786-4c20-8f0c-4cb496050b50",
+      "type": "legal",
+      "input": "draft NDA",
+      "output": {
+        "handled": true,
+        "type": "legal",
+        "summary": "received text task (9 chars)",
+        "note": "Default handler \u2014 host can override with a richer router."
+      },
+      "value": 200,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T01:54:00.503646+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "bcd4d881-3183-49df-922d-c990a4bec8cb",
+      "type": "code",
+      "input": {
+        "language": "python",
+        "code": "result = 2 + 40"
+      },
+      "output": {
+        "ok": true,
+        "language": "python",
+        "output": 42,
+        "logs": [],
+        "error": null,
+        "duration_ms": 0
+      },
+      "value": 75,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T01:54:00.505239+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "c831d0ba-5f58-4146-892f-c88b07dfd3a8",
+      "type": "code",
+      "input": {
+        "language": "html",
+        "code": "<h1 onclick='x'>hi</h1><script>alert(1)</script>"
+      },
+      "output": {
+        "ok": true,
+        "language": "html",
+        "output": "<h1>hi</h1>",
+        "logs": [],
+        "error": null,
+        "duration_ms": 0
+      },
+      "value": 75,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T01:54:00.505941+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "b1197df9-c8ef-4d77-bac0-cf3bf80d0d6c",
+      "type": "connector",
+      "input": {
+        "connector": "math",
+        "payload": {
+          "op": "mul",
+          "a": 6,
+          "b": 7
+        }
+      },
+      "output": {
+        "ok": true,
+        "type": "math",
+        "data": {
+          "result": 42.0
+        },
+        "error": null
+      },
+      "value": 25,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T01:54:00.506986+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "cd576b8b-7127-40b6-9b80-f3352c920887",
+      "type": "code",
+      "input": {
+        "language": "python",
+        "code": "import os\nresult = os.listdir('/')"
+      },
+      "output": null,
+      "value": 75,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T01:54:00.508150+00:00",
+      "error": "imports are not allowed in sandbox",
+      "persisted": false
+    },
+    {
+      "id": "34b43a98-d180-4c65-a023-33229978c4c1",
+      "type": "code",
+      "input": {
+        "language": "python",
+        "code": "result = ().__class__.__bases__"
+      },
+      "output": null,
+      "value": 75,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T01:54:00.509139+00:00",
+      "error": "access to dunder/private attribute '__bases__' is blocked",
+      "persisted": false
+    },
+    {
+      "id": "2bb338fb-9da9-4a92-9499-299c8256860e",
+      "type": "code",
+      "input": {
+        "language": "python",
+        "code": "while True:\n    pass",
+        "timeoutMs": 100
+      },
+      "output": null,
+      "value": 75,
+      "duration_ms": 110,
+      "created_at": "2026-04-26T01:54:00.620523+00:00",
+      "error": "execution timeout (>100ms)",
+      "persisted": false
+    },
+    {
+      "id": "421bf690-7973-4a05-a592-9bb4a443b6be",
+      "type": "legal",
+      "input": "Draft a 1-paragraph NDA",
+      "output": {
+        "handled": true,
+        "type": "legal",
+        "summary": "received text task (23 chars)",
+        "note": "Default handler \u2014 host can override with a richer router."
+      },
+      "value": 200,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T01:56:08.381877+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "970e6c8c-3e55-49c7-93b0-33988ba34bb2",
+      "type": "content",
+      "input": "Write a blog post about AI",
+      "output": {
+        "handled": true,
+        "type": "content",
+        "summary": "received text task (26 chars)",
+        "note": "Default handler \u2014 host can override with a richer router."
+      },
+      "value": 50,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T01:56:09.876717+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "60c2c49a-94c8-4f58-8942-46318a5eebca",
+      "type": "legal",
+      "input": "draft NDA",
+      "output": {
+        "handled": true,
+        "type": "legal",
+        "summary": "received text task (9 chars)",
+        "note": "Default handler \u2014 host can override with a richer router."
+      },
+      "value": 200,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T01:56:09.953499+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "74d638ba-d50f-4733-84d7-fb1484eb9113",
+      "type": "code",
+      "input": {
+        "language": "python",
+        "code": "result = 2 + 40"
+      },
+      "output": {
+        "ok": true,
+        "language": "python",
+        "output": 42,
+        "logs": [],
+        "error": null,
+        "duration_ms": 20
+      },
+      "value": 75,
+      "duration_ms": 20,
+      "created_at": "2026-04-26T01:56:10.042976+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "99531a58-79cc-4e98-9600-3ea0542d9515",
+      "type": "code",
+      "input": {
+        "language": "html",
+        "code": "<h1 onclick='x'>hi</h1><script>alert(1)</script>"
+      },
+      "output": {
+        "ok": true,
+        "language": "html",
+        "output": "<h1>hi</h1>",
+        "logs": [],
+        "error": null,
+        "duration_ms": 0
+      },
+      "value": 75,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T01:56:10.122444+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "25e85fb3-dad1-4371-a32a-ff63827e3a33",
+      "type": "connector",
+      "input": {
+        "connector": "math",
+        "payload": {
+          "op": "mul",
+          "a": 6,
+          "b": 7
+        }
+      },
+      "output": {
+        "ok": true,
+        "type": "math",
+        "data": {
+          "result": 42.0
+        },
+        "error": null
+      },
+      "value": 25,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T01:56:10.189098+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "14d40617-2a99-40d6-9c70-3e94129c9640",
+      "type": "code",
+      "input": {
+        "language": "python",
+        "code": "import os\nresult = os.listdir('/')"
+      },
+      "output": null,
+      "value": 75,
+      "duration_ms": 10,
+      "created_at": "2026-04-26T01:56:10.281642+00:00",
+      "error": "imports are not allowed in sandbox",
+      "persisted": false
+    },
+    {
+      "id": "6065c0f1-a24d-48fa-947d-84fef26d925d",
+      "type": "code",
+      "input": {
+        "language": "python",
+        "code": "result = ().__class__.__bases__"
+      },
+      "output": null,
+      "value": 75,
+      "duration_ms": 10,
+      "created_at": "2026-04-26T01:56:10.374031+00:00",
+      "error": "access to dunder/private attribute '__bases__' is blocked",
+      "persisted": false
+    },
+    {
+      "id": "a7cca172-27ed-4e24-83e0-a30c4b110b17",
+      "type": "code",
+      "input": {
+        "language": "python",
+        "code": "while True:\n    pass",
+        "timeoutMs": 100
+      },
+      "output": null,
+      "value": 75,
+      "duration_ms": 235,
+      "created_at": "2026-04-26T01:56:10.671270+00:00",
+      "error": "execution timeout (>100ms)",
+      "persisted": false
+    }
+  ]
+}
