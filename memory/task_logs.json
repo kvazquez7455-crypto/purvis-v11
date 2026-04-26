@@ -315,6 +315,102 @@
       "created_at": "2026-04-26T01:56:10.671270+00:00",
       "error": "execution timeout (>100ms)",
       "persisted": false
+    },
+    {
+      "id": "cbb8277b-3faf-4a2a-b642-9dd90d12d747",
+      "type": "default",
+      "input": "test task",
+      "output": {
+        "handled": true,
+        "type": "default",
+        "summary": "received text task (9 chars)",
+        "note": "Default handler \u2014 host can override with a richer router."
+      },
+      "value": 10,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T02:01:09.916654+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "b2f72659-7553-4c04-81f3-4c3d1434a9fa",
+      "type": "legal",
+      "input": "draft an NDA",
+      "output": {
+        "handled": true,
+        "type": "legal",
+        "summary": "received text task (12 chars)",
+        "note": "Default handler \u2014 host can override with a richer router."
+      },
+      "value": 200,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T02:01:10.043195+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "14ad861b-271c-4035-a66b-a98856bc622b",
+      "type": "content",
+      "input": "write a blog post",
+      "output": {
+        "handled": true,
+        "type": "content",
+        "summary": "received text task (17 chars)",
+        "note": "Default handler \u2014 host can override with a richer router."
+      },
+      "value": 50,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T02:01:10.149473+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "9cda381f-6c6a-4cca-987f-ac5dac41be63",
+      "type": "legal",
+      "input": "draft a 1-page NDA",
+      "output": {
+        "handled": true,
+        "type": "legal",
+        "summary": "received text task (18 chars)",
+        "note": "Default handler \u2014 host can override with a richer router."
+      },
+      "value": 200,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T02:01:39.789986+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "7540ac39-61f5-47a4-a955-dbbcea125d53",
+      "type": "content",
+      "input": "write a blog post about agents",
+      "output": {
+        "handled": true,
+        "type": "content",
+        "summary": "received text task (30 chars)",
+        "note": "Default handler \u2014 host can override with a richer router."
+      },
+      "value": 50,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T02:01:40.447254+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "241128a6-edd9-4be3-af2b-ba021abd26b8",
+      "type": "automation",
+      "input": "automate the daily report",
+      "output": {
+        "handled": true,
+        "type": "automation",
+        "summary": "received text task (25 chars)",
+        "note": "Default handler \u2014 host can override with a richer router."
+      },
+      "value": 150,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T02:01:41.975263+00:00",
+      "error": null,
+      "persisted": false
     }
   ]
 }

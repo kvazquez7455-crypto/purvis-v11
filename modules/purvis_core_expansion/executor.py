@@ -126,3 +126,38 @@ def build_result(task: TaskInput, routed: Dict[str, Any], started_at: float) -> 
         duration_ms=int((time.monotonic() - started_at) * 1000),
         error=err,
     )
+
+
+# ---------- Public sync entry: run_task(input_str) ----------
+#
+# This is the canonical hook the host system imports:
+#     from modules.purvis_core_expansion.executor import run_task
+#
+# It accepts a plain string (or a dict for advanced callers), runs it through
+# the full pipeline (route → execute → log), and returns a JSON-safe dict.
+
+def run_task(user_input: Any) -> Dict[str, Any]:
+    """Synchronous task executor — input → execution → logging → output."""
+    from .logger import log_task  # local import to avoid cycle at module load
+    started_at = time.monotonic()
+
+    if isinstance(user_input, dict):
+        task = TaskInput(**{k: v for k, v in user_input.items() if k in {"id", "type", "input", "meta"}})
+        if task.input is None and "input" not in user_input:
+            task = TaskInput(input=user_input)
+    else:
+        task = TaskInput(input=user_input)
+
+    type_ = infer_type(task).lower()
+    output = default_handle(type_, task.input)
+
+    result = TaskResult(
+        id=task.id or str(uuid.uuid4()),
+        type=type_,
+        input=task.input,
+        output=output,
+        value=estimate_value(type_),
+        duration_ms=int((time.monotonic() - started_at) * 1000),
+    )
+    log_task(result)
+    return result.model_dump()

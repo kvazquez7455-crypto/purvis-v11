@@ -15,19 +15,21 @@ from datetime import datetime, timezone
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# Load the Purvis Core Expansion module from /app/modules/purvis-core-expansion
-# (folder name has a hyphen, so we load it explicitly via importlib.util)
-import importlib.util
-_PURVIS_DIR = ROOT_DIR.parent / "modules" / "purvis-core-expansion"
-_PURVIS_INIT = _PURVIS_DIR / "__init__.py"
-_spec = importlib.util.spec_from_file_location(
-    "purvis_core_expansion",
-    _PURVIS_INIT,
-    submodule_search_locations=[str(_PURVIS_DIR)],
+# Make /app importable so we can import the module by its package name
+sys.path.insert(0, str(ROOT_DIR.parent))
+from modules.purvis_core_expansion.executor import run_task
+from modules.purvis_core_expansion import (
+    self_test as purvis_self_test,
+    run_code as purvis_run_code,
+    execute_connector as purvis_execute_connector,
+    get_logs as purvis_get_logs,
+    log_stats as purvis_log_stats,
+    clear_logs as purvis_clear_logs,
+    list_connectors as purvis_list_connectors,
+    config as purvis_config,
+    CodeRunRequest,
+    ConnectorRequest,
 )
-purvis = importlib.util.module_from_spec(_spec)
-sys.modules["purvis_core_expansion"] = purvis
-_spec.loader.exec_module(purvis)
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
@@ -90,17 +92,25 @@ app.include_router(api_router)
 purvis_router = APIRouter(prefix="/api/purvis")
 
 
-class PurvisRunBody(BaseModel):
-    type: Optional[str] = None
-    input: Any = None
-    id: Optional[str] = None
+@purvis_router.post("/run")
+async def run_purvis_task(data: dict):
+    result = run_task(data.get("input", ""))
+    return {"result": result}
 
+
+@purvis_router.get("/test")
+async def test_purvis():
+    result = run_task("test task")
+    return {"result": result}
+
+
+# ---- supporting routes used by the panel (logs, code, connector, etc.) ----
 
 class PurvisCodeBody(BaseModel):
     language: str = "python"
     code: str
     context: Optional[Dict[str, Any]] = None
-    timeoutMs: Optional[int] = None  # camelCase from FE
+    timeoutMs: Optional[int] = None
 
 
 class PurvisConnectorBody(BaseModel):
@@ -114,33 +124,24 @@ async def purvis_health():
         "ok": True,
         "name": "purvis-core-expansion",
         "config": {
-            "enableLogging": purvis.config.enable_logging,
-            "enableCodeRunner": purvis.config.enable_code_runner,
-            "enableConnectors": purvis.config.enable_connectors,
-            "logFile": purvis.config.log_file,
+            "enableLogging": purvis_config.enable_logging,
+            "enableCodeRunner": purvis_config.enable_code_runner,
+            "enableConnectors": purvis_config.enable_connectors,
+            "logFile": purvis_config.log_file,
         },
-        "connectors": purvis.list_connectors(),
+        "connectors": purvis_list_connectors(),
     }
-
-
-@purvis_router.post("/run")
-async def purvis_run(body: PurvisRunBody):
-    envelope = await purvis.run_purvis_expansion(
-        purvis.TaskInput(id=body.id, type=body.type, input=body.input)
-    )
-    return envelope.model_dump()
 
 
 @purvis_router.post("/run-test")
 async def purvis_run_test():
-    """Built-in self-test: input → execution → logging → output (8 cases)."""
-    return await purvis.self_test()
+    return await purvis_self_test()
 
 
 @purvis_router.post("/code")
 async def purvis_code(body: PurvisCodeBody):
-    r = purvis.run_code(
-        purvis.CodeRunRequest(
+    r = purvis_run_code(
+        CodeRunRequest(
             language=body.language,
             code=body.code,
             context=body.context,
@@ -152,25 +153,25 @@ async def purvis_code(body: PurvisCodeBody):
 
 @purvis_router.post("/connector")
 async def purvis_connector(body: PurvisConnectorBody):
-    r = await purvis.execute_connector(
-        purvis.ConnectorRequest(type=body.type, payload=body.payload)
+    r = await purvis_execute_connector(
+        ConnectorRequest(type=body.type, payload=body.payload)
     )
     return r.model_dump()
 
 
 @purvis_router.get("/logs")
 async def purvis_logs(limit: int = 50):
-    return {"entries": purvis.get_logs(limit)}
+    return {"entries": purvis_get_logs(limit)}
 
 
 @purvis_router.get("/logs/stats")
 async def purvis_logs_stats():
-    return purvis.log_stats()
+    return purvis_log_stats()
 
 
 @purvis_router.post("/logs/clear")
 async def purvis_logs_clear():
-    return {"cleared": purvis.clear_logs()}
+    return {"cleared": purvis_clear_logs()}
 
 
 app.include_router(purvis_router)
