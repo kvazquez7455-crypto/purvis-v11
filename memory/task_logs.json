@@ -791,6 +791,118 @@
       "created_at": "2026-04-26T02:29:35.851244+00:00",
       "error": null,
       "persisted": false
+    },
+    {
+      "id": "56a9c0af-c03a-48b2-b02d-27c2b9a0d3b8",
+      "type": "calculation",
+      "input": "calculate 10 5 2",
+      "output": {
+        "handled": true,
+        "type": "calculation",
+        "summary": "calculation complete",
+        "result": "Total = 17"
+      },
+      "value": 30,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:03:34.197934+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "40b113ee-d931-4361-aeab-56aad454ae8c",
+      "type": "calculation",
+      "input": "calculate 10 5 2",
+      "output": {
+        "handled": true,
+        "type": "calculation",
+        "summary": "calculation complete",
+        "result": "Total = 17"
+      },
+      "value": 30,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:13:22.030661+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "ea718919-5c06-42c2-98e1-586748d45797",
+      "type": "content",
+      "input": "write a blog about money",
+      "output": {
+        "handled": true,
+        "type": "error",
+        "summary": "ai failed",
+        "result": "Error code: 400 - {'error': {'message': 'The model `llama-3.1-70b-versatile` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead.', 'type': 'invalid_request_error', 'code': 'model_decommissioned'}}"
+      },
+      "value": 50,
+      "duration_ms": 110,
+      "created_at": "2026-04-26T03:13:22.290886+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "f7e2d674-5887-4154-8595-e72a9d5f5f6c",
+      "type": "calculation",
+      "input": "calculate 10 5 2",
+      "output": {
+        "handled": true,
+        "type": "calculation",
+        "summary": "calculation complete",
+        "result": "Total = 17"
+      },
+      "value": 30,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:13:56.039193+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "83f97610-f3ff-4cf3-b625-c2dc585b8bbc",
+      "type": "content",
+      "input": "write a blog about money",
+      "output": {
+        "handled": true,
+        "type": "content",
+        "summary": "ai generated",
+        "result": "**The Power of Money: A Comprehensive Guide to Financial Freedom**\n\nMoney is a fundamental aspect of our lives, and yet, it remains a mystery to many. We earn it, spend it, save it, and invest it, but do we truly understand its power and potential? In this blog, we'll delve into the world of money, exploring its significance, importance, and the strategies to achieve financial freedom.\n\n**Why is Money Important?**\n\nMoney is essential for several reasons:\n\n1. **Survival**: Money provides us with the basic necessities of life, such as food, shelter, and clothing.\n2. **Freedom**: Having sufficient money gives us the freedom to make choices, pursue our passions, and live life on our own terms.\n3. **Security**: A stable financial foundation provides peace of mind, reducing stress and anxiety.\n4. **Opportunity**: Money offers us the means to invest in ourselves, our businesses, and our communities, creating new opportunities and growth.\n\n**The Psychology of Money**\n\nMoney is not just a physical entity; it's also an emotional and psychological one. Our relationship with money is often influenced by our upbringing, values, and experiences. Understanding our money mindset is crucial to making informed financial decisions.\n\n1. **Financial literacy**: Educating ourselves about personal finance, investing, and money management is vital for making smart financial choices.\n2. **Money habits**: Developing healthy money habits, such as budgeting, saving, and investing, can help us build a stable financial foundation.\n3. **Emotional spending**: Recognizing and managing emotional spending patterns can help us avoid financial pitfalls and make more mindful purchasing decisions.\n\n**Strategies for Achieving Financial Freedom**\n\nAchieving financial freedom requires discipline, patience, and a well-thought-out plan. Here are some strategies to help you get started:\n\n1. **Create a budget**: Track your income and expenses to understand where your money is going and make informed decisions about how to allocate it.\n2. **Save and invest**: Set aside a portion of your income each month and invest it in a diversified portfolio to grow your wealth over time.\n3. **Pay off debt**: High-interest debt can be a significant obstacle to financial freedom. Focus on paying off high-interest loans and credit cards as quickly as possible.\n4. **Build multiple income streams**: Diversify your income streams to reduce financial risk and increase your earning potential.\n5. **Stay informed and educated**: Continuously learn about personal finance, investing, and money management to make informed decisions and stay ahead of the curve.\n\n**Conclusion**\n\nMoney is a powerful tool that can either liberate or limit us. By understanding its significance, importance, and the strategies to achieve financial freedom, we can take control of our financial lives and build a brighter future. Remember, financial freedom is not just about accumulating wealth; it's about living a life of purpose, happiness, and fulfillment.\n\n**Actionable Tips**\n\n1. Start tracking your expenses today to gain a better understanding of your spending habits.\n2. Set aside 10% of your income each month for savings and investments.\n3. Pay off high-interest debt as quickly as possible to free up more money in your budget.\n4. Explore alternative income streams, such as freelancing or investing in dividend-paying stocks.\n5. Continuously educate yourself on personal finance and money management to make informed decisions.\n\nBy following these tips and strategies, you'll be well on your way to achieving financial freedom and living a more prosperous, fulfilling life."
+      },
+      "value": 50,
+      "duration_ms": 2019,
+      "created_at": "2026-04-26T03:13:58.215867+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "aef4f830-7839-4ce6-b8dc-ea256e552819",
+      "type": "legal",
+      "input": "draft a one-sentence confidentiality clause",
+      "output": {
+        "handled": true,
+        "type": "legal",
+        "summary": "ai generated",
+        "result": "The parties agree to maintain the confidentiality of all information disclosed to each other, and shall not disclose such information to any third party without the prior written consent of the disclosing party."
+      },
+      "value": 200,
+      "duration_ms": 166,
+      "created_at": "2026-04-26T03:13:58.512898+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "8b8611d8-1bd5-4704-859b-fb716dd8c97d",
+      "type": "default",
+      "input": "test task",
+      "output": {
+        "handled": true,
+        "type": "default",
+        "summary": "ai generated",
+        "result": "I'm ready to perform the test task. What would you like me to do? Please provide the details of the task, and I'll do my best to complete it efficiently and effectively."
+      },
+      "value": 10,
+      "duration_ms": 272,
+      "created_at": "2026-04-26T03:13:58.954027+00:00",
+      "error": null,
+      "persisted": false
     }
   ]
 }

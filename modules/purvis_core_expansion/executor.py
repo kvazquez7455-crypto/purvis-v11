@@ -15,6 +15,7 @@ import uuid
 from typing import Any, Dict, Optional
 
 import httpx
+from groq import Groq
 
 from .types import (
     TaskInput,
@@ -24,6 +25,11 @@ from .types import (
 )
 from .code_runner import run_code
 from .connector_bridge import execute_connector
+
+
+# ---------- Groq client (real AI) ----------
+
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 
 # ---------- Value Engine (no AI, low cost, deterministic) ----------
@@ -195,29 +201,9 @@ def _handle_fallback(type_: str, payload: Any) -> Dict[str, Any]:
     }
 
 
-def default_handle(type_: str, input_: Any) -> Dict[str, Any]:
+def default_handle(type_, input_):
+    # Preserve simple calculation logic untouched (per spec step 6)
     text = str(input_).lower()
-
-    # --- AI: CONTENT or LEGAL ---
-    if type_ in ("content", "legal") or any(w in text for w in ["write", "draft", "create"]):
-        try:
-            response = _run_async(call_ai(str(input_)))
-            return {
-                "handled": True,
-                "type": type_ if type_ in ("content", "legal") else "content",
-                "summary": "ai generated",
-                "result": response,
-            }
-        except Exception as e:  # noqa: BLE001 — surface any AI error to caller
-            return {
-                "handled": False,
-                "type": type_,
-                "summary": "ai call failed",
-                "result": None,
-                "error": str(e),
-            }
-
-    # --- SIMPLE CALCULATION ---
     numbers = re.findall(r'\d+', text)
     if "calculate" in text and len(numbers) >= 2:
         total = sum(map(int, numbers))
@@ -228,13 +214,29 @@ def default_handle(type_: str, input_: Any) -> Dict[str, Any]:
             "result": f"Total = {total}"
         }
 
-    # --- FALLBACK ---
-    return {
-        "handled": True,
-        "type": "default",
-        "summary": f"received task ({len(str(input_))} chars)",
-        "result": f"Processed: {input_}"
-    }
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are PURVIS, an execution AI that produces clear and useful outputs."},
+                {"role": "user", "content": str(input_)}
+            ],
+        )
+
+        return {
+            "handled": True,
+            "type": type_,
+            "summary": "ai generated",
+            "result": response.choices[0].message.content
+        }
+
+    except Exception as e:
+        return {
+            "handled": True,
+            "type": "error",
+            "summary": "ai failed",
+            "result": str(e)
+        }
 
 
 # ---------- Real AI call (Groq, OpenAI-compatible) ----------
