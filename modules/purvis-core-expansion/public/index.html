@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Purvis · Execution Panel</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --panel: #11171f;
+    --panel-2: #0d131b;
+    --border: #1e2a38;
+    --text: #d6e1ee;
+    --muted: #7e8ea3;
+    --accent: #ffb347;       /* warm amber, not the usual purple */
+    --accent-2: #58e1c2;     /* mint */
+    --danger: #ff6b6b;
+    --ok: #58e1c2;
+    --mono: ui-monospace, "JetBrains Mono", "IBM Plex Mono", Menlo, Consolas, monospace;
+    --sans: "IBM Plex Sans", "Inter Tight", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--sans); }
+  body { display: grid; grid-template-rows: auto 1fr; }
+  header {
+    padding: 22px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: baseline; gap: 14px;
+    background: linear-gradient(180deg, #0e141c 0%, #0b0f14 100%);
+  }
+  header h1 {
+    font-size: 18px; letter-spacing: 0.18em; margin: 0;
+    text-transform: uppercase; font-weight: 600;
+  }
+  header h1 .dot { color: var(--accent); }
+  header .sub { color: var(--muted); font-size: 12px; letter-spacing: 0.08em; }
+  header .stats { margin-left: auto; display: flex; gap: 18px; font-size: 12px; color: var(--muted); }
+  header .stats b { color: var(--text); font-variant-numeric: tabular-nums; }
+
+  main {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 0;
+    min-height: 0;
+  }
+  section {
+    padding: 22px 28px;
+    overflow-y: auto;
+    min-width: 0;
+  }
+  section + section { border-left: 1px solid var(--border); background: var(--panel-2); }
+
+  h2 {
+    font-size: 11px; letter-spacing: 0.22em;
+    color: var(--muted); text-transform: uppercase;
+    margin: 0 0 14px 0; font-weight: 600;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 18px;
+  }
+
+  .row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+  .row label { font-size: 12px; color: var(--muted); width: 86px; flex-shrink: 0; }
+  select, input, textarea, button {
+    font-family: var(--mono); font-size: 13px;
+    background: #0a0e14; color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 8px 10px; outline: none;
+  }
+  textarea { width: 100%; min-height: 110px; resize: vertical; line-height: 1.5; }
+  textarea:focus, input:focus, select:focus { border-color: var(--accent); }
+  button {
+    cursor: pointer; background: var(--accent); color: #1a1206;
+    font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    border-color: var(--accent); transition: transform 120ms ease, filter 120ms ease;
+  }
+  button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  button.ghost { background: transparent; color: var(--text); border-color: var(--border); }
+  button.ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  .pill {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    border: 1px solid var(--border); color: var(--muted);
+  }
+  .pill.legal     { color: #ffb347; border-color: #4a3414; }
+  .pill.content   { color: #58e1c2; border-color: #16433b; }
+  .pill.automation{ color: #c08bff; border-color: #3a2956; }
+  .pill.code      { color: #7fc8ff; border-color: #1f3a52; }
+  .pill.connector { color: #ffd166; border-color: #4a3a14; }
+  .pill.default   { color: var(--muted); }
+  .pill.error     { color: var(--danger); border-color: #4a1f1f; }
+
+  pre.out {
+    background: #06090d; border: 1px solid var(--border); border-radius: 6px;
+    padding: 12px; font-family: var(--mono); font-size: 12px; color: #b9c7d9;
+    overflow-x: auto; white-space: pre-wrap; word-break: break-word; max-height: 320px;
+  }
+
+  .log-list { display: flex; flex-direction: column; gap: 10px; }
+  .log {
+    padding: 12px 14px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 12px; cursor: pointer;
+    transition: border-color 120ms ease, transform 120ms ease;
+  }
+  .log:hover { border-color: var(--accent); transform: translateX(2px); }
+  .log .meta { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
+  .log .meta time { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+  .log .meta .val { margin-left: auto; color: var(--accent-2); font-variant-numeric: tabular-nums; }
+  .log .input { color: var(--muted); font-family: var(--mono); font-size: 11px; line-height: 1.5; word-break: break-word; }
+
+  .empty { color: var(--muted); font-size: 13px; padding: 24px; text-align: center; border: 1px dashed var(--border); border-radius: 8px; }
+
+  .toolbar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+  .toolbar .spacer { flex: 1; }
+
+  .toggle-group { display: flex; gap: 4px; }
+  .toggle-group button {
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 12px;
+    padding: 6px 10px;
+  }
+  .toggle-group button.active { background: var(--accent); color: #1a1206; border-color: var(--accent); }
+
+  details summary { cursor: pointer; color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+  details[open] summary { color: var(--text); }
+
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; }
+    section + section { border-left: none; border-top: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>PURVIS<span class="dot">.</span>EXEC</h1>
+  <div class="sub">core expansion · execution panel</div>
+  <div class="stats">
+    <span>tasks <b id="stat-count">0</b></span>
+    <span>value <b id="stat-value">0</b></span>
+    <span id="stat-status">ready</span>
+  </div>
+</header>
+
+<main>
+  <!-- LEFT: run task / run code -->
+  <section>
+    <div class="card" data-testid="run-task-card">
+      <h2>Run Task</h2>
+      <div class="row">
+        <label>type</label>
+        <select id="task-type" data-testid="task-type-select">
+          <option value="">(auto-detect)</option>
+          <option>legal</option>
+          <option>content</option>
+          <option>automation</option>
+          <option>code</option>
+          <option>connector</option>
+          <option>default</option>
+        </select>
+        <div class="spacer"></div>
+        <span class="pill" id="task-value-pill">value: —</span>
+      </div>
+      <div class="row">
+        <label>input</label>
+        <textarea id="task-input" data-testid="task-input-textarea" placeholder="Describe the task, or paste a JSON object…">Write a short article about modular AI agents</textarea>
+      </div>
+      <div class="toolbar">
+        <button id="run-task-btn" data-testid="run-task-button">Run Task</button>
+        <button class="ghost" id="run-test-btn" data-testid="run-test-button">Run Self-Test</button>
+        <div class="spacer"></div>
+        <button class="ghost" id="clear-logs-btn" data-testid="clear-logs-button">Clear Logs</button>
+      </div>
+      <pre class="out" id="task-out" data-testid="task-output">— output will appear here —</pre>
+    </div>
+
+    <div class="card" data-testid="run-code-card">
+      <h2>Run Code (sandbox)</h2>
+      <div class="row">
+        <label>language</label>
+        <div class="toggle-group" id="lang-group" data-testid="lang-toggle-group">
+          <button class="active" data-lang="js" data-testid="lang-js">js</button>
+          <button data-lang="html" data-testid="lang-html">html</button>
+        </div>
+        <div class="spacer"></div>
+        <span class="pill" id="code-status">idle</span>
+      </div>
+      <textarea id="code-input" data-testid="code-input-textarea">// Sandboxed: no fs, no network, no process.
+// You can use `return` to produce a value.
+const xs = [1,2,3,4,5];
+return xs.reduce((a,b) => a + b, 0);</textarea>
+      <div class="toolbar" style="margin-top: 10px;">
+        <button id="run-code-btn" data-testid="run-code-button">Execute</button>
+      </div>
+      <pre class="out" id="code-out" data-testid="code-output">— sandbox output —</pre>
+    </div>
+
+    <div class="card" data-testid="connector-card">
+      <h2>Connector Bridge</h2>
+      <div class="row">
+        <label>type</label>
+        <select id="conn-type" data-testid="connector-type-select">
+          <option value="echo">echo</option>
+          <option value="math">math</option>
+          <option value="mock">mock</option>
+          <option value="web">web (http GET)</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>payload</label>
+        <textarea id="conn-payload" data-testid="connector-payload-textarea">{"op":"add","a":2,"b":40}</textarea>
+      </div>
+      <div class="toolbar">
+        <button id="run-conn-btn" data-testid="run-connector-button">Send</button>
+      </div>
+      <pre class="out" id="conn-out" data-testid="connector-output">— connector output —</pre>
+    </div>
+  </section>
+
+  <!-- RIGHT: recent logs -->
+  <section>
+    <div class="toolbar">
+      <h2 style="margin: 0;">Recent Tasks</h2>
+      <div class="spacer"></div>
+      <button class="ghost" id="refresh-btn" data-testid="refresh-logs-button">Refresh</button>
+    </div>
+    <div id="log-list" class="log-list" data-testid="log-list"></div>
+    <details style="margin-top: 18px;">
+      <summary>Selected log detail</summary>
+      <pre class="out" id="log-detail" data-testid="log-detail">— click a log to inspect —</pre>
+    </details>
+  </section>
+</main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const valueOf = (t) => ({legal:200,content:50,automation:150,code:75,connector:25,default:10}[(t||'default').toLowerCase()] ?? 10);
+
+  function pillClass(t) {
+    const k = String(t||'default').toLowerCase();
+    return ['legal','content','automation','code','connector'].includes(k) ? k : 'default';
+  }
+  function fmt(v) { try { return JSON.stringify(v, null, 2); } catch { return String(v); } }
+  function setStatus(text) { $('stat-status').textContent = text; }
+
+  async function api(path, opts = {}) {
+    const res = await fetch(path, {
+      headers: { 'Content-Type': 'application/json' },
+      ...opts,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  }
+
+  function refreshValuePill() {
+    const t = $('task-type').value || 'default';
+    $('task-value-pill').textContent = `value: ${valueOf(t)}`;
+    $('task-value-pill').className = 'pill ' + pillClass(t);
+  }
+  $('task-type').addEventListener('change', refreshValuePill);
+  refreshValuePill();
+
+  // Run Task
+  $('run-task-btn').addEventListener('click', async () => {
+    setStatus('running…');
+    let raw = $('task-input').value.trim();
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch { parsed = raw; }
+    try {
+      const env = await api('/api/run', {
+        method: 'POST',
+        body: { type: $('task-type').value || undefined, input: parsed },
+      });
+      $('task-out').textContent = fmt(env);
+      setStatus('ok');
+      await loadLogs();
+    } catch (e) {
+      $('task-out').textContent = 'ERROR: ' + e.message;
+      setStatus('error');
+    }
+  });
+
+  // Self-test
+  $('run-test-btn').addEventListener('click', async () => {
+    setStatus('self-test…');
+    try {
+      // Run several known tasks via the public API
+      const samples = [
+        { type: 'content', input: 'Write a tweet about modular agents' },
+        { type: 'legal',   input: 'Draft a 1-paragraph NDA' },
+        { type: 'code',    input: { language: 'js', code: 'return 2+40;' } },
+        { type: 'code',    input: { language: 'html', code: '<h1 onclick="x">hi</h1><script>alert(1)</' + 'script>' } },
+        { type: 'connector', input: { connector: 'math', payload: { op: 'mul', a: 6, b: 7 } } },
+      ];
+      const results = [];
+      for (const s of samples) results.push(await api('/api/run', { method: 'POST', body: s }));
+      $('task-out').textContent = fmt(results.map(r => ({
+        type: r.result.type, value: r.result.value, ok: !r.result.error,
+        output: r.result.output, error: r.result.error,
+      })));
+      setStatus('self-test ok');
+      await loadLogs();
+    } catch (e) {
+      $('task-out').textContent = 'ERROR: ' + e.message;
+      setStatus('error');
+    }
+  });
+
+  // Code runner
+  let lang = 'js';
+  document.querySelectorAll('#lang-group button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#lang-group button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      lang = btn.dataset.lang;
+      if (lang === 'html') {
+        $('code-input').value = '<h1>Hello Purvis</h1>\n<p>HTML is sanitised before render.</p>';
+      } else {
+        $('code-input').value = '// Sandboxed JS\nreturn Math.PI.toFixed(4);';
+      }
+    });
+  });
+  $('run-code-btn').addEventListener('click', async () => {
+    $('code-status').textContent = 'running';
+    try {
+      const r = await api('/api/code', {
+        method: 'POST',
+        body: { language: lang, code: $('code-input').value },
+      });
+      $('code-out').textContent = fmt(r);
+      $('code-status').textContent = r.ok ? 'ok' : 'error';
+    } catch (e) {
+      $('code-out').textContent = 'ERROR: ' + e.message;
+      $('code-status').textContent = 'error';
+    }
+  });
+
+  // Connector
+  $('run-conn-btn').addEventListener('click', async () => {
+    let payload = {};
+    try { payload = JSON.parse($('conn-payload').value || '{}'); }
+    catch (e) { $('conn-out').textContent = 'Invalid JSON: ' + e.message; return; }
+    try {
+      const r = await api('/api/connector', {
+        method: 'POST',
+        body: { type: $('conn-type').value, payload },
+      });
+      $('conn-out').textContent = fmt(r);
+    } catch (e) {
+      $('conn-out').textContent = 'ERROR: ' + e.message;
+    }
+  });
+
+  // Logs
+  async function loadLogs() {
+    const [{ entries }, stats] = await Promise.all([
+      api('/api/logs?limit=50'),
+      api('/api/logs/stats'),
+    ]);
+    $('stat-count').textContent = stats.count;
+    $('stat-value').textContent = stats.totalValue;
+    const list = $('log-list');
+    if (!entries.length) {
+      list.innerHTML = '<div class="empty">No tasks yet. Run something on the left.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    for (const e of entries) {
+      const div = document.createElement('div');
+      div.className = 'log';
+      div.dataset.testid = 'log-item';
+      const inputPreview = (typeof e.input === 'string' ? e.input : JSON.stringify(e.input)).slice(0, 140);
+      div.innerHTML = `
+        <div class="meta">
+          <span class="pill ${pillClass(e.type)}">${e.type}</span>
+          ${e.error ? '<span class="pill error">error</span>' : ''}
+          <time>${new Date(e.createdAt).toLocaleTimeString()}</time>
+          <span class="val">+${e.value}</span>
+        </div>
+        <div class="input">${inputPreview.replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</div>
+      `;
+      div.addEventListener('click', () => {
+        $('log-detail').textContent = fmt(e);
+      });
+      list.appendChild(div);
+    }
+  }
+  $('refresh-btn').addEventListener('click', loadLogs);
+  $('clear-logs-btn').addEventListener('click', async () => {
+    await api('/api/clear', { method: 'POST', body: {} });
+    await loadLogs();
+    setStatus('cleared');
+  });
+
+  loadLogs().catch(e => setStatus('offline: ' + e.message));
+</script>
+</body>
+</html>
