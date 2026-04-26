@@ -1,5 +1,5 @@
 import express from "express";
-import cors fromh "cors";
+import cors from "cors";
 
 import { orchestrate } from "./core/orchestrator.js";
 import { modules } from "./core/modules.js";
