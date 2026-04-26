@@ -205,14 +205,32 @@ def _handle_fallback(type_: str, payload: Any) -> Dict[str, Any]:
 def default_handle(type_, input_):
     # Preserve simple calculation logic untouched (per spec step 6)
     text = str(input_).lower()
-    numbers = re.findall(r'\d+', text)
-    if "calculate" in text and len(numbers) >= 2:
-        total = sum(map(int, numbers))
+
+    # Only extract numbers AFTER the word "calculate"
+    if "calculate" in text:
+        match = re.search(r'calculate\s+([0-9\s\+\-\*\/\.]+)', text)
+        if not match:
+            return {
+                "handled": True,
+                "type": "calculation",
+                "summary": "calculation complete",
+                "result": "Invalid calculation input"
+            }
+        expression = match.group(1)
+        numbers = re.findall(r'\d+', expression)
+        if len(numbers) >= 2:
+            total = sum(map(int, numbers))
+            return {
+                "handled": True,
+                "type": "calculation",
+                "summary": "calculation complete",
+                "result": f"Total = {total}"
+            }
         return {
             "handled": True,
             "type": "calculation",
             "summary": "calculation complete",
-            "result": f"Total = {total}"
+            "result": "Invalid calculation input"
         }
 
     try:

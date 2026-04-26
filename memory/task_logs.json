@@ -1109,6 +1109,292 @@
       "created_at": "2026-04-26T03:32:15.351462+00:00",
       "error": "execution timeout (>100ms)",
       "persisted": false
+    },
+    {
+      "id": "18843b2d-0459-495a-b501-55d87c795cb7",
+      "type": "legal",
+      "input": "1. calculate 10 5 2   \u2192 should return 17 2. write a blog       \u2192 should return AI text 3. draft contract     \u2192 should return AI legal text 4. hello              \u2192 should return AI response",
+      "output": {
+        "handled": true,
+        "type": "calculation",
+        "summary": "calculation complete",
+        "result": "Total = 44"
+      },
+      "value": 200,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:36:51.473591+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "cd408d9f-a06b-41d3-9869-4e8bf8fa35e8",
+      "type": "calculation",
+      "input": "calculate 10 5 2 ",
+      "output": {
+        "handled": true,
+        "type": "calculation",
+        "summary": "calculation complete",
+        "result": "Total = 17"
+      },
+      "value": 30,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:44:39.915416+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "8929d90b-3452-417b-b97c-740bb16f6745",
+      "type": "calculation",
+      "input": "calculate 10 5 2 Ex:",
+      "output": {
+        "handled": true,
+        "type": "calculation",
+        "summary": "calculation complete",
+        "result": "Total = 17"
+      },
+      "value": 30,
+      "duration_ms": 5,
+      "created_at": "2026-04-26T03:44:45.962014+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "afda57c0-d915-4fd2-8d8c-c3bf60a4a169",
+      "type": "calculation",
+      "input": "calculate 10 5 2 Ex: \"1. calculate 10 5 2 ...\" \u2192 becomes \u2192 \"10 5 2\" \u2192 result = 17 \u2705",
+      "output": {
+        "handled": true,
+        "type": "calculation",
+        "summary": "calculation complete",
+        "result": "Total = 69"
+      },
+      "value": 30,
+      "duration_ms": 5,
+      "created_at": "2026-04-26T03:44:51.425462+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "6c1a2fa5-1aee-4737-9700-431eddbee6dd",
+      "type": "calculation",
+      "input": "calculate 10 5 2",
+      "output": {
+        "handled": true,
+        "type": "calculation",
+        "summary": "calculation complete",
+        "result": "Total = 17"
+      },
+      "value": 30,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:48:43.545924+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "47eaae77-6b32-47d9-8952-c7fd8cd23a20",
+      "type": "calculation",
+      "input": "calculate 7 + 14",
+      "output": {
+        "handled": true,
+        "type": "calculation",
+        "summary": "calculation complete",
+        "result": "Total = 21"
+      },
+      "value": 30,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:48:43.699139+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "e7e8091d-4f2e-4fcc-9139-322102606468",
+      "type": "calculation",
+      "input": "calculate 10 5 2 today at 3pm",
+      "output": {
+        "handled": true,
+        "type": "calculation",
+        "summary": "calculation complete",
+        "result": "Total = 17"
+      },
+      "value": 30,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:48:43.852204+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "605944a1-ecb6-4aaf-8242-018e024bd390",
+      "type": "calculation",
+      "input": "calculate the bill",
+      "output": {
+        "handled": true,
+        "type": "calculation",
+        "summary": "calculation complete",
+        "result": "Invalid calculation input"
+      },
+      "value": 30,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:48:43.997247+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "f0b7d1e5-bb0b-43f1-a6e9-33195283f900",
+      "type": "content",
+      "input": "write a haiku about Mars",
+      "output": {
+        "handled": true,
+        "type": "content",
+        "summary": "ai response",
+        "result": "Red planet whispers\nBarren lands and dusty sky\nMars' lonely beauty"
+      },
+      "value": 50,
+      "duration_ms": 233,
+      "created_at": "2026-04-26T03:48:44.380205+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "67077321-9f4b-493f-a0db-b7a11285da68",
+      "type": "content",
+      "input": "Write a blog post about AI",
+      "output": {
+        "handled": true,
+        "type": "content",
+        "summary": "ai response",
+        "result": "**The Future of Intelligence: Unlocking the Potential of Artificial Intelligence**\n\nArtificial Intelligence (AI) has been a topic of fascination and debate for decades, with its potential to revolutionize various aspects of our lives. From science fiction to reality, AI has come a long way, transforming industries, and changing the way we live and work. In this blog post, we'll delve into the world of AI, exploring its history, applications, benefits, and future prospects.\n\n**A Brief History of AI**\n\nThe term \"Artificial Intelligence\" was coined in 1956 by John McCarthy, a computer scientist and cognitive scientist. Since then, AI has undergone significant transformations, with advances in computing power, data storage, and algorithms. The field has evolved from rule-based systems to machine learning, deep learning, and neural networks, enabling machines to learn from experience and improve their performance over time.\n\n**Applications of AI**\n\nAI is no longer confined to the realm of science fiction; it's a reality that's already changing our lives. Some of the most significant applications of AI include:\n\n1. **Virtual Assistants**: AI-powered virtual assistants like Siri, Alexa, and Google Assistant have made our lives easier, enabling us to control our homes, access information, and perform tasks with voice commands.\n2. **Healthcare**: AI is revolutionizing the healthcare industry, helping doctors diagnose diseases more accurately, personalize treatment plans, and streamline clinical workflows.\n3. **Finance**: AI-powered systems are being used to detect fraud, predict stock market trends, and optimize investment portfolios.\n4. **Transportation**: Self-driving cars and trucks are being developed, with AI algorithms enabling them to navigate roads, avoid accidents, and improve traffic flow.\n5. **Education**: AI-powered adaptive learning systems are helping students learn more effectively, tailoring educational content to individual needs and abilities.\n\n**Benefits of AI**\n\nThe benefits of AI are numerous, including:\n\n1. **Increased Efficiency**: AI can automate repetitive tasks, freeing up human resources for more complex and creative work.\n2. **Improved Accuracy**: AI systems can analyze vast amounts of data, reducing errors and improving decision-making.\n3. **Enhanced Customer Experience**: AI-powered chatbots and virtual assistants can provide 24/7 customer support, improving response times and customer satisfaction.\n4. **Competitive Advantage**: Companies that adopt AI can gain a competitive edge, staying ahead of the curve and driving innovation.\n\n**Future Prospects**\n\nAs AI continues to evolve, we can expect significant advancements in areas like:\n\n1. **Natural Language Processing**: AI systems will become more proficient in understanding human language, enabling more effective communication and collaboration.\n2. **Computer Vision**: AI-powered computer vision will improve image recognition, object detection, and scene understanding, with applications in areas like security, healthcare, and transportation.\n3. **Robotics**: AI-powered robots will become more autonomous, capable of performing complex tasks, and interacting with humans in a more natural way.\n\n**Conclusion**\n\nArtificial Intelligence is no longer a futuristic concept; it's a reality that's transforming industries and changing our lives. As AI continues to evolve, we can expect significant advancements in areas like natural language processing, computer vision, and robotics. While there are concerns about job displacement and ethics, the benefits of AI far outweigh the risks. By embracing AI, we can unlock new possibilities, drive innovation, and create a better future for all."
+      },
+      "value": 50,
+      "duration_ms": 2158,
+      "created_at": "2026-04-26T03:48:46.685479+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "2c252d26-72b3-48f3-8981-f1e50f75dbfb",
+      "type": "legal",
+      "input": "draft NDA",
+      "output": {
+        "handled": true,
+        "type": "general",
+        "summary": "ai response",
+        "result": "**CONFIDENTIALITY AND NON-DISCLOSURE AGREEMENT**\n\nThis Confidentiality and Non-Disclosure Agreement (\"Agreement\") is entered into on [DATE] (\"Effective Date\") by and between [COMPANY NAME] (\"Disclosing Party\") and [RECIPIENT NAME] (\"Receiving Party\").\n\n**1. PURPOSE**\n\nThe Disclosing Party is willing to disclose certain confidential and proprietary information to the Receiving Party for the purpose of [STATE PURPOSE, e.g., \"evaluating a potential business relationship\" or \"discussing a potential collaboration\"]. The Receiving Party is willing to receive such information on the terms and conditions set forth in this Agreement.\n\n**2. DEFINITIONS**\n\nFor the purposes of this Agreement, the following definitions shall apply:\n\n* \"Confidential Information\" means all information, whether written or oral, that is disclosed by the Disclosing Party to the Receiving Party, including but not limited to:\n\t+ Business plans, strategies, and methods\n\t+ Technical data, including but not limited to software, hardware, and other technical information\n\t+ Financial information, including but not limited to revenue, profits, and other financial data\n\t+ Customer lists and other proprietary business information\n\t+ Trade secrets and other confidential and proprietary information\n* \"Disclosing Party\" means [COMPANY NAME] and its affiliates, officers, directors, employees, and agents.\n* \"Receiving Party\" means [RECIPIENT NAME] and its affiliates, officers, directors, employees, and agents.\n\n**3. OBLIGATIONS OF THE REceiving PARTY**\n\nThe Receiving Party agrees to:\n\n* Hold the Confidential Information in confidence and not disclose it to any third party without the prior written consent of the Disclosing Party\n* Use the Confidential Information solely for the purpose stated in Section 1\n* Not copy, reproduce, or summarize the Confidential Information without the prior written consent of the Disclosing Party\n* Return all Confidential Information to the Disclosing Party upon request\n* Destroy any notes, memoranda, or other documents that contain Confidential Information\n\n**4. EXCLUSIONS**\n\nThe obligations of the Receiving Party under this Agreement shall not apply to any Confidential Information that:\n\n* Is or becomes generally available to the public through no fault of the Receiving Party\n* Is already known to the Receiving Party at the time of disclosure\n* Is disclosed to the Receiving Party by a third party who has the right to disclose such information\n* Is required to be disclosed by law, provided that the Receiving Party gives the Disclosing Party prior notice and an opportunity to contest such disclosure\n\n**5. TERM AND TERMINATION**\n\nThis Agreement shall commence on the Effective Date and shall continue for a period of [LENGTH OF TIME, e.g., \"two years\"] from the date of disclosure of the Confidential Information. Upon expiration or termination of this Agreement, the Receiving Party shall return all Confidential Information to the Disclosing Party and destroy any notes, memoranda, or other documents that contain Confidential Information.\n\n**6. REMEDIES**\n\nThe Receiving Party acknowledges that a breach of this Agreement may cause irreparable harm to the Disclosing Party, and that monetary damages may not be sufficient to compensate the Disclosing Party for such breach. In the event of a breach or threatened breach of this Agreement, the Disclosing Party shall be entitled to seek injunctive relief, in addition to any other remedies available at law or in equity.\n\n**7. GOVERNING LAW**\n\nThis Agreement shall be governed by and construed in accordance with the laws of [STATE/COUNTRY]. Any disputes arising out of or related to this Agreement shall be resolved through [DISPUTE RESOLUTION PROCESS, e.g., \"arbitration\" or \"litigation\"].\n\n**8. ENTIRE AGREEMENT**\n\nThis Agreement constitutes the entire agreement between the parties with respect to the subject matter hereof and supersedes all prior or contemporaneous agreements or understandings.\n\nBy signing below, the parties acknowledge that they have read, understand, and agree to be bound by the terms and conditions of this Agreement.\n\n**DISCLOSING PARTY**\n\nSignature: _____________________________\nName: _____________________________\nTitle: _____________________________\nDate: _____________________________\n\n**RECEIVING PARTY**\n\nSignature: _____________________________\nName: _____________________________\nTitle: _____________________________\nDate: _____________________________"
+      },
+      "value": 200,
+      "duration_ms": 2805,
+      "created_at": "2026-04-26T03:48:49.491874+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "33f98d46-4631-470f-b304-2155965a10a3",
+      "type": "code",
+      "input": {
+        "language": "python",
+        "code": "result = 2 + 40"
+      },
+      "output": {
+        "ok": true,
+        "language": "python",
+        "output": 42,
+        "logs": [],
+        "error": null,
+        "duration_ms": 0
+      },
+      "value": 75,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:48:49.493629+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "21566b9a-2512-418b-b95a-64021a133512",
+      "type": "code",
+      "input": {
+        "language": "html",
+        "code": "<h1 onclick='x'>hi</h1><script>alert(1)</script>"
+      },
+      "output": {
+        "ok": true,
+        "language": "html",
+        "output": "<h1>hi</h1>",
+        "logs": [],
+        "error": null,
+        "duration_ms": 0
+      },
+      "value": 75,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:48:49.495873+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "5028e639-dea7-4faf-8e1b-7d2e529a7c43",
+      "type": "connector",
+      "input": {
+        "connector": "math",
+        "payload": {
+          "op": "mul",
+          "a": 6,
+          "b": 7
+        }
+      },
+      "output": {
+        "ok": true,
+        "type": "math",
+        "data": {
+          "result": 42.0
+        },
+        "error": null
+      },
+      "value": 25,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:48:49.498278+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "1dd5bfd9-e4f6-4398-98e6-f0b745faa817",
+      "type": "code",
+      "input": {
+        "language": "python",
+        "code": "import os\nresult = os.listdir('/')"
+      },
+      "output": null,
+      "value": 75,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:48:49.500692+00:00",
+      "error": "imports are not allowed in sandbox",
+      "persisted": false
+    },
+    {
+      "id": "7011ddb0-b563-4ba0-b9cb-b88b3e7183dd",
+      "type": "code",
+      "input": {
+        "language": "python",
+        "code": "result = ().__class__.__bases__"
+      },
+      "output": null,
+      "value": 75,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T03:48:49.503340+00:00",
+      "error": "access to dunder/private attribute '__bases__' is blocked",
+      "persisted": false
+    },
+    {
+      "id": "b8119236-3266-4377-a505-3dcadd569902",
+      "type": "code",
+      "input": {
+        "language": "python",
+        "code": "while True:\n    pass",
+        "timeoutMs": 100
+      },
+      "output": null,
+      "value": 75,
+      "duration_ms": 110,
+      "created_at": "2026-04-26T03:48:49.615907+00:00",
+      "error": "execution timeout (>100ms)",
+      "persisted": false
     }
   ]
 }
