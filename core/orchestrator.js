@@ -1,4 +1,5 @@
-import { route } from "./router.js";
+import { decisionEngine } from "./decisionEngine.js";
+import { taskEngine } from "./taskEngine.js";
 import { modules } from "./modules.js";
 
 export async function orchestrate(input, modulesArg, memory) {
@@ -6,22 +7,24 @@ export async function orchestrate(input, modulesArg, memory) {
     throw new Error("No input provided");
   }
 
-  // decide which module to use
-  const moduleKey = route(input);
-
-  // use passed modules OR fallback to local import
   const moduleSet = modulesArg || modules;
+
+  // STEP 1: Decide module via decisionEngine
+  const moduleKey = decisionEngine(input);
 
   const module = moduleSet[moduleKey] || moduleSet.test;
 
-  if (!module || typeof module.run !== "function") {
-    throw new Error("Invalid module");
+  if (!module) {
+    throw new Error("Module not found");
   }
 
+  // STEP 2: Get memory context
   const context = await memory.getContext();
 
-  const result = await module.run(input, context);
+  // STEP 3: Execute through taskEngine
+  const result = await taskEngine(module, input, context);
 
+  // STEP 4: Save memory
   await memory.save({
     input,
     module: moduleKey,
