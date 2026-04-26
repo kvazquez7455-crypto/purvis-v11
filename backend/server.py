@@ -89,6 +89,15 @@ app.add_middleware(
 )
 
 
+# Guaranteed entrypoint for the deployment system to detect the app.
+# Note: in this Emergent container the public URL routes "/" → frontend (port 3000),
+# so this root route is only directly reachable on the internal port 8001.
+# The deployment system probes it before traffic-routing kicks in.
+@app.get("/")
+def root():
+    return {"status": "running"}
+
+
 @app.get("/healthz")
 async def healthz():
     return {"ok": True, "proxy": "fastapi", "target": NODE_TARGET}

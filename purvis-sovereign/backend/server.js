@@ -14,6 +14,13 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json({ limit: "1mb" }));
 
+// Guaranteed entrypoint for free-platform deploy systems (Render, Railway,
+// Fly.io, Replit, etc.) — gives them a 200 response on "/" so the app is
+// detected as healthy and never shows a blank screen.
+app.get("/", (req, res) => {
+  res.json({ status: "running" });
+});
+
 // All API routes are prefixed with /api (required for proper ingress routing).
 app.use("/api", runRoutes);
 
