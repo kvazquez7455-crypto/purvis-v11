@@ -711,6 +711,86 @@
       "created_at": "2026-04-26T02:07:27.403430+00:00",
       "error": null,
       "persisted": false
+    },
+    {
+      "id": "01a7ca51-3778-4702-88e8-c0907aece874",
+      "type": "default",
+      "input": "test task",
+      "output": {
+        "handled": true,
+        "type": "default",
+        "summary": "received task (9 chars)",
+        "result": "Processed: test task"
+      },
+      "value": 10,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T02:29:34.523751+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "97a0fa30-c57b-43d1-b64e-fed0d00e275a",
+      "type": "content",
+      "input": "Write a one-line tagline for a modular AI agent platform",
+      "output": {
+        "handled": true,
+        "type": "content",
+        "summary": "ai generated",
+        "result": "\"Empowering limitless innovation, one module at a time: Intelligent. Adaptable. Evolvable.\""
+      },
+      "value": 50,
+      "duration_ms": 264,
+      "created_at": "2026-04-26T02:29:34.936502+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "776288b2-a25f-44ec-b856-31b8a007b533",
+      "type": "legal",
+      "input": "Draft a 2-sentence NDA clause about confidentiality",
+      "output": {
+        "handled": true,
+        "type": "legal",
+        "summary": "ai generated",
+        "result": "The Recipient agrees to maintain the confidentiality of all proprietary and confidential information disclosed by the Discloser, and to not disclose such information to any third party without the prior written consent of the Discloser. The Recipient shall use the confidential information solely for the purpose of evaluating and pursuing a potential business relationship with the Discloser, and shall take all reasonable measures to protect the confidentiality of such information."
+      },
+      "value": 200,
+      "duration_ms": 488,
+      "created_at": "2026-04-26T02:29:35.580678+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "b2394b2f-2166-4089-a867-8a35faff47a0",
+      "type": "calculation",
+      "input": "calculate 12 7 3",
+      "output": {
+        "handled": true,
+        "type": "calculation",
+        "summary": "calculation complete",
+        "result": "Total = 22"
+      },
+      "value": 30,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T02:29:35.734161+00:00",
+      "error": null,
+      "persisted": false
+    },
+    {
+      "id": "5511c878-959f-4b77-996a-5fa6ed582656",
+      "type": "default",
+      "input": "hello there",
+      "output": {
+        "handled": true,
+        "type": "default",
+        "summary": "received task (11 chars)",
+        "result": "Processed: hello there"
+      },
+      "value": 10,
+      "duration_ms": 0,
+      "created_at": "2026-04-26T02:29:35.851244+00:00",
+      "error": null,
+      "persisted": false
     }
   ]
 }

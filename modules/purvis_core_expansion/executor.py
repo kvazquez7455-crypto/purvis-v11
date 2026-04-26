@@ -6,10 +6,15 @@ Pipeline position:
 """
 from __future__ import annotations
 import ast
+import asyncio
+import concurrent.futures
+import os
 import re
 import time
 import uuid
 from typing import Any, Dict, Optional
+
+import httpx
 
 from .types import (
     TaskInput,
@@ -193,14 +198,24 @@ def _handle_fallback(type_: str, payload: Any) -> Dict[str, Any]:
 def default_handle(type_: str, input_: Any) -> Dict[str, Any]:
     text = str(input_).lower()
 
-    # --- CONTENT ---
-    if any(word in text for word in ["write", "draft", "create"]):
-        return {
-            "handled": True,
-            "type": "content",
-            "summary": "generated content",
-            "result": f"Generated content for: {input_}"
-        }
+    # --- AI: CONTENT or LEGAL ---
+    if type_ in ("content", "legal") or any(w in text for w in ["write", "draft", "create"]):
+        try:
+            response = _run_async(call_ai(str(input_)))
+            return {
+                "handled": True,
+                "type": type_ if type_ in ("content", "legal") else "content",
+                "summary": "ai generated",
+                "result": response,
+            }
+        except Exception as e:  # noqa: BLE001 — surface any AI error to caller
+            return {
+                "handled": False,
+                "type": type_,
+                "summary": "ai call failed",
+                "result": None,
+                "error": str(e),
+            }
 
     # --- SIMPLE CALCULATION ---
     numbers = re.findall(r'\d+', text)
@@ -220,6 +235,57 @@ def default_handle(type_: str, input_: Any) -> Dict[str, Any]:
         "summary": f"received task ({len(str(input_))} chars)",
         "result": f"Processed: {input_}"
     }
+
+
+# ---------- Real AI call (Groq, OpenAI-compatible) ----------
+
+async def call_ai(prompt: str) -> str:
+    """Call Groq chat completions and return the assistant's text."""
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        raise RuntimeError("GROQ_API_KEY is not set in environment")
+    model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+
+    async with httpx.AsyncClient() as client:
+        res = await client.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": "You are a high-level AI assistant."},
+                    {"role": "user", "content": prompt},
+                ],
+            },
+            timeout=30,
+        )
+    res.raise_for_status()
+    return res.json()["choices"][0]["message"]["content"]
+
+
+# ---------- sync ↔ async bridge ----------
+#
+# `run_task` (and therefore `default_handle`) is synchronous because the
+# existing FastAPI route in server.py calls it without `await` (we're
+# under a strict "do not touch server.py" rule). When `default_handle`
+# needs to await an async coroutine like `call_ai`, this helper runs
+# the coroutine to completion regardless of whether an event loop is
+# already running on the caller's thread.
+
+def _run_async(coro):
+    """Run an async coroutine from sync code, even when an event loop is active."""
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        # No running loop — safe to use asyncio.run directly.
+        return asyncio.run(coro)
+    # We're inside a FastAPI event loop. Run the coroutine in a fresh
+    # loop on a worker thread so we don't try to nest asyncio.run().
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        return pool.submit(asyncio.run, coro).result()
 
 
 # ---------- Router ----------
