@@ -5,10 +5,11 @@ Pipeline position:
   router → decision → task → toolExecutor → [executor.py] → memory(logger)
 """
 from __future__ import annotations
+import ast
 import re
 import time
 import uuid
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from .types import (
     TaskInput,
@@ -28,6 +29,7 @@ VALUE_TABLE: Dict[str, int] = {
     "automation": 150,
     "code": 75,
     "connector": 25,
+    "calculation": 30,
     "default": 10,
 }
 
@@ -40,7 +42,11 @@ def estimate_value(type_: str | None) -> int:
 
 _LEGAL_RE = re.compile(r"\b(contract|nda|legal|clause|liability)\b", re.IGNORECASE)
 _AUTO_RE = re.compile(r"\b(automate|workflow|schedule|cron|pipeline)\b", re.IGNORECASE)
-_CONTENT_RE = re.compile(r"\b(write|article|blog|post|caption|copy)\b", re.IGNORECASE)
+_CONTENT_RE = re.compile(r"\b(write|article|blog|post|caption|copy|draft|create|compose|generate)\b", re.IGNORECASE)
+_CALC_KW_RE = re.compile(r"\b(calculate|compute|evaluate|sum|product|how much is|what is)\b", re.IGNORECASE)
+_NUM_EXPR_RE = re.compile(
+    r"[-+]?\d+(?:\.\d+)?(?:\s*[+\-*/^]\s*[-+]?\d+(?:\.\d+)?)+"
+)
 
 
 def infer_type(task: TaskInput) -> str:
@@ -57,23 +63,162 @@ def infer_type(task: TaskInput) -> str:
             return "legal"
         if _AUTO_RE.search(payload):
             return "automation"
+        # calculation must be checked before content so that
+        # "calculate the sum 2+3" is not classified as content
+        if _CALC_KW_RE.search(payload) or _NUM_EXPR_RE.search(payload):
+            return "calculation"
         if _CONTENT_RE.search(payload):
             return "content"
     return "default"
 
 
-# ---------- Default handler ----------
+# ---------- Real task classifier + handler ----------
+#
+# Replaces the previous "default_handle" stub with a small classifier:
+#
+#   1. write / draft / create  → simulated structured AI text response
+#   2. calculate / arithmetic  → real computed result via safe AST eval
+#   3. otherwise               → structured fallback
+#
+# The classifier runs over the *input* text; the *type* is set upstream by
+# infer_type() and drives the value engine.
+
+_WRITE_RE = re.compile(r"\b(write|draft|create|compose|generate)\b", re.IGNORECASE)
+
+
+def _safe_eval_arithmetic(expr: str) -> Optional[float]:
+    """Evaluate a numeric arithmetic expression safely via ast (no names, no calls)."""
+    expr = expr.replace("^", "**")  # accept "2^3" as power
+    try:
+        tree = ast.parse(expr, mode="eval")
+    except SyntaxError:
+        return None
+    allowed = (
+        ast.Expression, ast.BinOp, ast.UnaryOp, ast.Constant,
+        ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Mod, ast.Pow,
+        ast.FloorDiv, ast.USub, ast.UAdd,
+    )
+    for node in ast.walk(tree):
+        if not isinstance(node, allowed):
+            return None
+        if isinstance(node, ast.Constant) and not isinstance(node.value, (int, float)):
+            return None
+    try:
+        result = eval(  # noqa: S307 — restricted by AST allow-list above
+            compile(tree, "<purvis-calc>", "eval"),
+            {"__builtins__": {}},
+            {},
+        )
+    except (ZeroDivisionError, OverflowError, ValueError):
+        return None
+    return result if isinstance(result, (int, float)) else None
+
+
+def _strip_lead(text: str) -> str:
+    """Drop a leading verb + article so 'Write an article on X' → 'X'."""
+    t = _WRITE_RE.sub("", text, count=1).strip()
+    t = re.sub(r"^(a|an|the|about|on|some)\s+", "", t, flags=re.IGNORECASE).strip()
+    return t.rstrip(".!? ")
+
+
+def _handle_write(type_: str, text: str) -> Dict[str, Any]:
+    topic = _strip_lead(text) or "the requested topic"
+    title = topic[:80].strip().title() or "Untitled Draft"
+    body = (
+        f"Draft on '{topic}'.\n\n"
+        f"Opening — frame why {topic} matters now.\n"
+        f"Point 1 — the core insight, with a concrete example.\n"
+        f"Point 2 — the most common misconception, addressed directly.\n"
+        f"Point 3 — what the reader should do next.\n\n"
+        f"Closing — a clear call-to-action that ties back to the opening."
+    )
+    return {
+        "intent": "write",
+        "type": type_,
+        "topic": topic,
+        "title": title,
+        "body": body,
+        "wordCount": len(body.split()),
+        "stub": True,
+        "note": "Deterministic structured stub. Host can swap with a real LLM call.",
+    }
+
+
+def _handle_calculate(type_: str, text: str) -> Dict[str, Any]:
+    expr_match = _NUM_EXPR_RE.search(text)
+    expr = expr_match.group(0).strip() if expr_match else None
+
+    if expr:
+        value = _safe_eval_arithmetic(expr)
+        return {
+            "intent": "calculate",
+            "type": type_,
+            "expression": expr,
+            "result": value,
+            "ok": value is not None,
+        }
+
+    # No clean expression — extract bare numbers and report back
+    nums = [float(n) for n in re.findall(r"-?\d+(?:\.\d+)?", text)]
+    return {
+        "intent": "calculate",
+        "type": type_,
+        "expression": None,
+        "result": sum(nums) if nums else None,
+        "numbers": nums,
+        "ok": bool(nums),
+        "note": "no arithmetic expression found; returning sum of detected numbers"
+                if nums else "no numbers detected in input",
+    }
+
+
+def _handle_fallback(type_: str, payload: Any) -> Dict[str, Any]:
+    if isinstance(payload, str):
+        return {
+            "intent": "fallback",
+            "type": type_,
+            "summary": f"received text task ({len(payload)} chars)",
+            "echo": payload[:200],
+            "note": "no specific intent matched; structured fallback returned.",
+        }
+    return {
+        "intent": "fallback",
+        "type": type_,
+        "summary": "received structured task",
+        "data": payload,
+        "note": "non-text payload; structured fallback returned.",
+    }
+
 
 def default_handle(type_: str, input_: Any) -> Dict[str, Any]:
+    text = str(input_).lower()
+
+    # --- CONTENT ---
+    if any(word in text for word in ["write", "draft", "create"]):
+        return {
+            "handled": True,
+            "type": "content",
+            "summary": "generated content",
+            "result": f"Generated content for: {input_}"
+        }
+
+    # --- SIMPLE CALCULATION ---
+    numbers = re.findall(r'\d+', text)
+    if "calculate" in text and len(numbers) >= 2:
+        total = sum(map(int, numbers))
+        return {
+            "handled": True,
+            "type": "calculation",
+            "summary": "calculation complete",
+            "result": f"Total = {total}"
+        }
+
+    # --- FALLBACK ---
     return {
         "handled": True,
-        "type": type_,
-        "summary": (
-            f"received text task ({len(input_)} chars)"
-            if isinstance(input_, str)
-            else "received structured task"
-        ),
-        "note": "Default handler — host can override with a richer router.",
+        "type": "default",
+        "summary": f"received task ({len(str(input_))} chars)",
+        "result": f"Processed: {input_}"
     }
 
 
