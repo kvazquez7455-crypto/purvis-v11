@@ -14,10 +14,10 @@
   <script>
     async function runModule(module) {
       try {
-        const res = await fetch('/api/purvis');
+        const res = await fetch('/api/purvis?module=' + module);
         const data = await res.json();
         document.getElementById('output').innerText =
-          module + ': ' + JSON.stringify(data, null, 2);
+          JSON.stringify(data, null, 2);
       } catch (err) {
         document.getElementById('output').innerText = 'Error: ' + err;
       }
