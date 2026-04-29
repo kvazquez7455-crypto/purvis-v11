@@ -736,6 +736,7 @@ app.post("/api/learn/daily", async (req, res) => {
 // ─── ORCHESTRATOR MEMORY (Supabase-backed) ──────────────────────────────────
 import { orchestrate } from "./core/orchestrator.js";
 import { modules } from "./core/modules.js";
+import { decisionEngine } from "./core/decisionEngine.js";
 
 const orchestratorMemory = {
   async getContext() {
@@ -907,6 +908,47 @@ app.get("/api/modules", (req, res) => {
   res.json({ count: moduleList.length, modules: moduleList });
 });
 
+
+// ─── MAIN ENGINE (PURVIS) ───────────────────────────────────────────────────
+app.post("/api/purvis", async (req, res) => {
+  const { input, action, userId } = req.body;
+  if (!input) return res.status(400).json({ error: "No input provided" });
+
+  try {
+    // 1. Detect action/module via decisionEngine
+    const moduleKey = action || (typeof decisionEngine === "function" ? decisionEngine(input) : "chat");
+    
+    // 2. Execute via orchestrator
+    const result = await orchestrate(input, modules, orchestratorMemory);
+    
+    // 3. Log to purvis_logs
+    if (supabase) {
+      try {
+        await supabase.from("purvis_logs").insert({
+          user_id: userId || "kelvin",
+          action: action || "auto",
+          module: moduleKey,
+          input: input,
+          output: result,
+          status: result.success !== false ? "success" : "error"
+        });
+      } catch (logErr) {
+        console.error("[LOG ERROR]", logErr.message);
+      }
+    }
+
+    // 4. Return structured result
+    res.json({
+      success: true,
+      action: moduleKey,
+      result: result.data || result,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error("[PURVIS ERROR]", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // ─── SPA FALLBACK ────────────────────────────────────────────────────────────
 app.get("*", (req, res) => {

@@ -56,14 +56,30 @@ CREATE TABLE IF NOT EXISTS purvis_tasks (
   completed_at TIMESTAMPTZ
 );
 
+-- Execution logs for the main engine
+CREATE TABLE IF NOT EXISTS purvis_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id TEXT DEFAULT 'kelvin',
+  action TEXT,
+  module TEXT,
+  input TEXT,
+  output JSONB,
+  status TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_purvis_logs_created_at ON purvis_logs(created_at);
+
 -- Enable Row Level Security
 ALTER TABLE purvis_memory ENABLE ROW LEVEL SECURITY;
 ALTER TABLE purvis_agents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE purvis_content ENABLE ROW LEVEL SECURITY;
 ALTER TABLE purvis_tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE purvis_logs ENABLE ROW LEVEL SECURITY;
 
 -- Allow all access with service role key (backend uses service role)
 CREATE POLICY "Allow all for service role" ON purvis_memory FOR ALL USING (true);
 CREATE POLICY "Allow all for service role" ON purvis_agents FOR ALL USING (true);
 CREATE POLICY "Allow all for service role" ON purvis_content FOR ALL USING (true);
 CREATE POLICY "Allow all for service role" ON purvis_tasks FOR ALL USING (true);
+CREATE POLICY "Allow all for service role" ON purvis_logs FOR ALL USING (true);
