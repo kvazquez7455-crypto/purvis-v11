@@ -963,3 +963,22 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`   AI:       ${openai ? "✅ Online" : "⚠️  Local mode (no API key)"}`);
   console.log(`   Supabase: ${supabase ? "✅ Connected" : "⚠️  Not configured"}\n`);
 });
+
+// ─── STARTUP: INSERT SYSTEM TEST LOG ─────────────────────────────────────────
+(async () => {
+  if (supabase) {
+    try {
+      await supabase.from("purvis_logs").insert({
+        user_id: "kelvin",
+        action: "system_test",
+        module: "core",
+        input: "startup",
+        output: { details: "connected" },
+        status: "success"
+      });
+      console.log("[PURVIS] System test log inserted into purvis_logs");
+    } catch (e) {
+      console.warn("[PURVIS] Could not insert system test log:", e.message);
+    }
+  }
+})();
