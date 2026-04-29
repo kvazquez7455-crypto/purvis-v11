@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PURVIS Dashboard</title>
+</head>
+<body>
+  <h1>PURVIS DASHBOARD</h1>
+
+  <button onclick="runModule('core')">Run Core</button>
+  <button onclick="runModule('test')">Run Test</button>
+
+  <pre id="output"></pre>
+
+  <script>
+    async function runModule(module) {
+      try {
+        const res = await fetch('/api/purvis');
+        const data = await res.json();
+        document.getElementById('output').innerText =
+          module + ': ' + JSON.stringify(data, null, 2);
+      } catch (err) {
+        document.getElementById('output').innerText = 'Error: ' + err;
+      }
+    }
+  </script>
+</body>
+</html>
