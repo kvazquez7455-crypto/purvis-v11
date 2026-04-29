@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PURVIS</title>
+</head>
+<body>
+  <h1>PURVIS LIVE TEST</h1>
+  <button onclick="runPurvis()">Run Purvis</button>
+  <pre id="output"></pre>
+
+  <script>
+    async function runPurvis() {
+      try {
+        const res = await fetch('/api/purvis');
+        const data = await res.json();
+        document.getElementById('output').innerText = JSON.stringify(data, null, 2);
+      } catch (err) {
+        document.getElementById('output').innerText = 'Error: ' + err;
+      }
+    }
+  </script>
+</body>
+</html>
